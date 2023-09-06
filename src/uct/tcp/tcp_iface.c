@@ -66,6 +66,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "How many connection establishment attempts should be done if dropped "
    "connection was detected due to lack of system resources",
    ucs_offsetof(uct_tcp_iface_config_t, max_conn_retries), UCS_CONFIG_TYPE_UINT},
+   {UCT_TCP_CONFIG_REMOTE_ADDRESS_OVERRIDE, "",
+   "Override the remote address IP ",
+   ucs_offsetof(uct_tcp_iface_config_t, override_ip_address), UCS_CONFIG_TYPE_STRING},
 
   {"NODELAY", "y",
    "Set TCP_NODELAY socket option to disable Nagle algorithm. Setting this\n"
@@ -117,6 +120,48 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
 
 static UCS_CLASS_DEFINE_DELETE_FUNC(uct_tcp_iface_t, uct_iface_t);
 
+
+/**
+ * Set an address for the server to listen on - INADDR_ANY on a well known port.
+ */
+static void set_sock_addr(const char *address_str, int server_port, struct sockaddr_storage *saddr, sa_family_t ai_family )
+{
+    struct sockaddr_in *sa_in;
+    struct sockaddr_in6 *sa_in6;
+
+    /* The server will listen on INADDR_ANY */
+    memset(saddr, 0, sizeof(*saddr));
+
+    switch (ai_family) {
+    case AF_INET:
+        sa_in = (struct sockaddr_in*)saddr;
+        if (address_str != NULL) {
+            inet_pton(AF_INET, address_str, &sa_in->sin_addr);
+        } else {
+            sa_in->sin_addr.s_addr = INADDR_ANY;
+        }
+        sa_in->sin_family = AF_INET;
+        sa_in->sin_port   = htons(server_port);
+        break;
+    case AF_INET6:
+        sa_in6 = (struct sockaddr_in6*)saddr;
+        if (address_str != NULL) {
+            inet_pton(AF_INET6, address_str, &sa_in6->sin6_addr);
+        } else {
+            sa_in6->sin6_addr = in6addr_any;
+        }
+        sa_in6->sin6_family = AF_INET6;
+        sa_in6->sin6_port   = htons(server_port);
+        break;
+    default:
+        fprintf(stderr, "Invalid address family");
+        break;
+    }
+}
+
+
+
+
 static ucs_status_t uct_tcp_iface_get_device_address(uct_iface_h tl_iface,
                                                      uct_device_addr_t *addr)
 {
@@ -124,9 +169,11 @@ static ucs_status_t uct_tcp_iface_get_device_address(uct_iface_h tl_iface,
     uct_tcp_device_addr_t *dev_addr = (uct_tcp_device_addr_t*)addr;
     void *pack_ptr                   = dev_addr + 1;
     const struct sockaddr *saddr    = (struct sockaddr*)&iface->config.ifaddr;
+    const char* overrideAddress      = iface->config.override_ip_address;
     const void *in_addr;
     size_t ip_addr_len;
     ucs_status_t status;
+    struct sockaddr_storage peer_addr;
 
     dev_addr->flags     = 0;
     dev_addr->sa_family = saddr->sa_family;
@@ -136,6 +183,24 @@ static ucs_status_t uct_tcp_iface_get_device_address(uct_iface_h tl_iface,
         memset(pack_ptr, 0, sizeof(uct_iface_local_addr_ns_t));
         uct_iface_get_local_address(pack_ptr, UCS_SYS_NS_TYPE_NET);
     } else {
+        /** process override **/
+        /** Override the packed IP address with a provided IP */
+        if (overrideAddress != NULL && strlen(overrideAddress) > 0) {
+            uint16_t port;
+
+            status = ucs_sockaddr_get_port(saddr,
+                                   &port);
+
+            if (status != UCS_OK) {
+                return status;
+            }
+
+            set_sock_addr(overrideAddress, port, &peer_addr, AF_INET);
+
+            saddr = (struct sockaddr*)&peer_addr;
+
+        }
+
         in_addr = ucs_sockaddr_get_inet_addr(saddr);
         status  = ucs_sockaddr_inet_addr_sizeof(saddr, &ip_addr_len);
         if (status != UCS_OK) {
@@ -684,6 +749,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.conn_nb           = config->conn_nb;
     self->config.max_poll          = config->max_poll;
     self->config.max_conn_retries  = config->max_conn_retries;
+    self->config.override_ip_address = config->override_ip_address;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
     self->sockopt.sndbuf           = config->sockopt.sndbuf;
