@@ -53,6 +53,8 @@
 
 #define UCT_TCP_CONFIG_MAX_CONN_RETRIES      "MAX_CONN_RETRIES"
 
+#define UCT_TCP_CONFIG_REMOTE_ADDRESS_OVERRIDE "REMOTE_ADDRESS_OVERRIDE"
+
 /* TX and RX caps */
 #define UCT_TCP_EP_CTX_CAPS                  (UCT_TCP_EP_FLAG_CTX_TYPE_TX | \
                                               UCT_TCP_EP_FLAG_CTX_TYPE_RX)
@@ -408,6 +410,7 @@ typedef struct uct_tcp_iface {
                                                       * before aborting the attempt to connect.
                                                       * It cannot exceed 255. */
         double                    max_bw;            /* Upper bound to TCP iface bandwidth */
+        char *                    override_ip_address; /** Override Ip Address **/
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -454,6 +457,7 @@ typedef struct uct_tcp_iface_config {
         unsigned long              cnt;
         ucs_time_t                 intvl;
     } keepalive;
+    char *                         override_ip_address;
 } uct_tcp_iface_config_t;
 
 

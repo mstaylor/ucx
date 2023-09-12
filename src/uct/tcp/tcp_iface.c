@@ -66,6 +66,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "How many connection establishment attempts should be done if dropped "
    "connection was detected due to lack of system resources",
    ucs_offsetof(uct_tcp_iface_config_t, max_conn_retries), UCS_CONFIG_TYPE_UINT},
+   {UCT_TCP_CONFIG_REMOTE_ADDRESS_OVERRIDE, "",
+   "Override the remote address IP ",
+   ucs_offsetof(uct_tcp_iface_config_t, override_ip_address), UCS_CONFIG_TYPE_STRING},
 
   {"NODELAY", "y",
    "Set TCP_NODELAY socket option to disable Nagle algorithm. Setting this\n"
@@ -117,6 +120,11 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
 
 static UCS_CLASS_DEFINE_DELETE_FUNC(uct_tcp_iface_t, uct_iface_t);
 
+
+
+
+
+
 static ucs_status_t uct_tcp_iface_get_device_address(uct_iface_h tl_iface,
                                                      uct_device_addr_t *addr)
 {
@@ -124,6 +132,7 @@ static ucs_status_t uct_tcp_iface_get_device_address(uct_iface_h tl_iface,
     uct_tcp_device_addr_t *dev_addr = (uct_tcp_device_addr_t*)addr;
     void *pack_ptr                   = dev_addr + 1;
     const struct sockaddr *saddr    = (struct sockaddr*)&iface->config.ifaddr;
+
     const void *in_addr;
     size_t ip_addr_len;
     ucs_status_t status;
@@ -495,6 +504,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     struct sockaddr_storage bind_addr = iface->config.ifaddr;
     unsigned port_range_start         = iface->port_range.first;
     unsigned port_range_end           = iface->port_range.last;
+
     ucs_status_t status;
     size_t addr_len;
     int port, retry;
@@ -684,6 +694,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.conn_nb           = config->conn_nb;
     self->config.max_poll          = config->max_poll;
     self->config.max_conn_retries  = config->max_conn_retries;
+    self->config.override_ip_address = config->override_ip_address;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
     self->sockopt.sndbuf           = config->sockopt.sndbuf;
@@ -741,10 +752,11 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     }
 
     for (i = 0; i < tcp_md->config.af_prio_count; i++) {
-        status = ucs_netif_get_addr(self->if_name,
+        status = ucs_netif_get_addr2(self->if_name,
                                     tcp_md->config.af_prio_list[i],
                                     (struct sockaddr*)&self->config.ifaddr,
-                                    (struct sockaddr*)&self->config.netmask);
+                                    (struct sockaddr*)&self->config.netmask,
+                                            self->config.override_ip_address);
         if (status == UCS_OK) {
             break;
         }

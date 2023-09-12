@@ -94,6 +94,21 @@ ucs_status_t ucs_netif_get_addr(const char *if_name, sa_family_t af,
                                 struct sockaddr *saddr,
                                 struct sockaddr *netmask);
 
+/**
+ * Get address and netmask for a given interface.
+ *
+ * @param [in]  if_name      Interface name to check.
+ * @param [in]  af           Address family.
+ * @param [out] addr         Interface address.
+ * @param [out] netmask      Interface address.
+ *
+ * @return UCS_OK on success or an error code on failure.
+ */
+ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
+                                struct sockaddr *saddr,
+                                struct sockaddr *netmask,
+                                        const char * overrideAddress);
+
 
 /**
  * Get number of active 802.3ad ports for a bond device. If the device is not

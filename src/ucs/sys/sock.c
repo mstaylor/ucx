@@ -100,6 +100,129 @@ out:
     return status;
 }
 
+/**
+ * Set an address for the server to listen on - INADDR_ANY on a well known port.
+ */
+static void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family )
+{
+    struct sockaddr_in *sa_in;
+    struct sockaddr_in6 *sa_in6;
+
+    /* The server will listen on INADDR_ANY */
+    memset(saddr, 0, sizeof(*saddr));
+
+    switch (ai_family) {
+    case AF_INET:
+        sa_in = (struct sockaddr_in*)saddr;
+        if (address_str != NULL) {
+            inet_pton(AF_INET, address_str, &sa_in->sin_addr);
+        } else {
+            sa_in->sin_addr.s_addr = INADDR_ANY;
+        }
+        sa_in->sin_family = AF_INET;
+        sa_in->sin_port   = htons(INADDR_ANY);
+        break;
+    case AF_INET6:
+        sa_in6 = (struct sockaddr_in6*)saddr;
+        if (address_str != NULL) {
+            inet_pton(AF_INET6, address_str, &sa_in6->sin6_addr);
+        } else {
+            sa_in6->sin6_addr = in6addr_any;
+        }
+        sa_in6->sin6_family = AF_INET6;
+        //sa_in6->sin6_port   = htons(server_port);
+        break;
+    default:
+        fprintf(stderr, "Invalid address family");
+        break;
+    }
+}
+
+
+ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
+                                struct sockaddr *saddr,
+                                struct sockaddr *netmask,
+                                        const char * overrideAddress)
+{
+    ucs_status_t status = UCS_ERR_NO_DEVICE;
+    struct ifaddrs *ifa;
+    struct ifaddrs *ifaddrs;
+    const struct sockaddr_in6 *saddr6;
+    struct sockaddr* addr;
+    size_t addrlen;
+    struct sockaddr_storage connect_addr;
+
+    if (getifaddrs(&ifaddrs)) {
+        ucs_warn("getifaddrs error: %m");
+        status = UCS_ERR_IO_ERROR;
+        goto out;
+    }
+
+    for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
+        if ((if_name != NULL) && (0 != strcmp(if_name, ifa->ifa_name))) {
+            continue;
+        }
+
+        if ((ifa->ifa_addr == NULL) ||
+            ((ifa->ifa_addr->sa_family != AF_INET) &&
+             (ifa->ifa_addr->sa_family != AF_INET6))) {
+            continue;
+        }
+
+        if (!ucs_netif_flags_is_active(ifa->ifa_flags)) {
+            continue;
+        }
+
+        if (ifa->ifa_addr->sa_family == AF_INET6) {
+            saddr6 = (const struct sockaddr_in6*)ifa->ifa_addr;
+            if (IN6_IS_ADDR_LINKLOCAL(&saddr6->sin6_addr)) {
+                continue;
+            }
+        }
+
+        if ((af == AF_UNSPEC) || (ifa->ifa_addr->sa_family == af)) {
+
+            if (overrideAddress != NULL && strlen(overrideAddress) > 0) {
+
+                set_sock_addr(overrideAddress, &connect_addr, af);
+
+                addr = (struct sockaddr*)&connect_addr;
+
+                status = ucs_sockaddr_sizeof(addr, &addrlen);
+                if (status != UCS_OK) {
+                    goto out_free_ifaddr;
+                }
+
+                if (saddr != NULL) {
+                    memcpy(saddr, addr, addrlen);
+                }
+
+            } else {
+                status = ucs_sockaddr_sizeof(ifa->ifa_addr, &addrlen);
+                if (status != UCS_OK) {
+                    goto out_free_ifaddr;
+                }
+
+                if (saddr != NULL) {
+                    memcpy(saddr, ifa->ifa_addr, addrlen);
+                }
+            }
+
+            if (netmask != NULL) {
+                memcpy(netmask, ifa->ifa_netmask, addrlen);
+            }
+
+            status = UCS_OK;
+            break;
+        }
+    }
+
+out_free_ifaddr:
+    freeifaddrs(ifaddrs);
+out:
+    return status;
+}
+
 ucs_status_t ucs_netif_get_addr(const char *if_name, sa_family_t af,
                                 struct sockaddr *saddr,
                                 struct sockaddr *netmask)
