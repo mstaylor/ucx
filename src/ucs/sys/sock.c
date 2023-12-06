@@ -159,17 +159,21 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
     }
 
     for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
+        ucs_error("iterating over ifaddresses")
         if ((if_name != NULL) && (0 != strcmp(if_name, ifa->ifa_name))) {
+            ucs_error("if_name not null check")
             continue;
         }
 
         if ((ifa->ifa_addr == NULL) ||
             ((ifa->ifa_addr->sa_family != AF_INET) &&
              (ifa->ifa_addr->sa_family != AF_INET6))) {
+            ucs_error("ifa NULL check")
             continue;
         }
 
         if (!ucs_netif_flags_is_active(ifa->ifa_flags)) {
+            ucs_error("active check")
             continue;
         }
 
@@ -183,6 +187,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
         if ((af == AF_UNSPEC) || (ifa->ifa_addr->sa_family == af)) {
 
             if (overrideAddress != NULL && strlen(overrideAddress) > 0) {
+                ucs_error("setting override address")
 
                 set_sock_addr(overrideAddress, &connect_addr, af);
 
