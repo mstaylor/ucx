@@ -159,7 +159,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
     }
 
     for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
-        ucs_error("iterating over ifaddresses")
+        ucs_error("iterating over ifaddresses");
         if ((if_name != NULL) && (0 != strcmp(if_name, ifa->ifa_name))) {
             ucs_error("if_name not null check");
             continue;
