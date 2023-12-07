@@ -187,7 +187,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
         if ((af == AF_UNSPEC) || (ifa->ifa_addr->sa_family == af)) {
 
             if (overrideAddress != NULL && strlen(overrideAddress) > 0) {
-                ucs_error("setting override address")
+                ucs_error("setting override address");
 
                 set_sock_addr(overrideAddress, &connect_addr, af);
 
