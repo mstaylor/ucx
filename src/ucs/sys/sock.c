@@ -160,7 +160,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
         goto out;
     }
 
-    if (ifa == NULL) {
+    if (ifaddrs == NULL) {
         ucs_error("ifaddrs NULL");
     }
     for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
