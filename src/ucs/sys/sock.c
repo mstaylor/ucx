@@ -152,12 +152,17 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
     size_t addrlen;
     struct sockaddr_storage connect_addr;
 
+    ucs_error("calling getifaddrs");
+
     if (getifaddrs(&ifaddrs)) {
         ucs_warn("getifaddrs error: %m");
         status = UCS_ERR_IO_ERROR;
         goto out;
     }
 
+    if (ifa == NULL) {
+        ucs_error("ifaddrs NULL");
+    }
     for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
         ucs_error("iterating over ifaddresses");
         if ((if_name != NULL) && (0 != strcmp(if_name, ifa->ifa_name))) {
