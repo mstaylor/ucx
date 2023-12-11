@@ -904,6 +904,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     num_devices = 0;
 
     if (status == UCS_ERR_IO_ERROR) {
+        ucs_warn("processing fake interface for aws lambda support");
         is_active = 1;
 
         tmp = ucs_realloc(devices, sizeof(*devices) * (num_devices + 1),
@@ -921,7 +922,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         devices[num_devices].type = UCT_DEVICE_TYPE_NET;
         devices[num_devices].sys_device = UCS_SYS_DEVICE_ID_UNKNOWN;
         ++num_devices;
-        goto out;
+
     } else {
 
         for (;;) {
