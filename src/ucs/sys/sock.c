@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <ifaddrs.h>
 #include <unistd.h>
 #include <errno.h>
@@ -192,7 +193,15 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
         if ((af == AF_UNSPEC) || (ifa->ifa_addr->sa_family == af)) {
 
             if (overrideAddress != NULL && strlen(overrideAddress) > 0) {
-                ucs_error("setting override address");
+
+
+                char hoststr[NI_MAXHOST];
+                char portstr[NI_MAXSERV];
+
+                getnameinfo((struct sockaddr *)&client_addr, client_len, hoststr, sizeof(hoststr), portstr, sizeof(portstr), NI_NUMERICHOST | NI_NUMERICSERV);
+
+                ucs_error("setting override address override: %s current: %s:%s", overrideAddress, hoststr, portstr);
+
 
                 set_sock_addr(overrideAddress, &connect_addr, af);
 
