@@ -194,11 +194,10 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
 
             if (overrideAddress != NULL && strlen(overrideAddress) > 0) {
 
-
                 char ip_port_str[UCS_SOCKADDR_STRING_LEN];
 
 
-                ucs_error("setting override address override: %s current: %s", overrideAddress, hoststr,
+                ucs_error("setting override address override: %s current: %s", overrideAddress,
                           ucs_sockaddr_str(saddr, ip_port_str, sizeof(ip_port_str)));
 
 
