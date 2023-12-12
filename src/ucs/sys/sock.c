@@ -198,7 +198,9 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                 char hoststr[NI_MAXHOST];
                 char portstr[NI_MAXSERV];
 
-                getnameinfo((struct sockaddr *)&client_addr, client_len, hoststr, sizeof(hoststr), portstr, sizeof(portstr), NI_NUMERICHOST | NI_NUMERICSERV);
+                socklen_t client_len = sizeof(struct sockaddr_storage);
+
+                getnameinfo(saddr, client_len, hoststr, sizeof(hoststr), portstr, sizeof(portstr), NI_NUMERICHOST | NI_NUMERICSERV);
 
                 ucs_error("setting override address override: %s current: %s:%s", overrideAddress, hoststr, portstr);
 
