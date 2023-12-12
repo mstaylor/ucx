@@ -918,7 +918,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
 
         ucs_snprintf_zero(devices[num_devices].name,
                           sizeof(devices[num_devices].name),
-                          "%s", "eth0");
+                          "%s", "lo");
         devices[num_devices].type = UCT_DEVICE_TYPE_NET;
         devices[num_devices].sys_device = UCS_SYS_DEVICE_ID_UNKNOWN;
         ++num_devices;
