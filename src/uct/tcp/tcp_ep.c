@@ -593,6 +593,7 @@ static ucs_status_t uct_tcp_ep_keepalive_enable(uct_tcp_ep_t *ep)
 
 static ucs_status_t uct_tcp_ep_create_socket_and_connect(uct_tcp_ep_t *ep)
 {
+    ucs_warn("connecting ep to socket");
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
     struct sockaddr *saddr = (struct sockaddr*)ep->peer_addr;

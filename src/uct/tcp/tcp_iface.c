@@ -66,9 +66,12 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "How many connection establishment attempts should be done if dropped "
    "connection was detected due to lack of system resources",
    ucs_offsetof(uct_tcp_iface_config_t, max_conn_retries), UCS_CONFIG_TYPE_UINT},
-   {UCT_TCP_CONFIG_REMOTE_ADDRESS_OVERRIDE, "",
+   {UCT_TCP_CONFIG_PRIVATE_REMOTE_ADDRESS_OVERRIDE, "",
    "Override the remote address IP ",
-   ucs_offsetof(uct_tcp_iface_config_t, override_ip_address), UCS_CONFIG_TYPE_STRING},
+   ucs_offsetof(uct_tcp_iface_config_t, override_private_ip_address), UCS_CONFIG_TYPE_STRING},
+  {UCT_TCP_CONFIG_PUBLIC_REMOTE_ADDRESS_OVERRIDE, "",
+   "Override the remote address IP ",
+   ucs_offsetof(uct_tcp_iface_config_t, override_public_ip_address), UCS_CONFIG_TYPE_STRING},
 
   {"NODELAY", "y",
    "Set TCP_NODELAY socket option to disable Nagle algorithm. Setting this\n"
@@ -694,7 +697,8 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.conn_nb           = config->conn_nb;
     self->config.max_poll          = config->max_poll;
     self->config.max_conn_retries  = config->max_conn_retries;
-    self->config.override_ip_address = config->override_ip_address;
+    self->config.override_private_ip_address = config->override_private_ip_address;
+    self->config.override_public_ip_address = config->override_public_ip_address;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
     self->sockopt.sndbuf           = config->sockopt.sndbuf;
@@ -759,7 +763,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                     tcp_md->config.af_prio_list[i],
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
-                                            self->config.override_ip_address);
+                                            self->config.override_private_ip_address);
         if (status == UCS_OK) {
             break;
         }
