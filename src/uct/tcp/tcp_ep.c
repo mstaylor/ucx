@@ -593,12 +593,13 @@ static ucs_status_t uct_tcp_ep_keepalive_enable(uct_tcp_ep_t *ep)
 
 static ucs_status_t uct_tcp_ep_create_socket_and_connect(uct_tcp_ep_t *ep)
 {
-    uct_warn("connecting to endpoint scoket");
+
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
     struct sockaddr *saddr = (struct sockaddr*)ep->peer_addr;
     ucs_status_t status;
 
+    ucs_warn("creating uct ep socket and connecting");
     status = ucs_socket_create(saddr->sa_family, SOCK_STREAM, &ep->fd);
     if (status != UCS_OK) {
         goto err;
