@@ -460,7 +460,8 @@ typedef struct uct_tcp_iface_config {
         unsigned long              cnt;
         ucs_time_t                 intvl;
     } keepalive;
-    char *                         override_ip_address;
+    char *                         override_private_ip_address;
+    char *                         override_public_ip_address;
 } uct_tcp_iface_config_t;
 
 
