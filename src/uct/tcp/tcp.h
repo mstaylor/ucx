@@ -403,6 +403,7 @@ typedef struct uct_tcp_iface {
         size_t                    sockaddr_len;      /* Network address length */
         int                       prefer_default;    /* Prefer default gateway */
         int                       put_enable;        /* Enable PUT Zcopy operation support */
+        int                       reuse_addr;        /* Reuse address */
         int                       conn_nb;           /* Use non-blocking connect() */
         unsigned                  max_poll;          /* Number of events to poll per socket*/
         uint8_t                   max_conn_retries;  /* How many connection establishment attempts

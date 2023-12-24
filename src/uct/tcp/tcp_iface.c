@@ -53,6 +53,10 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "Enable PUT Zcopy support",
    ucs_offsetof(uct_tcp_iface_config_t, put_enable), UCS_CONFIG_TYPE_BOOL},
 
+  {"REUSE_SOCK_ADDR", "y",
+   "Enable reuse sockaddrr",
+   ucs_offsetof(uct_tcp_iface_config_t, reuse_addr), UCS_CONFIG_TYPE_BOOL},
+
   {"CONN_NB", "n",
    "Enable non-blocking connection establishment. It may improve startup "
    "time, but can lead to connection resets due to high load on TCP/IP stack",
@@ -507,6 +511,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     struct sockaddr_storage bind_addr = iface->config.ifaddr;
     unsigned port_range_start         = iface->port_range.first;
     unsigned port_range_end           = iface->port_range.last;
+    int reuse_address                 = iface->config.reuse_addr;
 
     ucs_status_t status;
     size_t addr_len;
@@ -537,7 +542,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
         }
 
         status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
-                                        ucs_socket_max_conn(), retry, 0,
+                                        ucs_socket_max_conn(), retry, reuse_address,
                                         &iface->listen_fd);
     } while (retry && (status == UCS_ERR_BUSY));
 
@@ -694,6 +699,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                      self->config.zcopy.hdr_offset;
     self->config.prefer_default    = config->prefer_default;
     self->config.put_enable        = config->put_enable;
+    self->config.reuse_addr        = config->reuse_addr;
     self->config.conn_nb           = config->conn_nb;
     self->config.max_poll          = config->max_poll;
     self->config.max_conn_retries  = config->max_conn_retries;
