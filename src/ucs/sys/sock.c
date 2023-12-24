@@ -604,6 +604,13 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
         if (status != UCS_OK) {
             goto err_close_socket;
         }
+
+        status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEPORT,
+                                   &so_reuse_optval, sizeof(so_reuse_optval));
+
+        if (status != UCS_OK) {
+            goto err_close_socket;
+        }
     }
 
     ret = bind(fd, saddr, socklen);

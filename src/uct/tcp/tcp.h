@@ -450,6 +450,7 @@ typedef struct uct_tcp_iface_config {
     unsigned                       max_poll;
     unsigned                       max_conn_retries;
     int                            sockopt_nodelay;
+    int                            reuse_addr;
     uct_tcp_send_recv_buf_config_t sockopt;
     unsigned                       syn_cnt;
     uct_iface_mpool_config_t       tx_mpool;
