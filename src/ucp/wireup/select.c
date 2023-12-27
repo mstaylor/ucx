@@ -417,13 +417,14 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
     UCS_BITMAP_CLEAR(&addr_index_map);
     ucp_unpacked_address_for_each(ae, address) {
         addr_index = ucp_unpacked_address_index(address, ae);
+        ucs_error("processing address[%d]", addr_index);
         if (!(remote_dev_bitmap & UCS_BIT(ae->dev_index))) {
-            ucs_trace("addr[%d]: not in use, because on device[%d]",
+            ucs_error("addr[%d]: not in use, because on device[%d]",
                       addr_index, ae->dev_index);
             continue;
         } else if ((ae->md_index != UCP_NULL_RESOURCE) &&
                    !(remote_md_map & UCS_BIT(ae->md_index))) {
-            ucs_trace("addr[%d]: not in use, because on md[%d]", addr_index,
+            ucs_error("addr[%d]: not in use, because on md[%d]", addr_index,
                       ae->md_index);
             continue;
         }
@@ -438,14 +439,14 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
                                           ae->iface_attr.flags,
                                           ucp_wireup_peer_flags,
                                           &missing_flags_str)) {
-            ucs_trace("addr[%d] %s: %s", addr_index,
+            ucs_error("addr[%d] %s: %s", addr_index,
                       ucp_find_tl_name_by_csum(context, ae->tl_name_csum),
                       ucs_string_buffer_cstr(&missing_flags_str));
             continue;
         }
 
         if (!ucs_test_all_flags(ae->iface_attr.flags, criteria->remote_event_flags)) {
-            ucs_trace("addr[%d] %s: no %s", addr_index,
+            ucs_error("addr[%d] %s: no %s", addr_index,
                       ucp_find_tl_name_by_csum(context, ae->tl_name_csum),
                       ucp_wireup_get_missing_flag_desc(ae->iface_attr.flags,
                                                        criteria->remote_event_flags,
@@ -453,6 +454,7 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
             continue;
         }
 
+        ucs_error("processing address");
         UCP_WIREUP_CHECK_AMO_FLAGS(ae, criteria, context, addr_index, op, 32);
         UCP_WIREUP_CHECK_AMO_FLAGS(ae, criteria, context, addr_index, op, 64);
         UCP_WIREUP_CHECK_AMO_FLAGS(ae, criteria, context, addr_index, fop, 32);
