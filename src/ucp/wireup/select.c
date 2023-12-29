@@ -442,7 +442,7 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
             ucs_error("addr[%d] %s: %s", addr_index,
                       ucp_find_tl_name_by_csum(context, ae->tl_name_csum),
                       ucs_string_buffer_cstr(&missing_flags_str));
-            //continue;
+            continue;
         }
 
         if (!ucs_test_all_flags(ae->iface_attr.flags, criteria->remote_event_flags)) {
@@ -451,7 +451,7 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
                       ucp_wireup_get_missing_flag_desc(ae->iface_attr.flags,
                                                        criteria->remote_event_flags,
                                                        ucp_wireup_peer_flags));
-            //continue;
+            continue;
         }
 
         ucs_error("processing address");
@@ -466,7 +466,7 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
     if (UCS_BITMAP_IS_ZERO_INPLACE(&addr_index_map)) {
          snprintf(p, endp - p, "%s  ", ucs_status_string(UCS_ERR_UNSUPPORTED));
          p += strlen(p);
-         //goto out;
+         goto out;
     }
 
     /* For each local resource try to find the best remote address to connect to.
