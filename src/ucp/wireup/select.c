@@ -417,14 +417,13 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
     UCS_BITMAP_CLEAR(&addr_index_map);
     ucp_unpacked_address_for_each(ae, address) {
         addr_index = ucp_unpacked_address_index(address, ae);
-        ucs_error("processing address[%d]", addr_index);
         if (!(remote_dev_bitmap & UCS_BIT(ae->dev_index))) {
-            ucs_error("addr[%d]: not in use, because on device[%d]",
+            ucs_trace("addr[%d]: not in use, because on device[%d]",
                       addr_index, ae->dev_index);
             continue;
         } else if ((ae->md_index != UCP_NULL_RESOURCE) &&
                    !(remote_md_map & UCS_BIT(ae->md_index))) {
-            ucs_error("addr[%d]: not in use, because on md[%d]", addr_index,
+            ucs_trace("addr[%d]: not in use, because on md[%d]", addr_index,
                       ae->md_index);
             continue;
         }
@@ -439,14 +438,14 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
                                           ae->iface_attr.flags,
                                           ucp_wireup_peer_flags,
                                           &missing_flags_str)) {
-            ucs_error("addr[%d] %s: %s", addr_index,
+            ucs_trace("addr[%d] %s: %s", addr_index,
                       ucp_find_tl_name_by_csum(context, ae->tl_name_csum),
                       ucs_string_buffer_cstr(&missing_flags_str));
             continue;
         }
 
         if (!ucs_test_all_flags(ae->iface_attr.flags, criteria->remote_event_flags)) {
-            ucs_error("addr[%d] %s: no %s", addr_index,
+            ucs_trace("addr[%d] %s: no %s", addr_index,
                       ucp_find_tl_name_by_csum(context, ae->tl_name_csum),
                       ucp_wireup_get_missing_flag_desc(ae->iface_attr.flags,
                                                        criteria->remote_event_flags,
@@ -454,7 +453,6 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
             continue;
         }
 
-        ucs_error("processing address");
         UCP_WIREUP_CHECK_AMO_FLAGS(ae, criteria, context, addr_index, op, 32);
         UCP_WIREUP_CHECK_AMO_FLAGS(ae, criteria, context, addr_index, op, 64);
         UCP_WIREUP_CHECK_AMO_FLAGS(ae, criteria, context, addr_index, fop, 32);
@@ -464,7 +462,6 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
     }
 
     if (UCS_BITMAP_IS_ZERO_INPLACE(&addr_index_map)) {
-        ucs_error("ucs bitmap is zero");
          snprintf(p, endp - p, "%s  ", ucs_status_string(UCS_ERR_UNSUPPORTED));
          p += strlen(p);
          goto out;
@@ -486,7 +483,6 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
 
         if ((context->tl_rscs[rsc_index].flags & UCP_TL_RSC_FLAG_AUX) &&
             !(criteria->tl_rsc_flags & UCP_TL_RSC_FLAG_AUX)) {
-            ucs_error("reachable1 continue");
             continue;
         }
 
@@ -540,7 +536,6 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
                                         criteria->local_atomic_flags.atomic64.fop_flags,
                                         64, 1, criteria->title, p, endp - p))
         {
-            ucs_error("check wireup flags 2");
             p += strlen(p);
             snprintf(p, endp - p, ", ");
             p += strlen(p);
@@ -554,7 +549,6 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
             snprintf(p, endp - p, UCT_TL_RESOURCE_DESC_FMT" - disabled for %s, ",
                      UCT_TL_RESOURCE_DESC_ARG(resource), criteria->title);
             p += strlen(p);
-            ucs_error("disabled by tl_bitmap");
             continue;
         } else if (!(local_dev_bitmap & UCS_BIT(dev_index))) {
             ucs_trace(UCT_TL_RESOURCE_DESC_FMT " : disabled by device bitmap",
@@ -562,7 +556,6 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
             snprintf(p, endp - p, UCT_TL_RESOURCE_DESC_FMT" - disabled for %s, ",
                      UCT_TL_RESOURCE_DESC_ARG(resource), criteria->title);
             p += strlen(p);
-            ucs_error("disabled by device bitmap");
             continue;
         }
 
@@ -588,14 +581,11 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
 
         is_reachable = 0;
 
-        ucs_error("checking reachable");
-
         UCS_BITMAP_FOR_EACH_BIT(rsc_addr_index_map, addr_index) {
             ae = &address->address_list[addr_index];
             if (!ucp_wireup_is_reachable(ep, select_params->ep_init_flags,
                                          rsc_index, ae)) {
                 /* Must be reachable device address, on same transport */
-                ucs_error("ucp wireup is not reachable");
                 continue;
             }
 
@@ -620,7 +610,6 @@ static UCS_F_NOINLINE ucs_status_t ucp_wireup_select_transport(
         /* If a local resource cannot reach any of the remote addresses,
          * generate debug message. */
         if (!is_reachable) {
-            ucs_error("writing unreachable message");
             ucs_trace(UCT_TL_RESOURCE_DESC_FMT" : unreachable ",
                       UCT_TL_RESOURCE_DESC_ARG(resource));
             snprintf(p, endp - p, UCT_TL_RESOURCE_DESC_FMT" - %s, ",
