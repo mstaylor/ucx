@@ -251,7 +251,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     if (overrideAddress != NULL && strlen(overrideAddress) > 0 ) {
         ucs_error("setting override address override in fallthru: %s ", overrideAddress);
 
-        set_sock_addr(overrideAddress, &connect_addr, af);
+        set_sock_addr(overrideAddress, &connect_addr, AF_INET);
 
         addr = (struct sockaddr*)&connect_addr;
 
