@@ -20,7 +20,6 @@
 #include <float.h>
 
 #define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net"
-#define CYLON_UCT_TCP_IFACE_NETDEV_DIR "/cylon/sys/class/net"
 
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
@@ -797,7 +796,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         status = UCS_ERR_IO_ERROR;
         goto err_cleanup_rx_mpool;
     }
-
+    ucs_warn("Found connectable interface now initializing listener");
     status = uct_tcp_iface_listener_init(self);
     if (status != UCS_OK) {
         goto err_cleanup_event_set;
@@ -916,71 +915,23 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
 
     if (status == UCS_ERR_IO_ERROR) {
         ucs_warn("processing fake interface for aws lambda support");
-        dir = opendir(CYLON_UCT_TCP_IFACE_NETDEV_DIR);
-        if (dir == NULL) {
-            ucs_error("opendir(%s) failed: %m ", CYLON_UCT_TCP_IFACE_NETDEV_DIR);
-            status = UCS_ERR_IO_ERROR;
-            goto out;
+        is_active = 1;
+
+        tmp = ucs_realloc(devices, sizeof(*devices) * (num_devices + 1),
+                          "tcp devices");
+        if (tmp == NULL) {
+            ucs_free(devices);
+            status = UCS_ERR_NO_MEMORY;
+            goto out_closedir;
         }
-        for (;;) {
-            errno = 0;
-            entry = readdir(dir);
-            if (entry == NULL) {
-                if (errno != 0) {
-                    ucs_error("readdir(%s) failed: %m", CYLON_UCT_TCP_IFACE_NETDEV_DIR);
-                    ucs_free(devices);
-                    status = UCS_ERR_IO_ERROR;
-                    goto out_closedir;
-                }
-                break; /* no more items */
-            }
+        devices = tmp;
 
-            /* According to the sysfs(5) manual page, all of entries
-             * has to be a symbolic link representing one of the real
-             * or virtual networking devices that are visible in the
-             * network namespace of the process that is accessing the
-             * directory. Let's avoid checking files that are not a
-             * symbolic link, e.g. "." and ".." entries */
-            //if (entry->d_type != DT_LNK) {
-            //    continue;
-            //}
-
-            is_active = 0;
-            for (i = 0; i < tcp_md->config.af_prio_count; i++) {
-                if (ucs_netif_is_active(entry->d_name,
-                                        tcp_md->config.af_prio_list[i])) {
-                    is_active = 1;
-                    break;
-                }
-            }
-
-            if (!is_active) {
-                continue;
-            }
-
-            tmp = ucs_realloc(devices, sizeof(*devices) * (num_devices + 1),
-                              "tcp devices");
-            if (tmp == NULL) {
-                ucs_free(devices);
-                status = UCS_ERR_NO_MEMORY;
-                goto out_closedir;
-            }
-            devices = tmp;
-
-            sysfs_path = uct_tcp_iface_get_sysfs_path(entry->d_name, path_buffer);
-            sys_dev = ucs_topo_get_sysfs_dev(entry->d_name, sysfs_path,
-                                             sys_device_priority);
-
-            ucs_snprintf_zero(devices[num_devices].name,
-                              sizeof(devices[num_devices].name),
-                              "%s", entry->d_name);
-            devices[num_devices].type = UCT_DEVICE_TYPE_NET;
-            devices[num_devices].sys_device = sys_dev;
-            ++num_devices;
-        }
-
-
-
+        ucs_snprintf_zero(devices[num_devices].name,
+                          sizeof(devices[num_devices].name),
+                          "%s", "eth0");
+        devices[num_devices].type = UCT_DEVICE_TYPE_NET;
+        devices[num_devices].sys_device = UCS_SYS_DEVICE_ID_UNKNOWN;
+        ++num_devices;
     } else {
 
         for (;;) {

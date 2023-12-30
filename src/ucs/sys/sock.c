@@ -149,7 +149,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
     struct ifaddrs *ifa;
     struct ifaddrs *ifaddrs;
     const struct sockaddr_in6 *saddr6;
-    struct sockaddr* addr;
+    struct sockaddr* addr = NULL;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
 
@@ -196,7 +196,6 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
 
                 ucs_error("setting override address override: %s ", overrideAddress);
 
-
                 set_sock_addr(overrideAddress, &connect_addr, af);
 
                 addr = (struct sockaddr*)&connect_addr;
@@ -228,6 +227,25 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
             status = UCS_OK;
             break;
         }
+    }
+
+    if (status == UCS_ERR_NO_DEVICE && overrideAddress != NULL && strlen(overrideAddress) > 0) {
+        ucs_error("setting override address override in fallthru: %s ", overrideAddress);
+
+        set_sock_addr(overrideAddress, &connect_addr, af);
+
+        addr = (struct sockaddr*)&connect_addr;
+
+        status = ucs_sockaddr_sizeof(addr, &addrlen);
+        if (status != UCS_OK) {
+            goto out_free_ifaddr;
+        }
+
+        if (saddr != NULL) {
+            memcpy(saddr, addr, addrlen);
+        }
+
+        status = UCS_OK;
     }
 
 out_free_ifaddr:
