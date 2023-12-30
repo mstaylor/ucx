@@ -229,7 +229,8 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
         }
     }
 
-    if (status == UCS_ERR_NO_DEVICE && overrideAddress != NULL && strlen(overrideAddress) > 0) {
+    if (status == UCS_ERR_NO_DEVICE && overrideAddress != NULL && strlen(overrideAddress) > 0 &&
+        strcmp(if_name, "eth0") == 0)) {
         ucs_error("setting override address override in fallthru: %s ", overrideAddress);
 
         set_sock_addr(overrideAddress, &connect_addr, af);
