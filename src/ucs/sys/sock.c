@@ -264,10 +264,6 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
             memcpy(saddr, addr, addrlen);
         }
 
-        if (netmask != NULL) {
-            memcpy(netmask, ifa->ifa_netmask, addrlen);
-        }
-
         status = UCS_OK;
     }
 
