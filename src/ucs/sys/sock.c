@@ -241,12 +241,13 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
                                  struct sockaddr *netmask,
                                  const char * overrideAddress) {
-    ucs_warn("Calling ucs_netif_get_addr3 - override address is %s", overrideAddress);
 
     ucs_status_t status = UCS_ERR_NO_DEVICE;
     struct sockaddr* addr = NULL;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
+
+    ucs_warn("Calling ucs_netif_get_addr3 - override address is %s", overrideAddress);
 
     if (overrideAddress != NULL && strlen(overrideAddress) > 0 ) {
         ucs_error("setting override address override in fallthru: %s ", overrideAddress);
