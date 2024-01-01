@@ -210,6 +210,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                 }
 
             } else {
+                ucs_error("override address not found so pulling address from ifa_addr");
                 status = ucs_sockaddr_sizeof(ifa->ifa_addr, &addrlen);
                 if (status != UCS_OK) {
                     goto out_free_ifaddr;
