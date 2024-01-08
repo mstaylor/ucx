@@ -751,6 +751,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
     struct sockaddr* addr = NULL;
+    struct sockaddr_storage connect_addr;
     size_t addrlen;
     ucs_status_t status;
 
@@ -768,17 +769,17 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     if (iface->config.override_public_ip_address != NULL && strlen(iface->config.override_public_ip_address) > 0) {
 
         ucs_warn("updating interface connect to public ip address %s", iface->config.override_public_ip_address);
-        set_sock_addr(iface->config.override_public_ip_address, (const struct sockaddr*)&ep->peer_addr, AF_INET);
+        set_sock_addr(iface->config.override_public_ip_address, &connect_addr, AF_INET);
 
-        addr = (const struct sockaddr*)&ep->peer_addr;
+        addr = (struct sockaddr*)&connect_addr;
 
         status = ucs_sockaddr_sizeof(addr, &addrlen);
         if (status != UCS_OK) {
             return status;
         }
 
-        if (saddr != NULL) {
-            memcpy((const struct sockaddr*)&ep->peer_addr, addr, addrlen);
+        if ((struct sockaddr*)&ep->peer_addr != NULL) {
+            memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
         }
     }
     status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
