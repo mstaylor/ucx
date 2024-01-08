@@ -905,6 +905,7 @@ static ucs_status_t uct_tcp_sockcm_ep_client_init(uct_tcp_sockcm_ep_t *cep,
     }
 
     /* try to connect to the server */
+    ucs_warn("connecting to socket connect ep");
     status = ucs_socket_connect(cep->fd, server_addr);
     if (UCS_STATUS_IS_ERR(status)) {
         goto err_close_socket;

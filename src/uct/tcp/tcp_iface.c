@@ -71,10 +71,10 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "connection was detected due to lack of system resources",
    ucs_offsetof(uct_tcp_iface_config_t, max_conn_retries), UCS_CONFIG_TYPE_UINT},
    {UCT_TCP_CONFIG_PRIVATE_REMOTE_ADDRESS_OVERRIDE, "",
-   "Override the remote address IP ",
+   "Override the private remote address IP ",
    ucs_offsetof(uct_tcp_iface_config_t, override_private_ip_address), UCS_CONFIG_TYPE_STRING},
   {UCT_TCP_CONFIG_PUBLIC_REMOTE_ADDRESS_OVERRIDE, "",
-   "Override the remote address IP ",
+   "Override the public remote address IP ",
    ucs_offsetof(uct_tcp_iface_config_t, override_public_ip_address), UCS_CONFIG_TYPE_STRING},
 
   {"NODELAY", "y",

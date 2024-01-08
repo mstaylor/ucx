@@ -761,6 +761,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTING);
 
+    ucs_warn("connecting to socket address cm");
     status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
     if (UCS_STATUS_IS_ERR(status)) {
         return status;
