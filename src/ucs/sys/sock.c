@@ -104,7 +104,7 @@ out:
 /**
  * Set an address for the server to listen on - INADDR_ANY on a well known port.
  */
-static void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family )
+void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family )
 {
     struct sockaddr_in *sa_in;
     struct sockaddr_in6 *sa_in6;
