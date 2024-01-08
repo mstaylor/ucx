@@ -230,6 +230,8 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
         }
     }
 
+    return status;
+
 
 
 out_free_ifaddr:
