@@ -770,6 +770,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
                                             self->config.override_private_ip_address);
+        ucs_warn("status %i address %s", status, self->config.override_private_ip_address);
         if (status != UCS_OK && self->config.override_private_ip_address != NULL &&
             strlen(self->config.override_private_ip_address) > 0) {
             ucs_warn("Calling ucs_netif_get_addr3");
