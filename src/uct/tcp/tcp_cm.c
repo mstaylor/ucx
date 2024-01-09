@@ -768,10 +768,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     ucs_warn("reuse adddress value %i", iface->config.reuse_addr);
 
-    if (iface->config.override_public_ip_address != NULL && strlen(iface->config.override_public_ip_address) > 0) {
+    if (iface->config.override_public_ip_address2 != NULL && strlen(iface->config.override_public_ip_address2) > 0) {
 
-        ucs_warn("updating interface connect to public ip address %s", iface->config.override_public_ip_address);
-        set_sock_addr(iface->config.override_public_ip_address, &connect_addr, AF_INET);
+        ucs_warn("updating interface connect to public ip address %s", iface->config.override_public_ip_address2);
+        set_sock_addr(iface->config.override_public_ip_address2, &connect_addr, AF_INET);
 
         addr = (struct sockaddr*)&connect_addr;
 
