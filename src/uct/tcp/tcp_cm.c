@@ -766,7 +766,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     ucs_warn("connecting to socket address cm");
 
-    ucs_warn("reuse adddress value %i", reuse_addr);
+    ucs_warn("reuse adddress value %i", iface->config.reuse_addr);
 
     if (iface->config.override_public_ip_address != NULL && strlen(iface->config.override_public_ip_address) > 0) {
 
