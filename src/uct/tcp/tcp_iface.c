@@ -706,7 +706,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.override_private_ip_address = config->override_private_ip_address;
     self->config.override_public_ip_address = config->override_public_ip_address;
     ucs_strncpy_zero(self->config.override_public_ip_address2, self->config.override_public_ip_address,
-        sizeof(config->override_public_ip_address2));
+        sizeof(self->config.override_public_ip_address2));
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
     self->sockopt.sndbuf           = config->sockopt.sndbuf;
