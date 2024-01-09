@@ -415,7 +415,6 @@ typedef struct uct_tcp_iface {
         double                    max_bw;            /* Upper bound to TCP iface bandwidth */
         char *                    override_private_ip_address; /** Override Private Ip Address **/
         char *                    override_public_ip_address; /** Override Public Ip Address **/
-        char                      override_public_ip_address2[INET6_ADDRSTRLEN];
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -465,6 +464,7 @@ typedef struct uct_tcp_iface_config {
     } keepalive;
     char *                         override_private_ip_address;
     char *                         override_public_ip_address;
+    char                            override_public_ip_address2[INET6_ADDRSTRLEN];
 } uct_tcp_iface_config_t;
 
 
