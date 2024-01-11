@@ -79,6 +79,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {"PUBLIC_IP_PORT", "0",
    "Public IP Address Port for NAT Hole punching support\n",
    ucs_offsetof(uct_tcp_iface_config_t, public_ip_address_port), UCS_CONFIG_TYPE_INT},
+  {"PRIVATE_IP_PORT", "0",
+   "Private IP Address Port for NAT Hole punching support\n",
+   ucs_offsetof(uct_tcp_iface_config_t, private_ip_address_port), UCS_CONFIG_TYPE_INT},
 
   {"NODELAY", "y",
    "Set TCP_NODELAY socket option to disable Nagle algorithm. Setting this\n"
@@ -534,6 +537,8 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
             port = 0;   /* let the operating system choose the port */
         }
 
+        ucs_warn("setting port to %i", port);
+
         status = ucs_sockaddr_set_port((struct sockaddr*)&bind_addr, port);
         if (status != UCS_OK) {
             break;
@@ -711,6 +716,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     ucs_strncpy_zero(self->config.override_public_ip_address2, self->config.override_public_ip_address,
         sizeof(self->config.override_public_ip_address2));
     self->config.public_ip_address_port = config->public_ip_address_port;
+self->config.private_ip_address_port = config->private_ip_address_port;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
     self->sockopt.sndbuf           = config->sockopt.sndbuf;
@@ -776,14 +782,16 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
                                             self->config.override_private_ip_address);
-        ucs_warn("status %i address %s", status, self->config.override_private_ip_address);
+        ucs_warn("status %i address %s", status, self->config.override_private_ip_address,
+                 self->config.private_ip_address_port);
         if (status != UCS_OK && self->config.override_private_ip_address != NULL &&
             strlen(self->config.override_private_ip_address) > 0) {
             ucs_warn("Calling ucs_netif_get_addr3");
             status = ucs_netif_get_addr3(self->if_name,
                              (struct sockaddr*)&self->config.ifaddr,
                              (struct sockaddr*)&self->config.netmask,
-                             self->config.override_private_ip_address);
+                             self->config.override_private_ip_address,
+                             self->config.private_ip_address_port);
             break;
         }
     }

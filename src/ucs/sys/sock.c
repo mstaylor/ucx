@@ -148,8 +148,8 @@ void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_f
 
 ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                                 struct sockaddr *saddr,
-                                struct sockaddr *netmask,
-                                        const char * overrideAddress)
+                                struct sockaddr *netmask, const char * overrideAddress,
+                                        int port)
 {
     ucs_status_t status = UCS_ERR_NO_DEVICE;
     struct ifaddrs *ifa;
@@ -202,7 +202,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
 
                 ucs_error("setting override address override: %s ", overrideAddress);
 
-                set_sock_addr(overrideAddress, &connect_addr, af, 0);
+                set_sock_addr(overrideAddress, &connect_addr, af, port);
 
                 addr = (struct sockaddr*)&connect_addr;
 
@@ -249,7 +249,7 @@ out:
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
                                  struct sockaddr *netmask,
-                                 const char * overrideAddress) {
+                                 const char * overrideAddress, int port) {
 
     ucs_status_t status = UCS_ERR_NO_DEVICE;
     struct sockaddr* addr = NULL;
@@ -261,7 +261,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     if (overrideAddress != NULL && strlen(overrideAddress) > 0 ) {
         ucs_error("setting override address override in fallthru: %s ", overrideAddress);
 
-        set_sock_addr(overrideAddress, &connect_addr, AF_INET, 0);
+        set_sock_addr(overrideAddress, &connect_addr, AF_INET, port);
 
         addr = (struct sockaddr*)&connect_addr;
 

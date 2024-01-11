@@ -113,14 +113,14 @@ ucs_status_t ucs_netif_get_addr(const char *if_name, sa_family_t af,
  */
 ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                                 struct sockaddr *saddr,
-                                struct sockaddr *netmask,
-                                        const char * overrideAddress);
+                                struct sockaddr *netmask, const char * overrideAddress,
+                                        int port);
 
 
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
                                  struct sockaddr *netmask,
-                                 const char * overrideAddress);
+                                 const char * overrideAddress, int port);
 
 /**
  * Get number of active 802.3ad ports for a bond device. If the device is not
