@@ -101,10 +101,7 @@ out:
     return status;
 }
 
-void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family )
-{
-    return set_sock_addr(address_str, saddr, ai_family, 0);
-}
+
 
 /**
  * Set an address for the server to listen on - INADDR_ANY on a well known port.
@@ -205,7 +202,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
 
                 ucs_error("setting override address override: %s ", overrideAddress);
 
-                set_sock_addr(overrideAddress, &connect_addr, af);
+                set_sock_addr(overrideAddress, &connect_addr, af, 0);
 
                 addr = (struct sockaddr*)&connect_addr;
 
@@ -264,7 +261,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     if (overrideAddress != NULL && strlen(overrideAddress) > 0 ) {
         ucs_error("setting override address override in fallthru: %s ", overrideAddress);
 
-        set_sock_addr(overrideAddress, &connect_addr, AF_INET);
+        set_sock_addr(overrideAddress, &connect_addr, AF_INET, 0);
 
         addr = (struct sockaddr*)&connect_addr;
 
