@@ -766,7 +766,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     ucs_warn("connecting to socket address cm");
 
-    if (iface->config.override_public_ip_address2 != NULL && strlen(iface->config.override_public_ip_address2) > 0) {
+    /*if (iface->config.override_public_ip_address2 != NULL && strlen(iface->config.override_public_ip_address2) > 0) {
 
         ucs_warn("updating interface connect to public ip address %s", iface->config.override_public_ip_address2);
         set_sock_addr(iface->config.override_public_ip_address2, &connect_addr, AF_INET, iface->config.public_ip_address_port);
@@ -782,19 +782,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
         }
 
-        /*ucs_warn("socket for endpoint configured to reuse address");
-        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
-                                   &so_reuse_optval, sizeof(so_reuse_optval));
-        if (UCS_STATUS_IS_ERR(status)) {
-            return status;
-        }
-        ucs_warn("socket for endpoint configured to reuse port");
-        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
-                                   &so_reuse_optval, sizeof(so_reuse_optval));
-        if (UCS_STATUS_IS_ERR(status)) {
-            return status;
-        }*/
-    }
+
+    }*/
     status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
     if (UCS_STATUS_IS_ERR(status)) {
         return status;
