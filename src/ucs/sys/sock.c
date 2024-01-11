@@ -101,10 +101,15 @@ out:
     return status;
 }
 
+void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family )
+{
+    return set_sock_addr(address_str, saddr, ai_family, 0);
+}
+
 /**
  * Set an address for the server to listen on - INADDR_ANY on a well known port.
  */
-void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family )
+void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family, int port )
 {
     struct sockaddr_in *sa_in;
     struct sockaddr_in6 *sa_in6;
@@ -121,7 +126,11 @@ void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_f
             sa_in->sin_addr.s_addr = INADDR_ANY;
         }
         sa_in->sin_family = AF_INET;
-        sa_in->sin_port   = htons(INADDR_ANY);
+        if (port != 0) {
+            sa_in->sin_port = htons(port);
+        } else {
+            sa_in->sin_port = htons(INADDR_ANY);
+        }
         break;
     case AF_INET6:
         sa_in6 = (struct sockaddr_in6*)saddr;

@@ -82,6 +82,10 @@ int ucs_netif_is_active(const char *if_name, sa_family_t af);
 
 void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family );
 
+void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family, int port );
+
+
+
 
 /**
  * Get address and netmask for a given interface.

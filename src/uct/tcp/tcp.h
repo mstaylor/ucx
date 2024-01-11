@@ -416,6 +416,7 @@ typedef struct uct_tcp_iface {
         char *                    override_private_ip_address; /** Override Private Ip Address **/
         char *                    override_public_ip_address; /** Override Public Ip Address **/
         char                      override_public_ip_address2[INET6_ADDRSTRLEN];
+        int                       public_ip_address_port;
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -465,6 +466,7 @@ typedef struct uct_tcp_iface_config {
     } keepalive;
     char *                         override_private_ip_address;
     char *                         override_public_ip_address;
+    int                            public_ip_address_port;
 } uct_tcp_iface_config_t;
 
 

@@ -76,6 +76,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {UCT_TCP_CONFIG_PUBLIC_REMOTE_ADDRESS_OVERRIDE, "",
    "Override the public remote address IP ",
    ucs_offsetof(uct_tcp_iface_config_t, override_public_ip_address), UCS_CONFIG_TYPE_STRING},
+  {"PUBLIC_IP_PORT", "0",
+   "Public IP Address Port for NAT Hole punching support\n",
+   ucs_offsetof(uct_tcp_iface_config_t, public_ip_address_port), UCS_CONFIG_TYPE_INT},
 
   {"NODELAY", "y",
    "Set TCP_NODELAY socket option to disable Nagle algorithm. Setting this\n"
@@ -707,6 +710,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.override_public_ip_address = config->override_public_ip_address;
     ucs_strncpy_zero(self->config.override_public_ip_address2, self->config.override_public_ip_address,
         sizeof(self->config.override_public_ip_address2));
+    self->config.public_ip_address_port = config->public_ip_address_port;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
     self->sockopt.sndbuf           = config->sockopt.sndbuf;
