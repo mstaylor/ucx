@@ -644,8 +644,15 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
     }
 
     if (reuse_addr) {
-        ucs_warn("configured to reuse socket address");
+        ucs_warn("configuring to reuse socket address");
         status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEADDR,
+                                   &so_reuse_optval, sizeof(so_reuse_optval));
+        if (status != UCS_OK) {
+            goto err_close_socket;
+        }
+
+        ucs_warn("configuring to reuse socket port");
+        status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEPORT,
                                    &so_reuse_optval, sizeof(so_reuse_optval));
         if (status != UCS_OK) {
             goto err_close_socket;

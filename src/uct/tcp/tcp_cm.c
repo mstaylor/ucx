@@ -781,6 +781,19 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         if ((struct sockaddr*)&ep->peer_addr != NULL) {
             memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
         }
+
+        ucs_warn("socket for endpoint configured to reuse address");
+        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+                                   &so_reuse_optval, sizeof(so_reuse_optval));
+        if (UCS_STATUS_IS_ERR(status)) {
+            return status;
+        }
+        ucs_warn("socket for endpoint configured to reuse port");
+        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                                   &so_reuse_optval, sizeof(so_reuse_optval));
+        if (UCS_STATUS_IS_ERR(status)) {
+            return status;
+        }
     }
     status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
     if (UCS_STATUS_IS_ERR(status)) {
