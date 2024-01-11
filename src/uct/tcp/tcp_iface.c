@@ -783,8 +783,7 @@ self->config.private_ip_address_port = config->private_ip_address_port;
                                     (struct sockaddr*)&self->config.netmask,
                                             self->config.override_private_ip_address,
                                             self->config.private_ip_address_port);
-        ucs_warn("status %i address %s", status, self->config.override_private_ip_address,
-                 self->config.private_ip_address_port);
+        ucs_warn("status %i address %s", status, self->config.override_private_ip_address);
         if (status != UCS_OK && self->config.override_private_ip_address != NULL &&
             strlen(self->config.override_private_ip_address) > 0) {
             ucs_warn("Calling ucs_netif_get_addr3");
