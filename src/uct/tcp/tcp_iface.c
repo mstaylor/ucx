@@ -781,7 +781,8 @@ self->config.private_ip_address_port = config->private_ip_address_port;
                                     tcp_md->config.af_prio_list[i],
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
-                                            self->config.override_private_ip_address);
+                                            self->config.override_private_ip_address,
+                                            self->config.private_ip_address_port);
         ucs_warn("status %i address %s", status, self->config.override_private_ip_address,
                  self->config.private_ip_address_port);
         if (status != UCS_OK && self->config.override_private_ip_address != NULL &&
