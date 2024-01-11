@@ -750,9 +750,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
-    struct sockaddr* addr = NULL;
-    struct sockaddr_storage connect_addr;
-    size_t addrlen;
+    //struct sockaddr* addr = NULL;
+    //struct sockaddr_storage connect_addr;
+    //size_t addrlen;
     ucs_status_t status;
 
     ep->conn_retries++;
