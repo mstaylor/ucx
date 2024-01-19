@@ -14,6 +14,7 @@ libuct_la_CPPFLAGS = $(BASE_CPPFLAGS)
 libuct_la_LIBADD   = $(top_builddir)/src/ucs/libucs.la
 libuct_la_LDFLAGS  = -ldl -version-info $(SOVERSION)
 libuct_ladir       = $(includedir)/uct
+libuct_LDADD       = -lhiredis
 
 nobase_dist_libuct_la_HEADERS = \
 	api/tl.h \

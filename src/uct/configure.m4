@@ -16,6 +16,29 @@ AC_CONFIG_FILES([src/uct/Makefile
                  src/uct/ucx-uct.pc])
 
 #
+# Include Hiredis for aws lambda support
+#
+#
+AC_ARG_WITH([hiredis-prefix],
+[AS_HELP_STRING([--with-hiredis-prefix=PREFIX],
+[specify the prefix where hiredis is installed])],
+[hiredis_prefix=$withval],
+[hiredis_prefix=""])   # Default is empty
+
+# Setup CPPFLAGS and LDFLAGS if a custom prefix is provided
+if test "x$hiredis_prefix" != "x"; then
+        CPPFLAGS="$CPPFLAGS -I$hiredis_prefix/include"
+LDFLAGS="$LDFLAGS -L$hiredis_prefix/lib"
+fi
+
+# Check for hiredis library and header
+        AC_CHECK_LIB([hiredis], [redisConnect],
+[AC_DEFINE([HAVE_HIREDIS], [1], [Have the hiredis library])],
+[AC_MSG_ERROR([Cannot find hiredis library])])
+AC_CHECK_HEADERS([hiredis/hiredis.h], , [AC_MSG_ERROR([Cannot find hiredis header])])
+
+
+#
 # TCP flags
 #
 AC_CHECK_DECLS([IPPROTO_TCP, SOL_SOCKET, SO_KEEPALIVE,

@@ -750,9 +750,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
-    struct sockaddr* addr = NULL;
+    /*struct sockaddr* addr = NULL;
     struct sockaddr_storage connect_addr;
-    size_t addrlen;
+    size_t addrlen;*/
     ucs_status_t status;
 
     ep->conn_retries++;
@@ -766,7 +766,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     ucs_warn("connecting to socket address cm");
 
-    if (iface->config.override_public_ip_address2 != NULL && strlen(iface->config.override_public_ip_address2) > 0) {
+    /*if (iface->config.override_public_ip_address2 != NULL && strlen(iface->config.override_public_ip_address2) > 0) {
 
         ucs_warn("updating interface connect to public ip address %s", iface->config.override_public_ip_address2);
         set_sock_addr(iface->config.override_public_ip_address2, &connect_addr, AF_INET, iface->config.public_ip_address_port);
@@ -783,7 +783,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         }
 
 
-    }
+    }*/
     status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
     if (UCS_STATUS_IS_ERR(status)) {
         return status;

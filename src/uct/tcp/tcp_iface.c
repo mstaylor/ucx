@@ -158,6 +158,9 @@ static ucs_status_t uct_tcp_iface_get_device_address(uct_iface_h tl_iface,
         memset(pack_ptr, 0, sizeof(uct_iface_local_addr_ns_t));
         uct_iface_get_local_address(pack_ptr, UCS_SYS_NS_TYPE_NET);
     } else {
+
+
+
         in_addr = ucs_sockaddr_get_inet_addr(saddr);
         status  = ucs_sockaddr_inet_addr_sizeof(saddr, &ip_addr_len);
         if (status != UCS_OK) {
@@ -176,6 +179,11 @@ static size_t uct_tcp_iface_get_device_address_length(uct_tcp_iface_t *iface)
     size_t addr_len              = sizeof(uct_tcp_device_addr_t);
     size_t in_addr_len;
     ucs_status_t status;
+
+
+
+    ucs_warn("retrieving device address...");
+
 
     if (ucs_sockaddr_is_inaddr_loopback(saddr)) {
         addr_len += sizeof(uct_iface_local_addr_ns_t);
