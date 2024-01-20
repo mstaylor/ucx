@@ -9,7 +9,7 @@
 
 #include "tcp.h"
 #include "tcp/tcp.h"
-#include "hiredis.h"
+#include "hiredis/hiredis.h"
 
 #include <ucs/async/async.h>
 
