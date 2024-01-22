@@ -13,6 +13,58 @@
 
 #include <ucs/async/async.h>
 
+ucs_status_t ucs_netif_get_addr3(const char *if_name,
+                                 struct sockaddr *saddr,
+                                 struct sockaddr *netmask,
+                                 uct_tcp_iface_config_t config) {
+
+    ucs_status_t status = UCS_ERR_NO_DEVICE;
+    struct sockaddr* addr = NULL;
+    size_t addrlen;
+    struct sockaddr_storage connect_addr;
+    char redisKey[200];
+    char redisValue[200];
+    const char * override_private_address = config.override_private_ip_address;
+    int private_port = config.private_ip_address_port;
+    const char * override_public_address = config.override_public_ip_address;
+    int public_port = config.public_ip_address_port;
+    int redis_enabled = config.enable_redis;
+    const char * redis_ip_address = config.redis_ip_address;
+    int redis_port = config.redis_port;
+
+
+    ucs_warn("Calling ucs_netif_get_addr3 - override address is %s", overrideAddress);
+
+    if (overrideAddress != NULL && strlen(overrideAddress) > 0 ) {
+        ucs_warn("setting override address override in fallthru: %s ", overrideAddress);
+
+        set_sock_addr(overrideAddress, &connect_addr, AF_INET, port);
+
+        addr = (struct sockaddr*)&connect_addr;
+
+        status = ucs_sockaddr_sizeof(addr, &addrlen);
+        if (status != UCS_OK) {
+            return status;
+        }
+
+        if (saddr != NULL) {
+            memcpy(saddr, addr, addrlen);
+        }
+
+        //write to redis
+        if (redis_enabled) {
+            ucs_warn("writing public address to redis");
+            sprintf(redisKey, "%s:%i", override_private_address, private_port);
+            sprintf(redisValue, "%s:%i", override_public_address, public_port);
+            setRedisValue(redis_ip_address, redis_port, redisKey, redisValue);
+        }
+
+        status = UCS_OK;
+    }
+
+    return status;
+
+}
 
 void uct_tcp_cm_change_conn_state(uct_tcp_ep_t *ep,
                                   uct_tcp_ep_conn_state_t new_conn_state)
