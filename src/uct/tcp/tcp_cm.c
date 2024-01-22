@@ -825,13 +825,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     ucs_warn("connecting to socket address cm");
 
-    if (iface->config.redis_enabled && iface->config.redis_ip_address != NULL) {
+    if (iface->config.enable_redis && iface->config.redis_ip_address != NULL) {
         ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
                          UCS_SOCKADDR_STRING_LEN);
 
         ucs_warn("dest addr to be passed to redis: %s", dest_str);
 
-        remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str)
+        remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
 
         //TODO: handle remote address and use that as endpoint connect
 
