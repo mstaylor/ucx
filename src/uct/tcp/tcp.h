@@ -668,6 +668,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep);
 
 void setRedisValue(const char *hostname, int port, const char *key, const char *value);
 
+ucs_status_t ucs_netif_get_addr3(const char *if_name,
+                                 struct sockaddr *saddr,
+                                 struct sockaddr *netmask,
+                                 uct_tcp_iface_config_t config);
+
 int uct_tcp_keepalive_is_enabled(uct_tcp_iface_t *iface);
 
 
