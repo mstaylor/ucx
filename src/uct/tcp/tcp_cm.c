@@ -35,7 +35,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
     ucs_warn("Calling ucs_netif_get_addr3 - override_private_address address is %s", override_private_address);
 
-    if (override_private_address != NULL && strlen(override_private_address) > 0 || redis_enabled) {
+    if ((override_private_address != NULL && strlen(override_private_address) > 0 ) || redis_enabled) {
         ucs_warn("setting override address override_private_address in fallthru: %s ", override_private_address);
 
         if (redis_enabled) {
