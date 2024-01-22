@@ -812,9 +812,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     size_t addrlen;
     ucs_status_t status;
     char dest_str[UCS_SOCKADDR_STRING_LEN];
-    char* remote_address;
+    char* remote_address = NULL;
     char publicAddress[UCS_SOCKADDR_STRING_LEN];
-    int publicPort;
+    int publicPort = 0;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
