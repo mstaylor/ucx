@@ -16,7 +16,7 @@
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
                                  struct sockaddr *netmask,
-                                 uct_tcp_iface_config_t config) {
+                                 uct_tcp_iface_config_t *config) {
 
     ucs_status_t status = UCS_ERR_NO_DEVICE;
     struct sockaddr* addr = NULL;
@@ -24,13 +24,13 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     struct sockaddr_storage connect_addr;
     char redisKey[200];
     char redisValue[200];
-    const char * override_private_address = config.override_private_ip_address;
-    int private_port = config.private_ip_address_port;
-    const char * override_public_address = config.override_public_ip_address;
-    int public_port = config.public_ip_address_port;
-    int redis_enabled = config.enable_redis;
-    const char * redis_ip_address = config.redis_ip_address;
-    int redis_port = config.redis_port;
+    const char * override_private_address = config->override_private_ip_address;
+    int private_port = config->private_ip_address_port;
+    const char * override_public_address = config->override_public_ip_address;
+    int public_port = config->public_ip_address_port;
+    int redis_enabled = config->enable_redis;
+    const char * redis_ip_address = config->redis_ip_address;
+    int redis_port = config->redis_port;
 
 
     ucs_warn("Calling ucs_netif_get_addr3 - override address is %s", overrideAddress);
