@@ -33,12 +33,12 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     int redis_port = config->redis_port;
 
 
-    ucs_warn("Calling ucs_netif_get_addr3 - override address is %s", overrideAddress);
+    ucs_warn("Calling ucs_netif_get_addr3 - override_private_address address is %s", override_private_address);
 
-    if (overrideAddress != NULL && strlen(overrideAddress) > 0 ) {
-        ucs_warn("setting override address override in fallthru: %s ", overrideAddress);
+    if (overrideAddress != NULL && strlen(override_private_address) > 0 ) {
+        ucs_warn("setting override address override_private_address in fallthru: %s ", override_private_address);
 
-        set_sock_addr(overrideAddress, &connect_addr, AF_INET, port);
+        set_sock_addr(override_private_address, &connect_addr, AF_INET, private_port);
 
         addr = (struct sockaddr*)&connect_addr;
 
