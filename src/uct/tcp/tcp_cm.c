@@ -905,5 +905,32 @@ ucs_status_t uct_tcp_cm_handle_incoming_conn(uct_tcp_iface_t *iface,
 }
 
 void setRedisValue(const char *hostname, int port, const char *key, const char *value) {
+    redisContext *c;
+    redisReply *reply;
 
+    // Connect to Redis server
+    c = redisConnect(hostname, port);
+    if (c == NULL || c->err) {
+        if (c) {
+            ucs_warn("Connection error: %s\n", c->errstr);
+            redisFree(c);
+        } else {
+            ucs_warn("Connection error: can't allocate redis context\n");
+        }
+        return;
+    }
+
+    // Set the key
+    reply = redisCommand(c, "SET %s %s", key, value);
+    if (reply == NULL) {
+        ucs_warn("Error in SET command\n");
+    } else {
+        // Print the reply
+        ucs_warn("%s\n", reply->str);
+        // Free the reply object
+        freeReplyObject(reply);
+    }
+
+    // Disconnect from Redis
+    redisFree(c);
 }
