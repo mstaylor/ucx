@@ -24,7 +24,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     struct sockaddr_storage connect_addr;
     char redisKey[200];
     char redisValue[200];
-    const char * override_private_address = config->override_private_ip_address;
+    char * override_private_address = config->override_private_ip_address;
     int private_port = config->private_ip_address_port;
     const char * override_public_address = config->override_public_ip_address;
     int public_port = config->public_ip_address_port;
@@ -35,8 +35,12 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
     ucs_warn("Calling ucs_netif_get_addr3 - override_private_address address is %s", override_private_address);
 
-    if (overrideAddress != NULL && strlen(override_private_address) > 0 ) {
+    if (override_private_address != NULL && strlen(override_private_address) > 0 || redis_enabled) {
         ucs_warn("setting override address override_private_address in fallthru: %s ", override_private_address);
+
+        if (redis_enabled) {
+            override_private_address = NULL; //set to NULL to use INADDR_ANY
+        }
 
         set_sock_addr(override_private_address, &connect_addr, AF_INET, private_port);
 
