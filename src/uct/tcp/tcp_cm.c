@@ -839,7 +839,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     if (remote_address != NULL) {
 
-
+        ucs_warn("remote address returned from redis: %s", remote_address);
         char* token = strtok(remote_address, ":");
         int i = 0;
         while (token != NULL) {
