@@ -851,3 +851,7 @@ ucs_status_t uct_tcp_cm_handle_incoming_conn(uct_tcp_iface_t *iface,
               ep, fd);
     return UCS_OK;
 }
+
+static void setRedisValue(const char *hostname, int port, const char *key, const char *value) {
+
+}
