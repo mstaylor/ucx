@@ -416,7 +416,7 @@ typedef struct uct_tcp_iface {
         char *                    override_private_ip_address; /** Override Private Ip Address **/
         char *                    override_public_ip_address; /** Override Public Ip Address **/
         char                      override_public_ip_address2[INET6_ADDRSTRLEN];
-        char                      redis_ip_address[INET6_ADDRSTRLEN]
+        char                      redis_ip_address[INET6_ADDRSTRLEN];
         int                       public_ip_address_port;
         int                       private_ip_address_port;
         int                       redis_port;
