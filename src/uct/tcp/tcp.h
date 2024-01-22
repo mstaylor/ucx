@@ -416,8 +416,11 @@ typedef struct uct_tcp_iface {
         char *                    override_private_ip_address; /** Override Private Ip Address **/
         char *                    override_public_ip_address; /** Override Public Ip Address **/
         char                      override_public_ip_address2[INET6_ADDRSTRLEN];
+        char                      redis_ip_address[INET6_ADDRSTRLEN]
         int                       public_ip_address_port;
         int                       private_ip_address_port;
+        int                       redis_port;
+        int                       enable_redis;
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -453,6 +456,7 @@ typedef struct uct_tcp_iface_config {
     unsigned                       max_poll;
     unsigned                       max_conn_retries;
     int                            sockopt_nodelay;
+    int                            enable_redis;
     int                            reuse_addr;
     uct_tcp_send_recv_buf_config_t sockopt;
     unsigned                       syn_cnt;
@@ -467,8 +471,10 @@ typedef struct uct_tcp_iface_config {
     } keepalive;
     char *                         override_private_ip_address;
     char *                         override_public_ip_address;
+    char *                         redis_ip_address;
     int                            public_ip_address_port;
     int                            private_ip_address_port;
+    int                            redis_port;
 } uct_tcp_iface_config_t;
 
 
@@ -661,6 +667,8 @@ ucs_status_t uct_tcp_cm_handle_incoming_conn(uct_tcp_iface_t *iface,
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep);
 
 int uct_tcp_keepalive_is_enabled(uct_tcp_iface_t *iface);
+
+void setRedisValue(const char *hostname, int port, const char *key, const char *value);
 
 static UCS_F_ALWAYS_INLINE int uct_tcp_ep_ctx_buf_empty(uct_tcp_ep_ctx_t *ctx)
 {
