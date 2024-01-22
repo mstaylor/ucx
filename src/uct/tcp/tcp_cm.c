@@ -811,6 +811,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_storage connect_addr;
     size_t addrlen;*/
     ucs_status_t status;
+    char dest_str[UCS_SOCKADDR_STRING_LEN];
+    const char* remote_address;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -822,6 +824,25 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTING);
 
     ucs_warn("connecting to socket address cm");
+
+    if (iface->config.redis_enabled && iface->config.redis_ip_address != NULL) {
+        ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
+                         UCS_SOCKADDR_STRING_LEN);
+
+        ucs_warn("dest addr to be passed to redis: %s", dest_str);
+
+        remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str)
+
+        //TODO: handle remote address and use that as endpoint connect
+
+        if (remote_address != NULL) {
+            free(remote_address);
+        }
+    }
+
+    if (remote_address != NULL) {
+
+    }
 
     /*if (iface->config.override_public_ip_address2 != NULL && strlen(iface->config.override_public_ip_address2) > 0) {
 
