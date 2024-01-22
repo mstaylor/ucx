@@ -143,7 +143,9 @@ static UCS_CLASS_DEFINE_DELETE_FUNC(uct_tcp_iface_t, uct_iface_t);
 
 
 
+static void setRedisValue(const char *hostname, int port, const char *key, const char *value) {
 
+}
 
 
 static ucs_status_t uct_tcp_iface_get_device_address(uct_iface_h tl_iface,
