@@ -845,15 +845,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         while (token != NULL) {
             if (i == 0) {
                 ucs_strncpy_zero(publicAddress, token, sizeof(token));
-            } else {
+            } else if (i == 1){
                 publicPort = atoi(token);
             }
 
             token = strtok(NULL, " - ");
             i++;
         }
-
-
 
         set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
