@@ -18,6 +18,7 @@
 #include <ucs/algorithm/crc.h>
 #include <ucs/sys/event_set.h>
 #include <ucs/sys/iovec.h>
+#include "hiredis/hiredis.h"
 
 #include <net/if.h>
 
@@ -666,7 +667,10 @@ ucs_status_t uct_tcp_cm_handle_incoming_conn(uct_tcp_iface_t *iface,
 
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep);
 
+redisContext * redisLogin(const char *hostname, int port);
+
 void setRedisValue(const char *hostname, int port, const char *key, const char *value);
+
 
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,

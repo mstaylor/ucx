@@ -9,7 +9,7 @@
 
 #include "tcp.h"
 #include "tcp/tcp.h"
-#include "hiredis/hiredis.h"
+
 
 #include <ucs/async/async.h>
 
@@ -908,9 +908,9 @@ ucs_status_t uct_tcp_cm_handle_incoming_conn(uct_tcp_iface_t *iface,
     return UCS_OK;
 }
 
-void setRedisValue(const char *hostname, int port, const char *key, const char *value) {
+redisContext * redisLogin(const char *hostname, int port) {
     redisContext *c;
-    redisReply *reply;
+
 
     // Connect to Redis server
     c = redisConnect(hostname, port);
@@ -921,20 +921,32 @@ void setRedisValue(const char *hostname, int port, const char *key, const char *
         } else {
             ucs_warn("Connection error: can't allocate redis context\n");
         }
-        return;
+        return NULL;
     }
 
-    // Set the key
-    reply = redisCommand(c, "SET %s %s", key, value);
-    if (reply == NULL) {
-        ucs_warn("Error in SET command\n");
-    } else {
-        // Print the reply
-        ucs_warn("%s\n", reply->str);
-        // Free the reply object
-        freeReplyObject(reply);
-    }
+    return c;
 
-    // Disconnect from Redis
-    redisFree(c);
+}
+
+void setRedisValue(const char *hostname, int port, const char *key, const char *value) {
+
+    redisReply *reply;
+
+    redisContext *c = redisLogin(hostname, port);
+
+    if (c != NULL) {
+        // Set the key
+        reply = redisCommand(c, "SET %s %s", key, value);
+        if (reply == NULL) {
+            ucs_warn("Error in SET command\n");
+        } else {
+            // Print the reply
+            ucs_warn("%s\n", reply->str);
+            // Free the reply object
+            freeReplyObject(reply);
+        }
+
+        // Disconnect from Redis
+        redisFree(c);
+    }
 }
