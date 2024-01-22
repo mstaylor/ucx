@@ -671,7 +671,7 @@ redisContext * redisLogin(const char *hostname, int port);
 
 void setRedisValue(const char *hostname, int port, const char *key, const char *value);
 
-const char * getValueFromRedis(const char *hostname, int port, const char *key);
+char * getValueFromRedis(const char *hostname, int port, const char *key);
 
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
