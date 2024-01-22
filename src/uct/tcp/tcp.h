@@ -666,9 +666,11 @@ ucs_status_t uct_tcp_cm_handle_incoming_conn(uct_tcp_iface_t *iface,
 
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep);
 
+void setRedisValue(const char *hostname, int port, const char *key, const char *value);
+
 int uct_tcp_keepalive_is_enabled(uct_tcp_iface_t *iface);
 
-static void setRedisValue(const char *hostname, int port, const char *key, const char *value);
+
 
 static UCS_F_ALWAYS_INLINE int uct_tcp_ep_ctx_buf_empty(uct_tcp_ep_ctx_t *ctx)
 {
