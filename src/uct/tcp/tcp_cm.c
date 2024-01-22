@@ -807,12 +807,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
-    /*struct sockaddr* addr = NULL;
+    struct sockaddr* addr = NULL;
     struct sockaddr_storage connect_addr;
-    size_t addrlen;*/
+    size_t addrlen;
     ucs_status_t status;
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char* remote_address;
+    char publicAddress[UCS_SOCKADDR_STRING_LEN];
+    int publicPort;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -833,14 +835,40 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
 
-        //TODO: handle remote address and use that as endpoint connect
-
-        if (remote_address != NULL) {
-            free(remote_address);
-        }
     }
 
     if (remote_address != NULL) {
+
+
+        char* token = strtok(remote_address, ":");
+        int i = 0;
+        while (token != NULL) {
+            if (i == 0) {
+                ucs_strncpy_zero(publicAddress, token, sizeof(token));
+            } else {
+                publicPort = atoi(token);
+            }
+
+            token = strtok(NULL, " - ");
+            i++;
+        }
+
+
+
+        set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
+
+        addr = (struct sockaddr*)&connect_addr;
+
+        status = ucs_sockaddr_sizeof(addr, &addrlen);
+        if (status != UCS_OK) {
+            return status;
+        }
+
+        if ((struct sockaddr*)&ep->peer_addr != NULL) {
+            memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
+        }
+
+        free(remote_address);
 
     }
 
