@@ -816,6 +816,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char publicAddress[UCS_SOCKADDR_STRING_LEN];
     int publicPort = 0;
     char * token = NULL;
+    int i = 0;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -842,7 +843,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         ucs_warn("remote address returned from redis: %s", remote_address);
         token = strtok(remote_address, ":");
-        int i = 0;
+
         while (token != NULL) {
             if (i == 0) {
                 ucs_strncpy_zero(publicAddress, token, sizeof(token));
