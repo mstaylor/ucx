@@ -189,10 +189,6 @@ static size_t uct_tcp_iface_get_device_address_length(uct_tcp_iface_t *iface)
     ucs_status_t status;
 
 
-
-    ucs_warn("retrieving device address...");
-
-
     if (ucs_sockaddr_is_inaddr_loopback(saddr)) {
         addr_len += sizeof(uct_iface_local_addr_ns_t);
     } else {
@@ -729,8 +725,8 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.max_conn_retries  = config->max_conn_retries;
     self->config.override_private_ip_address = config->override_private_ip_address;
     self->config.override_public_ip_address = config->override_public_ip_address;
-    ucs_strncpy_zero(self->config.redis_ip_address, self->config.redis_ip_address,
-        sizeof(self->config.redis_ip_address));
+    ucs_strncpy_zero(self->config.redis_ip_address, config->redis_ip_address,
+        sizeof(config->redis_ip_address));
 
     ucs_strncpy_zero(self->config.override_public_ip_address2, self->config.override_public_ip_address,
         sizeof(self->config.override_public_ip_address2));

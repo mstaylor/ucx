@@ -964,7 +964,7 @@ ucs_status_t uct_tcp_cm_handle_incoming_conn(uct_tcp_iface_t *iface,
 
 redisContext * redisLogin(const char *hostname, int port) {
     redisContext *c;
-
+    ucs_warn("Logging into redis host: %s port: %i", hostname, port);
 
     // Connect to Redis server
     c = redisConnect(hostname, port);
