@@ -22,7 +22,6 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     struct sockaddr* addr = NULL;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
-    char redisKey[200];
     char redisValue[200];
     char * override_private_address = config->override_private_ip_address;
     char dest_str[UCS_SOCKADDR_STRING_LEN];
