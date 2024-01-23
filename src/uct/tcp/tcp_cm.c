@@ -25,6 +25,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     char redisKey[200];
     char redisValue[200];
     char * override_private_address = config->override_private_ip_address;
+    char dest_str[UCS_SOCKADDR_STRING_LEN];
     int private_port = config->private_ip_address_port;
     const char * override_public_address = config->override_public_ip_address;
     int public_port = config->public_ip_address_port;
@@ -56,11 +57,16 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         }
 
         //write to redis
-        if (redis_enabled) {
-            ucs_warn("writing public address to redis");
-            sprintf(redisKey, "%s:%i", override_private_address, private_port);
+        if (redis_enabled && saddr != NULL) {
+
+
+            ucs_sockaddr_str(saddr, dest_str,
+                             UCS_SOCKADDR_STRING_LEN);
+
             sprintf(redisValue, "%s:%i", override_public_address, public_port);
-            setRedisValue(redis_ip_address, redis_port, redisKey, redisValue);
+
+            ucs_warn("writing public address to redis - key: %s value:%s", dest_str, redisValue);
+            setRedisValue(redis_ip_address, redis_port, dest_str, redisValue);
         }
 
         status = UCS_OK;
