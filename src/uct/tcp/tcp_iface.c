@@ -726,7 +726,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.override_private_ip_address = config->override_private_ip_address;
     self->config.override_public_ip_address = config->override_public_ip_address;
     ucs_strncpy_zero(self->config.redis_ip_address, config->redis_ip_address,
-        sizeof(config->redis_ip_address));
+        sizeof(self->config.redis_ip_address));
 
     ucs_strncpy_zero(self->config.override_public_ip_address2, self->config.override_public_ip_address,
         sizeof(self->config.override_public_ip_address2));
