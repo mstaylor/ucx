@@ -860,6 +860,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             i++;
         }
 
+        ucs_warn("configuring endpoint connect address: %s %i", publicAddress, publicPort);
+
         set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
         addr = (struct sockaddr*)&connect_addr;
