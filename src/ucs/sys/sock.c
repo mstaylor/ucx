@@ -470,10 +470,13 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr, int re
             conn_errno = errno;
 
             if (errno == EINPROGRESS) {
-                //status = UCS_INPROGRESS;
-                //break;
-                errno = EINTR;
-                continue;
+                if (retries > 0) {
+                    errno = EINTR;
+                    continue;
+                } else {
+                    status = UCS_INPROGRESS;
+                    break;
+                }
             }
 
             if (errno == EISCONN) {
