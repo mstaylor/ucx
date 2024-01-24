@@ -490,8 +490,8 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr, int re
                                            UCS_SOCKADDR_STRING_LEN));
 
                 if (retry < retries) {
-                    ucs_warn("retrying connection...")
-                   retry++;
+                    ucs_warn("retrying connection...");
+                    retry++;
                 } else {
                     return UCS_ERR_UNREACHABLE;
                 }
