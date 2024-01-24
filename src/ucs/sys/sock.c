@@ -447,7 +447,7 @@ static ucs_status_t ucs_socket_check_errno(int io_errno)
     return UCS_ERR_IO_ERROR;
 }
 
-ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
+ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr, int retries)
 {
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char src_str[UCS_SOCKADDR_STRING_LEN];
