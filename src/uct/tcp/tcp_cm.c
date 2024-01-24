@@ -1022,7 +1022,7 @@ char * getValueFromRedis(const char *hostname, int port, const char *key){
                 ucs_warn("The value of '%s' is: %s\n", key, reply->str);
                 result = (char*) malloc((strlen(reply->str)+1)*sizeof(char));
                 ucs_strncpy_zero(result, reply->str,
-                                 sizeof(reply->str));
+                                 sizeof(result));
 
             } else {
                 ucs_warn("The key '%s' does not exist\n", key);
