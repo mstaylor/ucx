@@ -1020,9 +1020,8 @@ char * getValueFromRedis(const char *hostname, int port, const char *key){
             // store the value in a char*
             if (reply->type == REDIS_REPLY_STRING) {
                 ucs_warn("The value of '%s' is: %s\n", key, reply->str);
-                result = (char*) malloc((strlen(reply->str)+1)*sizeof(char));
-                ucs_strncpy_zero(result, reply->str,
-                                 sizeof(result));
+                result = (char*) malloc(strlen(reply->str)+1);
+                strcpy(result, reply->str);
 
             } else {
                 ucs_warn("The key '%s' does not exist\n", key);
