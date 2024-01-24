@@ -455,7 +455,7 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr, int re
     size_t dest_addr_size;
     int conn_errno;
     int ret;
-    int retry;
+    int retry = 0;
 
     status = ucs_sockaddr_sizeof(dest_addr, &dest_addr_size);
     if (status != UCS_OK) {
