@@ -877,7 +877,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
         }
 
-        ucs_warn("configuring connect timeout to %i", iface->config.connect_timeout);
+        /*ucs_warn("configuring connect timeout to %i", iface->config.connect_timeout);
 
 
 
@@ -888,7 +888,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         if (status != UCS_OK) {
             ucs_warn("could NOT configure to reuse socket port");
             goto err_close_socket;
-        }
+        }*/
 
         retries = iface->config.max_conn_retries;
 
