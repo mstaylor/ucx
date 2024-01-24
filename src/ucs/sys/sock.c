@@ -455,6 +455,7 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
     size_t dest_addr_size;
     int conn_errno;
     int ret;
+    int retry;
 
     status = ucs_sockaddr_sizeof(dest_addr, &dest_addr_size);
     if (status != UCS_OK) {
@@ -469,8 +470,10 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
             conn_errno = errno;
 
             if (errno == EINPROGRESS) {
-                status = UCS_INPROGRESS;
-                break;
+                //status = UCS_INPROGRESS;
+                //break;
+                errno = EINTR;
+                continue;
             }
 
             if (errno == EISCONN) {
@@ -482,7 +485,14 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
                 ucs_error("connect(fd=%d, dest_addr=%s) failed: %m", fd,
                           ucs_sockaddr_str(dest_addr, dest_str,
                                            UCS_SOCKADDR_STRING_LEN));
-                return UCS_ERR_UNREACHABLE;
+
+                if (retry < retries) {
+                    ucs_warn("retrying connection...")
+                   retry++;
+                } else {
+                    return UCS_ERR_UNREACHABLE;
+                }
+
             }
         } else {
             conn_errno = 0;

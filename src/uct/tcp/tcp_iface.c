@@ -65,6 +65,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {"MAX_POLL", UCS_PP_MAKE_STRING(UCT_TCP_MAX_EVENTS),
    "Number of times to poll on a ready socket. 0 - no polling, -1 - until drained",
    ucs_offsetof(uct_tcp_iface_config_t, max_poll), UCS_CONFIG_TYPE_UINT},
+  {"CONNECT_TIMEOUT", "15",
+   "connect timeout in seconds",
+   ucs_offsetof(uct_tcp_iface_config_t, connect_timeout), UCS_CONFIG_TYPE_UINT},
 
   {UCT_TCP_CONFIG_MAX_CONN_RETRIES, "25",
    "How many connection establishment attempts should be done if dropped "
@@ -734,6 +737,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.private_ip_address_port = config->private_ip_address_port;
     self->config.redis_port = config->redis_port;
     self->config.enable_redis = config->enable_redis;
+    self->config.connect_timeout = config->connect_timeout;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
     self->sockopt.sndbuf           = config->sockopt.sndbuf;

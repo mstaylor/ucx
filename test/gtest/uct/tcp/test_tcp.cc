@@ -189,7 +189,7 @@ private:
         status = ucs_socket_create(dest_addr.ss_family, SOCK_STREAM, &fd);
         ASSERT_UCS_OK(status);
 
-        status = ucs_socket_connect(fd, (struct sockaddr*)&dest_addr);
+        status = ucs_socket_connect(fd, (struct sockaddr*)&dest_addr, 0);
         ASSERT_UCS_OK(status);
 
         status = ucs_sys_fcntl_modfl(fd, O_NONBLOCK, 0);

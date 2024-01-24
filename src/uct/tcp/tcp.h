@@ -422,6 +422,7 @@ typedef struct uct_tcp_iface {
         int                       private_ip_address_port;
         int                       redis_port;
         int                       enable_redis;
+        int                       connect_timeout;
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -476,6 +477,7 @@ typedef struct uct_tcp_iface_config {
     int                            public_ip_address_port;
     int                            private_ip_address_port;
     int                            redis_port;
+    int                            connect_timeout;
 } uct_tcp_iface_config_t;
 
 

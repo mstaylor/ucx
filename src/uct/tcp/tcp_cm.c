@@ -821,7 +821,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char publicAddress[UCS_SOCKADDR_STRING_LEN];
     int publicPort = 0;
     char * token = NULL;
+    struct timeval timeout;
     int i = 0;
+    int retries = 0;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -875,29 +877,27 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
         }
 
+        ucs_warn("configuring connect timeout to %i", iface->config.connect_timeout);
+
+
+
+        timeout.tv_sec = iface->config.connect_timeout / 1000;
+        timeout.tv_usec = (iface->config.connect_timeout % 1000) * 1000;
+
+        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout);
+        if (status != UCS_OK) {
+            ucs_warn("could NOT configure to reuse socket port");
+            goto err_close_socket;
+        }
+
+        retries = iface->config.max_conn_retries;
+
         free(remote_address);
 
     }
 
-    /*if (iface->config.override_public_ip_address2 != NULL && strlen(iface->config.override_public_ip_address2) > 0) {
 
-        ucs_warn("updating interface connect to public ip address %s", iface->config.override_public_ip_address2);
-        set_sock_addr(iface->config.override_public_ip_address2, &connect_addr, AF_INET, iface->config.public_ip_address_port);
-
-        addr = (struct sockaddr*)&connect_addr;
-
-        status = ucs_sockaddr_sizeof(addr, &addrlen);
-        if (status != UCS_OK) {
-            return status;
-        }
-
-        if ((struct sockaddr*)&ep->peer_addr != NULL) {
-            memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
-        }
-
-
-    }*/
-    status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
+    status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr, retries);
     if (UCS_STATUS_IS_ERR(status)) {
         return status;
     } else if (status == UCS_INPROGRESS) {
