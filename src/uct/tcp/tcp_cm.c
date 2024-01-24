@@ -821,7 +821,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char publicAddress[UCS_SOCKADDR_STRING_LEN];
     int publicPort = 0;
     char * token = NULL;
-    struct timeval timeout;
+    //struct timeval timeout;
     int i = 0;
     int retries = 0;
 
