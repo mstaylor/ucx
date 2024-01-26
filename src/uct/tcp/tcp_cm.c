@@ -896,8 +896,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout);
         if (status != UCS_OK) {
-            ucs_warn("could NOT configure to reuse socket port");
-            goto err_close_socket;
+            ucs_warn("could NOT configure socket timeout");
+            return status;
         }
 
 
