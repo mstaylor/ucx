@@ -862,6 +862,22 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             i++;
         }
 
+        ucs_warn("configuring to reuse socket port");
+        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                                   &so_reuse_optval, sizeof(so_reuse_optval));
+        if (status != UCS_OK) {
+            ucs_warn("could NOT configure to reuse socket port");
+            goto err_close_socket;
+        }
+
+        ucs_warn("configuring to reuse socket address");
+        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+                                   &so_reuse_optval, sizeof(so_reuse_optval));
+        if (status != UCS_OK) {
+            ucs_warn("could NOT configureto reuse socket address");
+            goto err_close_socket;
+        }
+
         //bind to local
 
         local_port_addr.sin_family = AF_INET;
@@ -900,6 +916,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         if (status != UCS_OK) {
             ucs_warn("could NOT configure socket timeout");
         }*/
+
+
 
 
 
