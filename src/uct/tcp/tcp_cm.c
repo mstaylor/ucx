@@ -868,7 +868,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                                    &so_reuse_optval, sizeof(so_reuse_optval));
         if (status != UCS_OK) {
             ucs_warn("could NOT configure to reuse socket port");
-            goto err_close_socket;
+
         }
 
         ucs_warn("configuring to reuse socket address");
@@ -876,7 +876,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                                    &so_reuse_optval, sizeof(so_reuse_optval));
         if (status != UCS_OK) {
             ucs_warn("could NOT configureto reuse socket address");
-            goto err_close_socket;
+
         }
 
         //bind to local
