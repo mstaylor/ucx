@@ -65,7 +65,7 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {"MAX_POLL", UCS_PP_MAKE_STRING(UCT_TCP_MAX_EVENTS),
    "Number of times to poll on a ready socket. 0 - no polling, -1 - until drained",
    ucs_offsetof(uct_tcp_iface_config_t, max_poll), UCS_CONFIG_TYPE_UINT},
-  {"CONNECT_TIMEOUT", "15",
+  {"CONNECT_TIMEOUT", "45",
    "connect timeout in seconds",
    ucs_offsetof(uct_tcp_iface_config_t, connect_timeout), UCS_CONFIG_TYPE_UINT},
 
