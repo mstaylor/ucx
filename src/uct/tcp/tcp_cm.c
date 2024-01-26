@@ -899,7 +899,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             goto err_close_socket;
         }*/
 
-        retries = iface->config.max_conn_retries;
+
 
         free(remote_address);
 
