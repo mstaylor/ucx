@@ -447,7 +447,7 @@ static ucs_status_t ucs_socket_check_errno(int io_errno)
     return UCS_ERR_IO_ERROR;
 }
 
-ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr, int retries)
+ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
 {
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char src_str[UCS_SOCKADDR_STRING_LEN];
@@ -455,7 +455,7 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr, int re
     size_t dest_addr_size;
     int conn_errno;
     int ret;
-    int retry = 0;
+
 
     status = ucs_sockaddr_sizeof(dest_addr, &dest_addr_size);
     if (status != UCS_OK) {
@@ -470,13 +470,8 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr, int re
             conn_errno = errno;
 
             if (errno == EINPROGRESS) {
-                if (retries > 0) {
-                    errno = EINTR;
-                    continue;
-                } else {
-                    status = UCS_INPROGRESS;
-                    break;
-                }
+                status = UCS_INPROGRESS;
+
             }
 
             if (errno == EISCONN) {
@@ -489,12 +484,8 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr, int re
                           ucs_sockaddr_str(dest_addr, dest_str,
                                            UCS_SOCKADDR_STRING_LEN));
 
-                if (retry < retries) {
-                    ucs_warn("retrying connection...");
-                    retry++;
-                } else {
-                    return UCS_ERR_UNREACHABLE;
-                }
+                return UCS_ERR_UNREACHABLE;
+
 
             }
         } else {

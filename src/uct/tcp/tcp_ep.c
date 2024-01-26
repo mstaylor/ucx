@@ -625,12 +625,12 @@ out:
     return status;
 
 err:
-    if (ep->conn_retries > 1) {
+    //if (ep->conn_retries > 1) {
         /* if this is not the first connection establishment retry (i.e. it
          * is not called from uct_ep_create()/uct_ep_connect_to_ep()), set
          * EP as failed */
         uct_tcp_ep_set_failed(ep, UCS_ERR_ENDPOINT_TIMEOUT);
-    }
+    //}
     goto out;
 }
 

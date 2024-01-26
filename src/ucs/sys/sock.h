@@ -181,12 +181,11 @@ ucs_status_t ucs_socket_getopt(int fd, int level, int optname,
  *
  * @param [in]  fd                Socket fd.
  * @param [in]  dest_addr         Pointer to destination address.
- * @param [in]  retries           Number of retries on failed connect attempt
  *
  * @return UCS_OK on success or UCS_ERR_UNREACHABLE on failure or
  *         UCS_INPROGRESS if operation is in progress.
  */
-ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr, int retries);
+ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr);
 
 
 /**

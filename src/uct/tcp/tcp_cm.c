@@ -821,9 +821,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char publicAddress[UCS_SOCKADDR_STRING_LEN];
     int publicPort = 0;
     char * token = NULL;
-    //struct timeval timeout;
+    struct sockaddr_in local_port_addr = {0};
     int i = 0;
-    int retries = 0;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -862,6 +861,16 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             i++;
         }
 
+        //bind to local
+
+        local_port_addr.sin_family = AF_INET;
+        local_port_addr.sin_addr.s_addr = INADDR_ANY;
+        local_port_addr.sin_port = iface->config.private_ip_address_port;
+
+        if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
+            ucs_warn("Binding to same port failed: %i", iface->config.private_ip_address_port);
+        }
+
         ucs_warn("configuring endpoint connect address: %s %i", publicAddress, publicPort);
 
         set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
@@ -897,7 +906,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     }
 
 
-    status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr, retries);
+    status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
     if (UCS_STATUS_IS_ERR(status)) {
         return status;
     } else if (status == UCS_INPROGRESS) {
