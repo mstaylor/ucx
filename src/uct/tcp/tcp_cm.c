@@ -868,6 +868,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         local_port_addr.sin_addr.s_addr = INADDR_ANY;
         local_port_addr.sin_port = iface->config.private_ip_address_port;
 
+        ucs_warn("binding connect interface to %i", iface->config.private_ip_address_port);
+
         if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
             ucs_warn("Binding to same port failed: %i", iface->config.private_ip_address_port);
         }
@@ -894,10 +896,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         timeout.tv_sec = iface->config.connect_timeout / 1000;
         timeout.tv_usec = (iface->config.connect_timeout % 1000) * 1000;
 
-        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout);
+        /*status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout);
         if (status != UCS_OK) {
             ucs_warn("could NOT configure socket timeout");
-        }
+        }*/
 
 
 
