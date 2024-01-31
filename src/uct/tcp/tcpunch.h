@@ -14,6 +14,11 @@
 
 #define DEBUG 0
 
+typedef struct {
+    struct in_addr ip;
+    in_port_t      port;
+} PeerConnectionData;
+
 
 
 int pair(const char * pairing_name, const char* server_address, int port, int timeout_ms);
