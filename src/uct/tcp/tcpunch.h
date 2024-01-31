@@ -12,8 +12,6 @@
 #include <arpa/inet.h>
 
 
-#define DEBUG 0
-
 typedef struct {
     struct in_addr ip;
     in_port_t      port;
