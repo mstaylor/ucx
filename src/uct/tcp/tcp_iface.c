@@ -76,24 +76,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    {UCT_TCP_CONFIG_PRIVATE_REMOTE_ADDRESS_OVERRIDE, "",
    "Override the private remote address IP ",
    ucs_offsetof(uct_tcp_iface_config_t, override_private_ip_address), UCS_CONFIG_TYPE_STRING},
-  {UCT_TCP_CONFIG_PUBLIC_REMOTE_ADDRESS_OVERRIDE, "",
-   "Override the public remote address IP ",
-   ucs_offsetof(uct_tcp_iface_config_t, override_public_ip_address), UCS_CONFIG_TYPE_STRING},
-  {"PUBLIC_IP_PORT", "0",
-   "Public IP Address Port for NAT Hole punching support\n",
-   ucs_offsetof(uct_tcp_iface_config_t, public_ip_address_port), UCS_CONFIG_TYPE_INT},
-  {"PRIVATE_IP_PORT", "0",
-   "Private IP Address Port for NAT Hole punching support\n",
-   ucs_offsetof(uct_tcp_iface_config_t, private_ip_address_port), UCS_CONFIG_TYPE_INT},
-  {"REDIS_IP", "",
-   "Redis IP ",
-   ucs_offsetof(uct_tcp_iface_config_t, redis_ip_address), UCS_CONFIG_TYPE_STRING},
-  {"REDIS_PORT", "0",
-   "Redis Port\n",
-   ucs_offsetof(uct_tcp_iface_config_t, redis_port), UCS_CONFIG_TYPE_INT},
-  {"ENABLE_REDIS", "n",
-   "enable the use of redis for tcp hole punching ",
-   ucs_offsetof(uct_tcp_iface_config_t, enable_redis), UCS_CONFIG_TYPE_BOOL},
+  {"ENABLE_TCPUNCH", "n",
+   "enable the use of tcp hole punching ",
+   ucs_offsetof(uct_tcp_iface_config_t, enable_tcpunch), UCS_CONFIG_TYPE_BOOL},
   {"NODELAY", "y",
    "Set TCP_NODELAY socket option to disable Nagle algorithm. Setting this\n"
    "option usually provides better performance",
@@ -727,16 +712,8 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.max_poll          = config->max_poll;
     self->config.max_conn_retries  = config->max_conn_retries;
     self->config.override_private_ip_address = config->override_private_ip_address;
-    self->config.override_public_ip_address = config->override_public_ip_address;
-    ucs_strncpy_zero(self->config.redis_ip_address, config->redis_ip_address,
-        sizeof(self->config.redis_ip_address));
 
-    ucs_strncpy_zero(self->config.override_public_ip_address2, self->config.override_public_ip_address,
-        sizeof(self->config.override_public_ip_address2));
-    self->config.public_ip_address_port = config->public_ip_address_port;
-    self->config.private_ip_address_port = config->private_ip_address_port;
-    self->config.redis_port = config->redis_port;
-    self->config.enable_redis = config->enable_redis;
+    self->config.enable_redis = config->enable_tcpunch;
     self->config.connect_timeout = config->connect_timeout;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
@@ -803,16 +780,14 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
                                             self->config.override_private_ip_address,
-                                            self->config.private_ip_address_port);
+                                            0);
         ucs_warn("status %i address %s", status, self->config.override_private_ip_address);
         if (status != UCS_OK && self->config.enable_redis) {
             ucs_warn("Calling ucs_netif_get_addr3");
             status = ucs_netif_get_addr3(self->if_name,
                              (struct sockaddr*)&self->config.ifaddr,
                              (struct sockaddr*)&self->config.netmask,
-                             config
-                             /*self->config.override_private_ip_address,
-                             self->config.private_ip_address_port*/);
+                             config);
             break;
         }
     }

@@ -415,13 +415,7 @@ typedef struct uct_tcp_iface {
                                                       * It cannot exceed 255. */
         double                    max_bw;            /* Upper bound to TCP iface bandwidth */
         char *                    override_private_ip_address; /** Override Private Ip Address **/
-        char *                    override_public_ip_address; /** Override Public Ip Address **/
-        char                      override_public_ip_address2[INET6_ADDRSTRLEN];
-        char                      redis_ip_address[INET6_ADDRSTRLEN];
-        int                       public_ip_address_port;
-        int                       private_ip_address_port;
-        int                       redis_port;
-        int                       enable_redis;
+        int                       enable_tcpunch;
         int                       connect_timeout;
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
@@ -458,7 +452,7 @@ typedef struct uct_tcp_iface_config {
     unsigned                       max_poll;
     unsigned                       max_conn_retries;
     int                            sockopt_nodelay;
-    int                            enable_redis;
+    int                            enable_tcpunch;
     int                            reuse_addr;
     uct_tcp_send_recv_buf_config_t sockopt;
     unsigned                       syn_cnt;
@@ -472,11 +466,6 @@ typedef struct uct_tcp_iface_config {
         ucs_time_t                 intvl;
     } keepalive;
     char *                         override_private_ip_address;
-    char *                         override_public_ip_address;
-    char *                         redis_ip_address;
-    int                            public_ip_address_port;
-    int                            private_ip_address_port;
-    int                            redis_port;
     int                            connect_timeout;
 } uct_tcp_iface_config_t;
 
