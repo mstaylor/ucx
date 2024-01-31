@@ -3,6 +3,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <stdatomic.h>
+#include <stdio.h>
 
 void* peer_listen(void* p) {
     return NULL;

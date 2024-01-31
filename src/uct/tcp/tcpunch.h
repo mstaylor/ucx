@@ -5,7 +5,7 @@
 #ifndef UCX_TCPUNCH_H
 #define UCX_TCPUNCH_H
 
-
+#include "tcp.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 
