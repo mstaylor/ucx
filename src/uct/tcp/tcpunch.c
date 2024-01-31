@@ -1,4 +1,9 @@
 #include "tcpunch.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+
 
 int pair(const char * pairing_name, const char * server_address, int port, int timeout_ms) {
     return 0;
