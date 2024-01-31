@@ -11,8 +11,10 @@ atomic_bool connection_established = ATOMIC_VAR_INIT(false);
 atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
 
 ucs_status_t peer_listen(void* p) {
-    struct sockaddr_in peer_info{};
-    struct sockaddr_in local_port_data{};
+    struct sockaddr_in peer_info;
+    struct sockaddr_in local_port_data;
+    int peer;
+
     unsigned int len;
     int enable_flag = 1;
     PeerConnectionData* info = (PeerConnectionData*)p;
@@ -49,7 +51,7 @@ ucs_status_t peer_listen(void* p) {
     len = sizeof(peer_info);
 
     while(true) {
-        int peer = accept(listen_socket, (struct sockaddr*)&peer_info, &len);
+        peer = accept(listen_socket, (struct sockaddr*)&peer_info, &len);
         if (peer == -1) {
 
             ucs_error("Error when connecting to peer %s", strerror(errno));
