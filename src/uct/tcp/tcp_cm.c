@@ -22,19 +22,18 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     struct sockaddr* addr = NULL;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
-    char redisValue[200];
+
     char * override_private_address = config->override_private_ip_address;
-    char dest_str[UCS_SOCKADDR_STRING_LEN];
-    int private_port = config->private_ip_address_port;
-    const char * override_public_address = config->override_public_ip_address;
-    int public_port = config->public_ip_address_port;
-    int redis_enabled = config->enable_redis;
+
+
+
+
 
 
 
     ucs_warn("Calling ucs_netif_get_addr3 - override_private_address address is %s", override_private_address);
 
-    if ((override_private_address != NULL && strlen(override_private_address) > 0 ) || redis_enabled) {
+    if ((override_private_address != NULL && strlen(override_private_address) > 0 ) ) {
         ucs_warn("setting override address override_private_address in fallthru: %s ", override_private_address);
 
 
