@@ -37,7 +37,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         ucs_warn("setting override address override_private_address in fallthru: %s ", override_private_address);
 
 
-        set_sock_addr(override_private_address, &connect_addr, AF_INET, private_port);
+        set_sock_addr(override_private_address, &connect_addr, AF_INET, 0);
 
         addr = (struct sockaddr*)&connect_addr;
 
@@ -801,7 +801,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     ucs_status_t status;
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char* remote_address = NULL;
-    char publicAddress[UCS_SOCKADDR_STRING_LEN];
+
     int publicPort = 0;
     char * token = NULL;
     struct sockaddr_in local_port_addr = {0};
@@ -819,7 +819,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     ucs_warn("connecting to socket address cm");
 
-    if (iface->config.enable_redis && iface->config.redis_ip_address != NULL) {
+    /*if (iface->config.enable_redis && iface->config.redis_ip_address != NULL) {
         ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
                          UCS_SOCKADDR_STRING_LEN);
 
@@ -828,7 +828,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
 
     }
-
+*/
     if (remote_address != NULL) {
 
         ucs_warn("remote address returned from redis: %s", remote_address);
