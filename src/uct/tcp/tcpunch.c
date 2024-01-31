@@ -6,6 +6,9 @@
 #include <stdatomic.h>
 #include <stdio.h>
 
+atomic_bool connection_established = ATOMIC_VAR_INIT(false);
+atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
+
 void* peer_listen(void* p) {
     return NULL;
 }
