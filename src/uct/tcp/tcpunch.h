@@ -16,6 +16,6 @@
 
 
 
-int pair(const char * pairing_name, const char* server_address, int port = 10000, int timeout_ms = 0);
+int pair(const char * pairing_name, const char* server_address, int port, int timeout_ms);
 
 #endif //UCX_TCPUNCH_H
