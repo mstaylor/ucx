@@ -10,7 +10,11 @@
 atomic_bool connection_established = ATOMIC_VAR_INIT(false);
 atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
 
-void* peer_listen(void* p) {
+ucs_status_t peer_listen(void* p) {
+    struct sockaddr_in peer_info{};
+    struct sockaddr_in local_port_data{};
+    unsigned int len;
+    int enable_flag = 1;
     PeerConnectionData* info = (PeerConnectionData*)p;
 
     // Create socket on the port that was previously used to contact the rendezvous server
@@ -19,14 +23,14 @@ void* peer_listen(void* p) {
         ucs_error("Socket creation failed: ");
         return UCS_ERR_IO_ERROR;
     }
-    int enable_flag = 1;
+
     if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
         setsockopt(listen_socket, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
         ucs_error("Setting REUSE options failed: ");
         return UCS_ERR_IO_ERROR;
     }
 
-    struct sockaddr_in local_port_data{};
+
     local_port_data.sin_family = AF_INET;
     local_port_data.sin_addr.s_addr = INADDR_ANY;
     local_port_data.sin_port = info->port;
@@ -41,8 +45,8 @@ void* peer_listen(void* p) {
         return UCS_ERR_IO_ERROR;
     }
 
-    struct sockaddr_in peer_info{};
-    unsigned int len = sizeof(peer_info);
+
+    len = sizeof(peer_info);
 
     while(true) {
         int peer = accept(listen_socket, (struct sockaddr*)&peer_info, &len);
@@ -56,7 +60,7 @@ void* peer_listen(void* p) {
 
             atomic_store(&accepting_socket, peer);
             atomic_store(&connection_established, true);
-            return 0;
+            return UCS_OK;
         }
     }
 }
