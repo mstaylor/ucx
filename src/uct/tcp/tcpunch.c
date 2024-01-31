@@ -53,13 +53,9 @@ ucs_status_t peer_listen(void* p) {
     while(true) {
         peer = accept(listen_socket, (struct sockaddr*)&peer_info, &len);
         if (peer == -1) {
-
             ucs_error("Error when connecting to peer %s", strerror(errno));
-
         } else {
-
             ucs_warn("Succesfully connected to peer, accepting");
-
             atomic_store(&accepting_socket, peer);
             atomic_store(&connection_established, true);
             return UCS_OK;
@@ -67,6 +63,163 @@ ucs_status_t peer_listen(void* p) {
     }
 }
 
+char * ip_to_string(in_addr_t *ip) {
+    char str_buffer[20];
+    inet_ntop(AF_INET, ip, str_buffer, sizeof(str_buffer));
+    return str_buffer;
+}
+
 int pair(const char * pairing_name, const char * server_address, int port, int timeout_ms) {
-    return 0;
+
+    struct sockaddr_in peer_addr;
+    struct timeval timeout;
+    int socket_rendezvous;
+    struct sockaddr_in server_data;
+    PeerConnectionData public_info;
+    ssize_t bytes;
+    pthread_t peer_listen_thread;
+    int thread_return;
+    PeerConnectionData peer_data;
+    ssize_t bytes_received;
+    int peer_socket;
+    struct sockaddr_in local_port_addr;
+    int enable_flag = 1;
+    int peer_status;
+    int flags;
+
+
+    atomic_store(&connection_established, false);
+    atomic_store(&accepting_socket, -1);
+
+    timeout.tv_sec = timeout_ms / 1000;
+    timeout.tv_usec = (timeout_ms % 1000) * 1000;
+
+
+
+    socket_rendezvous = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_rendezvous == -1) {
+        ucs_error("Could not create socket for rendezvous server: ");
+        return UCS_ERR_IO_ERROR;
+    }
+
+    // Enable binding multiple sockets to the same local endpoint, see https://bford.info/pub/net/p2pnat/ for details
+
+    if (setsockopt(socket_rendezvous, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
+        setsockopt(socket_rendezvous, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
+        ucs_error("Setting REUSE options failed: ");
+        return UCS_ERR_IO_ERROR;
+    }
+    if (setsockopt(socket_rendezvous, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout) < 0 ||
+        setsockopt(socket_rendezvous, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
+        ucs_error("Setting timeout failed: ");
+        return UCS_ERR_IO_ERROR;
+    }
+
+    server_data.sin_family = AF_INET;
+    server_data.sin_addr.s_addr = inet_addr(server_address.c_str());
+    server_data.sin_port = htons(port);
+
+    if (connect(socket_rendezvous, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
+        ucs_error("Connection with the rendezvous server failed: ");
+        return UCS_ERR_IO_ERROR;
+
+    }
+
+    if(send(socket_rendezvous, pairing_name, strlen(pairing_name), MSG_DONTWAIT) == -1) {
+        ucs_error("Failed to send data to rendezvous server: ");
+        return UCS_ERR_IO_ERROR;
+    }
+
+
+    bytes = recv(socket_rendezvous, &public_info, sizeof(public_info), MSG_WAITALL);
+    if (bytes == -1) {
+        ucs_error("Failed to get data from rendezvous server: ");
+        return UCS_ERR_IO_ERROR;
+    } else if(bytes == 0) {
+        ucs_error("Server has disconnected");
+        return UCS_ERR_IO_ERROR;
+    }
+
+
+    thread_return = pthread_create(&peer_listen_thread, nullptr, peer_listen, (void*) &public_info);
+    if(thread_return) {
+        ucs_error("Error when creating thread for listening: ");
+        return UCS_ERR_IO_ERROR;
+    }
+
+
+
+    // Wait until rendezvous server sends info about peer
+    bytes_received = recv(socket_rendezvous, &peer_data, sizeof(peer_data), MSG_WAITALL);
+    if(bytes_received == -1) {
+        ucs_error("Failed to get peer data from rendezvous server: ");
+        return UCS_ERR_IO_ERROR;
+    } else if(bytes_received == 0) {
+        ucs_error("Server has disconnected when waiting for peer data");
+        return UCS_ERR_IO_ERROR;
+    }
+
+    ucs_warn("Peer: %s:%i", ip_to_string(&peer_data.ip.s_addr), ntohs(peer_data.port));
+
+
+    //We do NOT close the socket_rendezvous socket here, otherwise the next binds sometimes fail (although SO_REUSEADDR|SO_REUSEPORT is set)!
+
+    peer_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (setsockopt(peer_socket, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
+        setsockopt(peer_socket, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
+        ucs_error("Setting REUSE options failed");
+        return UCS_ERR_IO_ERROR;
+    }
+
+    //Set socket to non blocking for the following polling operations
+    if(fcntl(peer_socket, F_SETFL, O_NONBLOCK) != 0) {
+        ucs_error("Setting O_NONBLOCK failed: ");
+        return UCS_ERR_IO_ERROR;
+    }
+
+
+    local_port_addr.sin_family = AF_INET;
+    local_port_addr.sin_addr.s_addr = INADDR_ANY;
+    local_port_addr.sin_port = public_info.port;
+
+    if (bind(peer_socket, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
+        ucs_error("Binding to same port failed: ");
+        return UCS_ERR_IO_ERROR;
+    }
+
+
+    peer_addr.sin_family = AF_INET;
+    peer_addr.sin_addr.s_addr = peer_data.ip.s_addr;
+    peer_addr.sin_port = peer_data.port;
+
+    while(!atomic_load(&connection_established)) {
+        peer_status = connect(peer_socket, (struct sockaddr *)&peer_addr, sizeof(struct sockaddr));
+        if (peer_status != 0) {
+            if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
+                continue;
+            } else if(errno == EISCONN) {
+
+                ucs_warn("Succesfully connected to peer, EISCONN");
+                break;
+            } else {
+                sleep(100);
+                //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+        } else {
+            ucs_warn("Succesfully connected to peer, peer_status");
+            break;
+        }
+    }
+
+    if(atomic_load(&connection_established)) {
+        pthread_join(peer_listen_thread, nullptr);
+        peer_socket = accepting_socket.load();
+    }
+
+    flags = fcntl(peer_socket,  F_GETFL, 0);
+    flags &= ~(O_NONBLOCK);
+    fcntl(peer_socket, F_SETFL, flags);
+
+    return peer_socket;
 }
