@@ -822,9 +822,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int publicPort = 0;
     char * token = NULL;
     struct sockaddr_in local_port_addr = {0};
-    struct timeval timeout;
     int i = 0;
-    int so_reuse_optval = 1;
+
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -910,13 +909,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-        timeout.tv_sec = iface->config.connect_timeout / 1000;
-        timeout.tv_usec = (iface->config.connect_timeout % 1000) * 1000;
-
-        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout);
-        if (status != UCS_OK) {
-            ucs_warn("could NOT configure socket timeout");
-        }
 
 
 
