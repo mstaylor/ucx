@@ -795,16 +795,16 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
-    struct sockaddr* addr = NULL;
-    struct sockaddr_storage connect_addr;
-    size_t addrlen;
+    //struct sockaddr* addr = NULL;
+    //struct sockaddr_storage connect_addr;
+    //size_t addrlen;
     ucs_status_t status;
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char* remote_address = NULL;
 
-    int publicPort = 0;
+    //int publicPort = 0;
     char * token = NULL;
-    struct sockaddr_in local_port_addr = {0};
+    //struct sockaddr_in local_port_addr = {0};
     int i = 0;
 
 
@@ -863,7 +863,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         //bind to local
 
-        local_port_addr.sin_family = AF_INET;
+        /*local_port_addr.sin_family = AF_INET;
         local_port_addr.sin_addr.s_addr = INADDR_ANY;
         local_port_addr.sin_port = iface->config.private_ip_address_port;
 
@@ -893,7 +893,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-
+*/
 
 
 
