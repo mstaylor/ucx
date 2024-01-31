@@ -799,13 +799,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     //struct sockaddr_storage connect_addr;
     //size_t addrlen;
     ucs_status_t status;
-    char dest_str[UCS_SOCKADDR_STRING_LEN];
+    //char dest_str[UCS_SOCKADDR_STRING_LEN];
     char* remote_address = NULL;
 
     //int publicPort = 0;
-    char * token = NULL;
+    //char * token = NULL;
     //struct sockaddr_in local_port_addr = {0};
-    int i = 0;
+    //int i = 0;
 
 
     ep->conn_retries++;
@@ -831,7 +831,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 */
     if (remote_address != NULL) {
 
-        ucs_warn("remote address returned from redis: %s", remote_address);
+        /*ucs_warn("remote address returned from redis: %s", remote_address);
         token = strtok(remote_address, ":");
 
         while (token != NULL) {
@@ -843,7 +843,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             token = strtok(NULL, ":");
             i++;
-        }
+        }*/
 
         ucs_warn("configuring to reuse socket port");
         status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
