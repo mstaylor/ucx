@@ -4,6 +4,9 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
+void* peer_listen(void* p) {
+    return NULL;
+}
 
 int pair(const char * pairing_name, const char * server_address, int port, int timeout_ms) {
     return 0;
