@@ -9,6 +9,7 @@
 
 #include "tcp.h"
 #include "tcp/tcp.h"
+#include "tcpunch.h"
 
 
 #include <ucs/async/async.h>
@@ -813,7 +814,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     //size_t addrlen;
     ucs_status_t status;
     //char dest_str[UCS_SOCKADDR_STRING_LEN];
-    char* remote_address = NULL;
+    //char* remote_address = NULL;
 
     //int publicPort = 0;
     //char * token = NULL;
@@ -842,7 +843,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     }
 */
-    if (remote_address != NULL) {
+    //if (remote_address != NULL) {
 
         /*ucs_warn("remote address returned from redis: %s", remote_address);
         token = strtok(remote_address, ":");
@@ -910,10 +911,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-        free(remote_address);
+     //   free(remote_address);
 
+   // }
+
+    if (iface->config.enable_tcpunch) {
+        //call tcpunch to collect endpoints and connect!
+        ep->fd = pair("test_pairing", iface->config.rendezvous_ip_address, iface->config.rendezvous_port);
     }
-
 
     status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
     if (UCS_STATUS_IS_ERR(status)) {

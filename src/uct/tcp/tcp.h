@@ -416,7 +416,9 @@ typedef struct uct_tcp_iface {
         double                    max_bw;            /* Upper bound to TCP iface bandwidth */
         char *                    override_private_ip_address; /** Override Private Ip Address **/
         char                      redis_ip_address[INET6_ADDRSTRLEN];
+        char                      rendezvous_ip_address[INET6_ADDRSTRLEN];
         int                       redis_port;
+        int                       rendezvous_port;
         int                       enable_tcpunch;
         int                       connect_timeout;
         struct {
@@ -469,6 +471,8 @@ typedef struct uct_tcp_iface_config {
     } keepalive;
     char *                         override_private_ip_address;
     char *                         redis_ip_address;
+    char *                         rendezvous_port;
+    char *                         rendezvous_ip_address;
     int                            redis_port;
     int                            connect_timeout;
 } uct_tcp_iface_config_t;

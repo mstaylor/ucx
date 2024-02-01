@@ -92,7 +92,7 @@ int msleep(long msec)
     return res;
 }
 
-int pair(const char * pairing_name, const char * server_address, int port, int timeout_ms) {
+int pair(int peer_socket, const char * pairing_name, const char * server_address, int port, int timeout_ms) {
 
     struct sockaddr_in peer_addr;
     struct timeval timeout;
@@ -104,7 +104,6 @@ int pair(const char * pairing_name, const char * server_address, int port, int t
     int thread_return;
     PeerConnectionData peer_data;
     ssize_t bytes_received;
-    int peer_socket;
     struct sockaddr_in local_port_addr;
     char ipadd[UCS_SOCKADDR_STRING_LEN];
     int enable_flag = 1;
@@ -245,5 +244,5 @@ int pair(const char * pairing_name, const char * server_address, int port, int t
     flags &= ~(O_NONBLOCK);
     fcntl(peer_socket, F_SETFL, flags);
 
-    return peer_socket;
+    return UCS_OK;
 }

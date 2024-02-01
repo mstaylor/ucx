@@ -19,6 +19,6 @@ typedef struct {
 
 
 
-int pair(const char * pairing_name, const char* server_address, int port, int timeout_ms);
+int pair(int peer_socket, const char * pairing_name, const char* server_address, int port, int timeout_ms);
 
 #endif //UCX_TCPUNCH_H
