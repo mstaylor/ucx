@@ -6,6 +6,8 @@
 #include <stdatomic.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <time.h>
+#include <errno.h>
 
 atomic_bool connection_established = ATOMIC_VAR_INIT(false);
 atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
@@ -66,6 +68,28 @@ ucs_status_t peer_listen(void* p) {
 char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size) {
     inet_ntop(AF_INET, ip, buffer, max_size);
     return buffer;
+}
+
+/* msleep(): Sleep for the requested number of milliseconds. */
+int msleep(long msec)
+{
+    struct timespec ts;
+    int res;
+
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
 }
 
 int pair(const char * pairing_name, const char * server_address, int port, int timeout_ms) {
@@ -202,7 +226,7 @@ int pair(const char * pairing_name, const char * server_address, int port, int t
                 ucs_warn("Succesfully connected to peer, EISCONN");
                 break;
             } else {
-                sleep(100);
+                msleep(100);
                 //std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
