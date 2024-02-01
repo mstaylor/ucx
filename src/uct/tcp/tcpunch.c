@@ -213,7 +213,7 @@ int pair(const char * pairing_name, const char * server_address, int port, int t
     }
 
     if(atomic_load(&connection_established)) {
-        pthread_join(peer_listen_thread, nullptr);
+        pthread_join(peer_listen_thread, NULL);
         peer_socket = atomic_load(&accepting_socket);
     }
 
