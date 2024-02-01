@@ -22,22 +22,23 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     struct sockaddr* addr = NULL;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
+    //char redisValue[200];
 
-    char * override_private_address = config->override_private_ip_address;
+    //char dest_str[UCS_SOCKADDR_STRING_LEN];
 
-
-
-
-
-
-
-    ucs_warn("Calling ucs_netif_get_addr3 - override_private_address address is %s", override_private_address);
-
-    if ((override_private_address != NULL && strlen(override_private_address) > 0 ) ) {
-        ucs_warn("setting override address override_private_address in fallthru: %s ", override_private_address);
+    int enable_tcpunch = config->enable_tcpunch;
+    //const char * redis_ip_address = config->redis_ip_address;
+    //int redis_port = config->redis_port;
 
 
-        set_sock_addr(override_private_address, &connect_addr, AF_INET, 0);
+    //ucs_warn("Calling ucs_netif_get_addr3 - override_private_address address is %s", override_private_address);
+
+    if (enable_tcpunch) {
+        ucs_warn("tcpunch enabled");
+
+
+
+        set_sock_addr(NULL, &connect_addr, AF_INET, 0);
 
         addr = (struct sockaddr*)&connect_addr;
 
@@ -50,6 +51,18 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
             memcpy(saddr, addr, addrlen);
         }
 
+        //write to redis
+        /*if (redis_enabled && saddr != NULL) {
+
+
+            ucs_sockaddr_str(saddr, dest_str,
+                             UCS_SOCKADDR_STRING_LEN);
+
+            sprintf(redisValue, "%s:%i", override_public_address, public_port);
+
+            ucs_warn("writing public address to redis - key: %s value:%s", dest_str, redisValue);
+            setRedisValue(redis_ip_address, redis_port, dest_str, redisValue);
+        }*/
 
         status = UCS_OK;
     }

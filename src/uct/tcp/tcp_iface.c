@@ -712,7 +712,9 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.max_poll          = config->max_poll;
     self->config.max_conn_retries  = config->max_conn_retries;
     self->config.override_private_ip_address = config->override_private_ip_address;
-
+    ucs_strncpy_zero(self->config.redis_ip_address, config->redis_ip_address,
+        sizeof(self->config.redis_ip_address));
+    self->config.redis_port = config->redis_port;
     self->config.enable_tcpunch = config->enable_tcpunch;
     self->config.connect_timeout = config->connect_timeout;
     self->config.syn_cnt           = config->syn_cnt;
