@@ -63,10 +63,9 @@ ucs_status_t peer_listen(void* p) {
     }
 }
 
-char * ip_to_string(in_addr_t *ip) {
-    char str_buffer[20];
-    inet_ntop(AF_INET, ip, str_buffer, sizeof(str_buffer));
-    return str_buffer;
+char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size) {
+    inet_ntop(AF_INET, ip, buffer, max_size);
+    return buffer;
 }
 
 int pair(const char * pairing_name, const char * server_address, int port, int timeout_ms) {
@@ -83,6 +82,7 @@ int pair(const char * pairing_name, const char * server_address, int port, int t
     ssize_t bytes_received;
     int peer_socket;
     struct sockaddr_in local_port_addr;
+    char ipadd[UCS_SOCKADDR_STRING_LEN];
     int enable_flag = 1;
     int peer_status;
     int flags;
@@ -116,7 +116,7 @@ int pair(const char * pairing_name, const char * server_address, int port, int t
     }
 
     server_data.sin_family = AF_INET;
-    server_data.sin_addr.s_addr = inet_addr(server_address.c_str());
+    server_data.sin_addr.s_addr = inet_addr(server_address);
     server_data.sin_port = htons(port);
 
     if (connect(socket_rendezvous, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
@@ -141,7 +141,7 @@ int pair(const char * pairing_name, const char * server_address, int port, int t
     }
 
 
-    thread_return = pthread_create(&peer_listen_thread, nullptr, peer_listen, (void*) &public_info);
+    thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen, (void*) &public_info);
     if(thread_return) {
         ucs_error("Error when creating thread for listening: ");
         return UCS_ERR_IO_ERROR;
@@ -159,7 +159,7 @@ int pair(const char * pairing_name, const char * server_address, int port, int t
         return UCS_ERR_IO_ERROR;
     }
 
-    ucs_warn("Peer: %s:%i", ip_to_string(&peer_data.ip.s_addr), ntohs(peer_data.port));
+    ucs_warn("Peer: %s:%i", ip_to_string(&peer_data.ip.s_addr, ipadd, sizeof(ipadd)), ntohs(peer_data.port));
 
 
     //We do NOT close the socket_rendezvous socket here, otherwise the next binds sometimes fail (although SO_REUSEADDR|SO_REUSEPORT is set)!
@@ -214,7 +214,7 @@ int pair(const char * pairing_name, const char * server_address, int port, int t
 
     if(atomic_load(&connection_established)) {
         pthread_join(peer_listen_thread, nullptr);
-        peer_socket = accepting_socket.load();
+        peer_socket = atomic_load(&accepting_socket);
     }
 
     flags = fcntl(peer_socket,  F_GETFL, 0);
