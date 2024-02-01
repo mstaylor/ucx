@@ -917,16 +917,17 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     if (iface->config.enable_tcpunch) {
         //call tcpunch to collect endpoints and connect!
-        ep->fd = pair("test_pairing", iface->config.rendezvous_ip_address, iface->config.rendezvous_port);
-    }
-
-    status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
-    if (UCS_STATUS_IS_ERR(status)) {
-        return status;
-    } else if (status == UCS_INPROGRESS) {
-        ucs_assert(iface->config.conn_nb);
-        uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
-        return UCS_OK;
+        status = pair(ep->fd , "test_pairing", iface->config.rendezvous_ip_address, iface->config.rendezvous_port);
+    } else {
+        //normal flow
+        status = ucs_socket_connect(ep->fd, (const struct sockaddr *) &ep->peer_addr);
+        if (UCS_STATUS_IS_ERR(status)) {
+            return status;
+        } else if (status == UCS_INPROGRESS) {
+            ucs_assert(iface->config.conn_nb);
+            uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
+            return UCS_OK;
+        }
     }
 
     ucs_assert(status == UCS_OK);
