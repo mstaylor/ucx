@@ -471,7 +471,7 @@ typedef struct uct_tcp_iface_config {
     } keepalive;
     char *                         override_private_ip_address;
     char *                         redis_ip_address;
-    char *                         rendezvous_port;
+    int                            rendezvous_port;
     char *                         rendezvous_ip_address;
     int                            redis_port;
     int                            connect_timeout;
