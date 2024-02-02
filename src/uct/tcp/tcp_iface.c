@@ -727,6 +727,9 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     ucs_strncpy_zero(self->config.redis_ip_address, config->redis_ip_address,
         sizeof(self->config.redis_ip_address));
     self->config.redis_port = config->redis_port;
+    self->config.rendezvous_port = config->rendezvous_port;
+    ucs_strncpy_zero(self->config.rendezvous_ip_address, config->rendezvous_ip_address,
+        sizeof(self->config.rendezvous_ip_address));
     self->config.enable_tcpunch = config->enable_tcpunch;
     self->config.connect_timeout = config->connect_timeout;
     self->config.syn_cnt           = config->syn_cnt;

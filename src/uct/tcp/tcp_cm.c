@@ -917,6 +917,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     if (iface->config.enable_tcpunch) {
         //call tcpunch to collect endpoints and connect!
+        ucs_warn("calling pair with serverId: %s, port: %i", iface->config.rendezvous_ip_address, iface->config.rendezvous_port);
         status = pair(ep->fd , "test_pairing", iface->config.rendezvous_ip_address, iface->config.rendezvous_port, 10000);
     } else {
         //normal flow
