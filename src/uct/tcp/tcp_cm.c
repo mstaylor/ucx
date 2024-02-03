@@ -919,6 +919,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         //call tcpunch to collect endpoints and connect!
         ucs_warn("calling pair with serverId: %s, port: %i", iface->config.rendezvous_ip_address, iface->config.rendezvous_port);
         status = pair(ep->fd , "test_pairing", iface->config.rendezvous_ip_address, iface->config.rendezvous_port, 10000);
+
+        if (status == UCS_OK) {
+            ucs_warn("updating connection state to connected")
+            uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTED);
+        }
+        ucs_warn("returning ucs_ok from cm endpoint and tcpunch")
+        return UCS_OK;
     } else {
         //normal flow
         status = ucs_socket_connect(ep->fd, (const struct sockaddr *) &ep->peer_addr);
@@ -929,19 +936,21 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
             return UCS_OK;
         }
-    }
+        ucs_assert(status == UCS_OK);
 
-    ucs_assert(status == UCS_OK);
-
-    if (!iface->config.conn_nb) {
-        status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
-        if (status != UCS_OK) {
-            return status;
+        if (!iface->config.conn_nb) {
+            ucs_warn("configuring non-blocking")
+            status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
+            if (status != UCS_OK) {
+                return status;
+            }
         }
+
+        uct_tcp_cm_conn_complete(ep);
+        return UCS_OK;
     }
 
-    uct_tcp_cm_conn_complete(ep);
-    return UCS_OK;
+
 }
 
 /* This function is called from async thread */

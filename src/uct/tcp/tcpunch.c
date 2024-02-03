@@ -244,5 +244,7 @@ int pair(int peer_socket, const char * pairing_name, const char * server_address
     flags &= ~(O_NONBLOCK);
     fcntl(peer_socket, F_SETFL, flags);
 
+    ucs_warn("returning UCS_OK from tcpunch")
+
     return UCS_OK;
 }

@@ -809,8 +809,6 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         }
     }
 
-    if (status != UCS_OK)
-
     if (status != UCS_OK) {
         goto err_cleanup_rx_mpool;
     }
