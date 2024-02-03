@@ -939,7 +939,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_assert(status == UCS_OK);
 
         if (!iface->config.conn_nb) {
-            ucs_warn("configuring non-blocking")
+            ucs_warn("configuring non-blocking");
             status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
             if (status != UCS_OK) {
                 return status;
