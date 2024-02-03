@@ -921,10 +921,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         status = pair(ep->fd , "test_pairing", iface->config.rendezvous_ip_address, iface->config.rendezvous_port, 10000);
 
         if (status == UCS_OK) {
-            ucs_warn("updating connection state to connected")
+            ucs_warn("updating connection state to connected");
             uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTED);
         }
-        ucs_warn("returning ucs_ok from cm endpoint and tcpunch")
+        ucs_warn("returning ucs_ok from cm endpoint and tcpunch");
         return UCS_OK;
     } else {
         //normal flow
