@@ -693,23 +693,28 @@ static ucs_status_t uct_tcp_ep_connect(uct_tcp_ep_t *ep)
 
     if (uct_tcp_ep_is_self(ep) ||
         (ep->flags & UCT_TCP_EP_FLAG_CONNECT_TO_EP)) {
+        ucs_warn("uct is self creating socket and connection");
         status = uct_tcp_ep_create_socket_and_connect(ep);
         if (status != UCS_OK) {
             return status;
         }
+        ucs_warn("successful now going to out is self");
         goto out;
     }
 
     peer_ep = uct_tcp_cm_get_ep(iface, (struct sockaddr*)&ep->peer_addr,
                                 ep->cm_id.conn_sn, UCT_TCP_EP_FLAG_CTX_TYPE_RX);
     if (peer_ep == NULL) {
+        ucs_warn("peer is null creating socket and connection");
         status = uct_tcp_ep_create_socket_and_connect(ep);
         if (status != UCS_OK) {
             return status;
         }
+        ucs_warn("peer endpoint null completed successfully");
     } else {
         /* EP that connects to self or EP created using CONNECT_TO_EP mustn't
          * go here and always create socket and connect to a peer */
+        ucs_warn("checking ep");
         ucs_assert(!uct_tcp_ep_is_self(ep) &&
                    !(ep->flags & UCT_TCP_EP_FLAG_CONNECT_TO_EP));
         ucs_assert((peer_ep != NULL) && (peer_ep->fd != -1) &&
