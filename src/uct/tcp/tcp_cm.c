@@ -811,9 +811,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
-    //struct sockaddr* addr = NULL;
-    //struct sockaddr_storage connect_addr;
-    //size_t addrlen;
+    struct sockaddr* addr = NULL;
+    struct sockaddr_storage connect_addr;
+    size_t addrlen;
     ucs_status_t status;
     //char dest_str[UCS_SOCKADDR_STRING_LEN];
     //char* remote_address = NULL;
@@ -920,7 +920,19 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     if (iface->config.enable_tcpunch) {
         //call tcpunch to collect endpoints and connect!
         ucs_warn("calling pair with serverId: %s, port: %i", iface->config.rendezvous_ip_address, iface->config.rendezvous_port);
-        status = pair(ep->fd , (struct sockaddr_in*)&ep->peer_addr, "test_pairing", iface->config.rendezvous_ip_address, iface->config.rendezvous_port, 10000);
+        status = pair(ep->fd , (struct sockaddr_in*)&connect_addr, "test_pairing", iface->config.rendezvous_ip_address, iface->config.rendezvous_port, 10000);
+
+
+        addr = (struct sockaddr*)&connect_addr;
+
+        status = ucs_sockaddr_sizeof(addr, &addrlen);
+        if (status != UCS_OK) {
+            return status;
+        }
+
+        if ((struct sockaddr*)&ep->peer_addr != NULL) {
+            memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
+        }
 
         if (status == UCS_OK) {
             ucs_warn("successfully paired tcpunch socket - now resuming process");

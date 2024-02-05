@@ -216,7 +216,7 @@ int pair(int peer_socket, struct sockaddr_in * peer_addr, const char * pairing_n
     peer_addr->sin_port = peer_data.port;
 
     while(!atomic_load(&connection_established)) {
-        peer_status = connect(peer_socket, (struct sockaddr *)&peer_addr, sizeof(struct sockaddr));
+        peer_status = connect(peer_socket, (struct sockaddr *)peer_addr, sizeof(struct sockaddr));
         if (peer_status != 0) {
             if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
                 continue;
@@ -225,6 +225,7 @@ int pair(int peer_socket, struct sockaddr_in * peer_addr, const char * pairing_n
                 ucs_warn("Succesfully connected to peer, EISCONN");
                 break;
             } else {
+
                 msleep(100);
                 //std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
