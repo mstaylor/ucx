@@ -923,18 +923,19 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         status = pair(ep->fd , (struct sockaddr_in*)&ep->peer_addr, "test_pairing", iface->config.rendezvous_ip_address, iface->config.rendezvous_port, 10000);
 
         if (status == UCS_OK) {
-            ucs_warn("updating connection state to connected");
-            uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTED);
+            ucs_warn("successfully paired tcpunch socket - now resuming process");
+            /*uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTED);*/
         }
-        ucs_warn("returning ucs_ok from cm endpoint and tcpunch");
+        /*ucs_warn("returning ucs_ok from cm endpoint and tcpunch");
         uct_tcp_cm_conn_complete(ep);
-        return UCS_OK;
-    } else {
+        return UCS_OK;*/
+    } /*else {*/
         //normal flow
         status = ucs_socket_connect(ep->fd, (const struct sockaddr *) &ep->peer_addr);
         if (UCS_STATUS_IS_ERR(status)) {
             return status;
         } else if (status == UCS_INPROGRESS) {
+            ucs_warn("status connecting is in progress")
             ucs_assert(iface->config.conn_nb);
             uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
             return UCS_OK;
@@ -951,7 +952,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         uct_tcp_cm_conn_complete(ep);
         return UCS_OK;
-    }
+   /* }*/
 
 
 }
