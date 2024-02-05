@@ -92,9 +92,9 @@ int msleep(long msec)
     return res;
 }
 
-int pair(int peer_socket, const char * pairing_name, const char * server_address, int port, int timeout_ms) {
+int pair(int peer_socket, struct sockaddr_in * peer_addr, const char * pairing_name, const char * server_address, int port, int timeout_ms) {
 
-    struct sockaddr_in peer_addr;
+    //struct sockaddr_in peer_addr;
     struct timeval timeout;
     int socket_rendezvous;
     struct sockaddr_in server_data;
@@ -211,9 +211,9 @@ int pair(int peer_socket, const char * pairing_name, const char * server_address
     }
 
 
-    peer_addr.sin_family = AF_INET;
-    peer_addr.sin_addr.s_addr = peer_data.ip.s_addr;
-    peer_addr.sin_port = peer_data.port;
+    peer_addr->sin_family = AF_INET;
+    peer_addr->sin_addr.s_addr = peer_data.ip.s_addr;
+    peer_addr->sin_port = peer_data.port;
 
     while(!atomic_load(&connection_established)) {
         peer_status = connect(peer_socket, (struct sockaddr *)&peer_addr, sizeof(struct sockaddr));
