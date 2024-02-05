@@ -925,6 +925,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTED);
         }
         ucs_warn("returning ucs_ok from cm endpoint and tcpunch");
+        uct_tcp_cm_conn_complete(ep);
         return UCS_OK;
     } else {
         //normal flow
