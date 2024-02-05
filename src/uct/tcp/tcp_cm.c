@@ -776,8 +776,10 @@ static void uct_tcp_cm_conn_complete(uct_tcp_ep_t *ep)
     }
 
     if (ep->flags & UCT_TCP_EP_FLAG_CONNECT_TO_EP) {
+        ucs_warn("changing on connection state to connected");
         uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTED);
     } else {
+        ucs_warn("waiting on connection state ack");
         uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_WAITING_ACK);
     }
 
