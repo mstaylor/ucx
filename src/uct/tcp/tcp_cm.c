@@ -832,7 +832,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTING);
 
 
-    if (config->enable_tcpunch) {
+    if (iface->config.enable_tcpunch) {
         //tcp punch already connected
         ucs_warn("already connected to peer - update file descriptor");
         ep->fd = iface->listen_fd;
