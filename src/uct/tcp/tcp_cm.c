@@ -40,8 +40,8 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
         //tomorrow - can tcpunch
 
-        status = pair(fd, &connect_addr, "testPairing", config->rendezvous_ip_address, config->rendezvous_port, 6000);
-        *peer_socket = fd;
+        status = pair(peer_socket, &connect_addr, "testPairing", config->rendezvous_ip_address, config->rendezvous_port, 6000);
+
 
         //set_sock_addr(NULL, &connect_addr, AF_INET, 0);
         if (status != UCS_OK) {
