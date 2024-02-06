@@ -17,7 +17,7 @@ typedef struct {
     in_port_t      port;
 } PeerConnectionData;
 
-PeerConnectionData connectandBindLocal(struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms);
+int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms);
 
 int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms);
 

@@ -42,7 +42,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
         ucs_warn("contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address, config->rendezvous_port);
 
-        data = connectandBindLocal(&connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 60000);
+        connectandBindLocal(&data, &connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 60000);
 
         if (status != UCS_OK) {
             ucs_warn("could not bind via tcpunch");

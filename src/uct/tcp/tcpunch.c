@@ -93,7 +93,7 @@ int msleep(long msec)
     return res;
 }
 
-PeerConnectionData connectandBindLocal(struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms) {
+int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms) {
     struct sockaddr_in *sa_in;
     struct timeval timeout;
     int socket_rendezvous;
@@ -174,7 +174,10 @@ PeerConnectionData connectandBindLocal(struct sockaddr_storage *saddr, const cha
     sa_in->sin_addr.s_addr = INADDR_ANY;
     sa_in->sin_port = public_info.port;
 
-    return public_info;
+    data->ip = peer_data.ip;
+    data->port = peer_data.port;
+
+    return UCS_OK;
 }
 
 int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_name, const char * server_address, int port, int timeout_ms) {
