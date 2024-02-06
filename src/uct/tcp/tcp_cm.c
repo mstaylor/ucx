@@ -831,24 +831,33 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTING);
 
-    ucs_warn("connecting to socket address cm");
-    status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
-    if (UCS_STATUS_IS_ERR(status)) {
-        return status;
-    } else if (status == UCS_INPROGRESS) {
-        ucs_assert(iface->config.conn_nb);
-        uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
-        return UCS_OK;
-    }
 
-    ucs_assert(status == UCS_OK);
-
-    if (!iface->config.conn_nb) {
-        status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
-        if (status != UCS_OK) {
+    if (config->enable_tcpunch) {
+        //tcp punch already connected
+        ucs_warn("already connected to peer - update file descriptor");
+        ep->fd = iface->listen_fd;
+    } else {
+        ucs_warn("connecting to socket address cm");
+        status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
+        if (UCS_STATUS_IS_ERR(status)) {
             return status;
+        } else if (status == UCS_INPROGRESS) {
+            ucs_assert(iface->config.conn_nb);
+            uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
+            return UCS_OK;
+        }
+
+        ucs_assert(status == UCS_OK);
+
+        if (!iface->config.conn_nb) {
+            status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
+            if (status != UCS_OK) {
+                return status;
+            }
         }
     }
+
+
 
     uct_tcp_cm_conn_complete(ep);
     return UCS_OK;
