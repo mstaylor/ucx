@@ -21,4 +21,6 @@ PeerConnectionData connectandBindLocal(struct sockaddr_storage *saddr, const cha
 
 int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms);
 
+char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size);
+
 #endif //UCX_TCPUNCH_H
