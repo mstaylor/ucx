@@ -175,8 +175,8 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     sa_in->sin_addr.s_addr = INADDR_ANY;
     sa_in->sin_port = public_info.port;
 
-    data->ip = peer_data.ip;
-    data->port = peer_data.port;
+    data->ip = public_info.ip;
+    data->port = public_info.port;
 
     return UCS_OK;
 }
