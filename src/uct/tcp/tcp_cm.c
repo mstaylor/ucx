@@ -17,7 +17,7 @@
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
                                  struct sockaddr *netmask,
-                                 uct_tcp_iface_config_t *config, int *peer_socket) {
+                                 uct_tcp_iface_config_t *config) {
 
     ucs_status_t status = UCS_ERR_NO_DEVICE;
     struct sockaddr* addr = NULL;
