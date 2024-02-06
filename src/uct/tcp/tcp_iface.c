@@ -526,7 +526,7 @@ static uct_iface_ops_t uct_tcp_iface_ops = {
 
 static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
 {
-    /*struct sockaddr_storage bind_addr = iface->config.ifaddr;
+    struct sockaddr_storage bind_addr = iface->config.ifaddr;
     unsigned port_range_start         = iface->port_range.first;
     unsigned port_range_end           = iface->port_range.last;
     int reuse_address                 = iface->config.reuse_addr;*/
@@ -564,8 +564,8 @@ static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
 
         if (listen(iface->listen_fd, ucs_socket_max_conn()) < 0) {
             ucs_error("listen(fd=%d addr=%s backlog=%d) failed: %m",
-                      iface->listen_fd, ucs_sockaddr_str(saddr, ip_port_str, sizeof(ip_port_str)),
-                      backlog);
+                      iface->listen_fd, ucs_sockaddr_str(&saddr, ip_port_str, sizeof(ip_port_str)),
+                      ucs_socket_max_conn());
             return UCS_ERR_IO_ERROR;
         } else {
             ucs_warn("listen success!");
