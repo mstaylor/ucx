@@ -105,6 +105,7 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
 
     PeerConnectionData peer_data;
     ssize_t bytes_received;
+    int enable_flag = 1;
 
 
     memset(saddr, 0, sizeof(*saddr));
