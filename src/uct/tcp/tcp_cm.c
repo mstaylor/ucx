@@ -38,7 +38,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         ucs_warn("tcpunch enabled");
 
         //tomorrow - can tcpunch
-        ucs_warn("contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address, config->rendezvous_port)
+        ucs_warn("contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address, config->rendezvous_port);
 
         status = pair(peer_socket, &connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 60000);
 
