@@ -527,7 +527,7 @@ static uct_iface_ops_t uct_tcp_iface_ops = {
 static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
 {
     struct sockaddr_storage bind_addr = iface->config.ifaddr;
-    unsigned port_range_start         = iface->port_range.first;
+    /*unsigned port_range_start         = iface->port_range.first;
     unsigned port_range_end           = iface->port_range.last;
     int reuse_address                 = iface->config.reuse_addr;*/
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
