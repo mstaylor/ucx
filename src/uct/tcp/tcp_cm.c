@@ -30,6 +30,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     int enable_tcpunch = config->enable_tcpunch;
     PeerConnectionData data;
     const char * redis_ip_address = config->redis_ip_address;
+
     int redis_port = config->redis_port;
     char * publicAddress;
     int publicPort;
@@ -60,7 +61,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         }
 
         //write to redis
-        if (redis_enabled && saddr != NULL) {
+        if (saddr != NULL) {
 
 
             ucs_sockaddr_str(saddr, dest_str,
