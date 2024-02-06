@@ -26,7 +26,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     char redisValue[200];
 
     char dest_str[UCS_SOCKADDR_STRING_LEN];
-
+    char ipadd[UCS_SOCKADDR_STRING_LEN];
 
     int enable_tcpunch = config->enable_tcpunch;
     PeerConnectionData data;
