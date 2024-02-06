@@ -675,7 +675,7 @@ char * getValueFromRedis(const char *hostname, int port, const char *key);
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
                                  struct sockaddr *netmask,
-                                 uct_tcp_iface_config_t *config, int *fd);
+                                 uct_tcp_iface_config_t *config);
 
 int uct_tcp_keepalive_is_enabled(uct_tcp_iface_t *iface);
 

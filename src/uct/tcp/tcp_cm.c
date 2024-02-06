@@ -23,27 +23,25 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     struct sockaddr* addr = NULL;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
-    //char redisValue[200];
+    char redisValue[200];
 
-    //char dest_str[UCS_SOCKADDR_STRING_LEN];
+    char dest_str[UCS_SOCKADDR_STRING_LEN];
 
     int enable_tcpunch = config->enable_tcpunch;
-    //const char * redis_ip_address = config->redis_ip_address;
-    //int redis_port = config->redis_port;
+    PeerConnectionData data;
+    const char * redis_ip_address = config->redis_ip_address;
+    int redis_port = config->redis_port;
+    char * publicAddress;
+    int publicPort;
 
-
-    //ucs_warn("Calling ucs_netif_get_addr3 - override_private_address address is %s", override_private_address);
 
     if (enable_tcpunch) {
         ucs_warn("tcpunch enabled");
 
-        //tomorrow - can tcpunch
         ucs_warn("contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address, config->rendezvous_port);
 
-        status = pair(peer_socket, &connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 60000);
+        data = pair(&connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 60000);
 
-
-        //set_sock_addr(NULL, &connect_addr, AF_INET, 0);
         if (status != UCS_OK) {
             ucs_warn("could not bind via tcpunch");
             return status;
@@ -62,17 +60,20 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         }
 
         //write to redis
-        /*if (redis_enabled && saddr != NULL) {
+        if (redis_enabled && saddr != NULL) {
 
 
             ucs_sockaddr_str(saddr, dest_str,
                              UCS_SOCKADDR_STRING_LEN);
 
-            sprintf(redisValue, "%s:%i", override_public_address, public_port);
+            publicAddress = ip_to_string(&data.ip.s_addr, ipadd, sizeof(ipadd));
+            publicPort = ntohs(data.port);
+
+            sprintf(redisValue, "%s:%i", publicAddress, public_port);
 
             ucs_warn("writing public address to redis - key: %s value:%s", dest_str, redisValue);
             setRedisValue(redis_ip_address, redis_port, dest_str, redisValue);
-        }*/
+        }
 
         status = UCS_OK;
     }
