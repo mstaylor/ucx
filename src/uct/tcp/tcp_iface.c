@@ -636,10 +636,10 @@ static ucs_status_t uct_tcp_iface_listener_init2(uct_tcp_iface_t *iface)
     //uint16_t port;
     //int ret;
 
-    status = uct_tcp_iface_server_init2(iface);
+    /*status = uct_tcp_iface_server_init2(iface);
     if (status != UCS_OK) {
         goto err;
-    }
+    }*/
 
     /* Get the port which was selected for the socket */
     /*ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
