@@ -524,61 +524,7 @@ static uct_iface_ops_t uct_tcp_iface_ops = {
     .iface_is_reachable       = uct_base_iface_is_reachable
 };
 
-static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
-{
-    struct sockaddr_storage bind_addr = iface->config.ifaddr;
-    /*unsigned port_range_start         = iface->port_range.first;
-    unsigned port_range_end           = iface->port_range.last;
-    int reuse_address                 = iface->config.reuse_addr;*/
-    char ip_port_str[UCS_SOCKADDR_STRING_LEN];
 
-    //ucs_status_t status;
-    /*size_t addr_len;
-    int port, retry;*/
-
-    /* retry is 1 for a range of ports or when port value is zero.
-     * retry is 0 for a single value port that is not zero */
-    /*retry = (port_range_start == 0) || (port_range_start < port_range_end);*/
-
-  //  do {
-        /*if (port_range_end != 0) {
-            status = ucs_rand_range(port_range_start, port_range_end, &port);
-            if (status != UCS_OK) {
-                break;
-            }
-        } else {
-            port = 0;   *//* let the operating system choose the port *//*
-        }
-
-        ucs_warn("setting port to %i", port);*/
-
-        /*status = ucs_sockaddr_set_port((struct sockaddr*)&bind_addr, port);
-        if (status != UCS_OK) {
-            break;
-        }*/
-
-        /*status = ucs_sockaddr_sizeof((struct sockaddr*)&bind_addr, &addr_len);
-        if (status != UCS_OK) {
-            return status;
-        }*/
-
-        if (listen(iface->listen_fd, ucs_socket_max_conn()) < 0) {
-            ucs_error("listen(fd=%d addr=%s backlog=%d) failed: %m",
-                      iface->listen_fd, ucs_sockaddr_str((struct sockaddr*)&bind_addr, ip_port_str, sizeof(ip_port_str)),
-                      ucs_socket_max_conn());
-            return UCS_ERR_IO_ERROR;
-        } else {
-            ucs_warn("listen success!");
-            return UCS_OK;
-        }
-
-        /*status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
-                                        ucs_socket_max_conn(), retry, reuse_address,
-                                        &iface->listen_fd);*/
-   // } while (retry && (status == UCS_ERR_BUSY));
-
-    //return status;
-}
 
 
 
