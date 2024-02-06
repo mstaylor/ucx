@@ -3,6 +3,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <string.h>
 #include <stdatomic.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -92,9 +93,10 @@ int msleep(long msec)
     return res;
 }
 
-int pair(int peer_socket, struct sockaddr_in * peer_addr, const char * pairing_name, const char * server_address, int port, int timeout_ms) {
+int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_name, const char * server_address, int port, int timeout_ms) {
 
     //struct sockaddr_in peer_addr;
+    struct sockaddr_in *sa_in;
     struct timeval timeout;
     int socket_rendezvous;
     struct sockaddr_in server_data;
@@ -109,8 +111,10 @@ int pair(int peer_socket, struct sockaddr_in * peer_addr, const char * pairing_n
     int enable_flag = 1;
     int peer_status;
     int flags;
+    int fd;
 
-
+    memset(saddr, 0, sizeof(*saddr));
+    sa_in = (struct sockaddr_in*)saddr;
     atomic_store(&connection_established, false);
     atomic_store(&accepting_socket, -1);
 
@@ -187,15 +191,15 @@ int pair(int peer_socket, struct sockaddr_in * peer_addr, const char * pairing_n
 
     //We do NOT close the socket_rendezvous socket here, otherwise the next binds sometimes fail (although SO_REUSEADDR|SO_REUSEPORT is set)!
 
-    peer_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (setsockopt(peer_socket, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
-        setsockopt(peer_socket, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
+        setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
         ucs_error("Setting REUSE options failed");
         return UCS_ERR_IO_ERROR;
     }
 
     //Set socket to non blocking for the following polling operations
-    if(fcntl(peer_socket, F_SETFL, O_NONBLOCK) != 0) {
+    if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_error("Setting O_NONBLOCK failed: ");
         return UCS_ERR_IO_ERROR;
     }
@@ -205,18 +209,18 @@ int pair(int peer_socket, struct sockaddr_in * peer_addr, const char * pairing_n
     local_port_addr.sin_addr.s_addr = INADDR_ANY;
     local_port_addr.sin_port = public_info.port;
 
-    if (bind(peer_socket, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
+    if (bind(fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
         ucs_error("Binding to same port failed: ");
         return UCS_ERR_IO_ERROR;
     }
 
 
-    peer_addr->sin_family = AF_INET;
-    peer_addr->sin_addr.s_addr = peer_data.ip.s_addr;
-    peer_addr->sin_port = peer_data.port;
+    sa_in->sin_family = AF_INET;
+    sa_in->sin_addr.s_addr = peer_data.ip.s_addr;
+    sa_in->sin_port = peer_data.port;
 
     while(!atomic_load(&connection_established)) {
-        peer_status = connect(peer_socket, (struct sockaddr *)peer_addr, sizeof(struct sockaddr));
+        peer_status = connect(fd, (struct sockaddr *)saddr, sizeof(struct sockaddr));
         if (peer_status != 0) {
             if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
                 continue;
@@ -238,14 +242,16 @@ int pair(int peer_socket, struct sockaddr_in * peer_addr, const char * pairing_n
 
     if(atomic_load(&connection_established)) {
         pthread_join(peer_listen_thread, NULL);
-        peer_socket = atomic_load(&accepting_socket);
+        fd = atomic_load(&accepting_socket);
     }
 
-    flags = fcntl(peer_socket,  F_GETFL, 0);
+    flags = fcntl(fd,  F_GETFL, 0);
     flags &= ~(O_NONBLOCK);
-    fcntl(peer_socket, F_SETFL, flags);
+    fcntl(fd, F_SETFL, flags);
 
     ucs_warn("returning UCS_OK from tcpunch");
+
+    *peer_socket = fd;
 
     return UCS_OK;
 }

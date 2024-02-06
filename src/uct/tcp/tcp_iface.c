@@ -524,6 +524,64 @@ static uct_iface_ops_t uct_tcp_iface_ops = {
     .iface_is_reachable       = uct_base_iface_is_reachable
 };
 
+static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
+{
+    /*struct sockaddr_storage bind_addr = iface->config.ifaddr;
+    unsigned port_range_start         = iface->port_range.first;
+    unsigned port_range_end           = iface->port_range.last;
+    int reuse_address                 = iface->config.reuse_addr;*/
+    char ip_port_str[UCS_SOCKADDR_STRING_LEN];
+
+    ucs_status_t status;
+    /*size_t addr_len;
+    int port, retry;*/
+
+    /* retry is 1 for a range of ports or when port value is zero.
+     * retry is 0 for a single value port that is not zero */
+    /*retry = (port_range_start == 0) || (port_range_start < port_range_end);*/
+
+    do {
+        /*if (port_range_end != 0) {
+            status = ucs_rand_range(port_range_start, port_range_end, &port);
+            if (status != UCS_OK) {
+                break;
+            }
+        } else {
+            port = 0;   *//* let the operating system choose the port *//*
+        }
+
+        ucs_warn("setting port to %i", port);*/
+
+        /*status = ucs_sockaddr_set_port((struct sockaddr*)&bind_addr, port);
+        if (status != UCS_OK) {
+            break;
+        }*/
+
+        /*status = ucs_sockaddr_sizeof((struct sockaddr*)&bind_addr, &addr_len);
+        if (status != UCS_OK) {
+            return status;
+        }*/
+
+        if (listen(iface->listen_fd, ucs_socket_max_conn()) < 0) {
+            ucs_error("listen(fd=%d addr=%s backlog=%d) failed: %m",
+                      iface->listen_fd, ucs_sockaddr_str(saddr, ip_port_str, sizeof(ip_port_str)),
+                      backlog);
+            return UCS_ERR_IO_ERROR;
+        } else {
+            ucs_warn("listen success!");
+            return UCS_OK;
+        }
+
+        /*status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
+                                        ucs_socket_max_conn(), retry, reuse_address,
+                                        &iface->listen_fd);*/
+    } while (retry && (status == UCS_ERR_BUSY));
+
+    return status;
+}
+
+
+
 static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 {
     struct sockaddr_storage bind_addr = iface->config.ifaddr;
@@ -566,6 +624,63 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
                                         &iface->listen_fd);
     } while (retry && (status == UCS_ERR_BUSY));
 
+    return status;
+}
+
+static ucs_status_t uct_tcp_iface_listener_init2(uct_tcp_iface_t *iface)
+{
+    //struct sockaddr_storage bind_addr = iface->config.ifaddr;
+    //socklen_t socklen                 = sizeof(bind_addr);
+    char ip_port_str[UCS_SOCKADDR_STRING_LEN];
+    ucs_status_t status;
+    //uint16_t port;
+    //int ret;
+
+    status = uct_tcp_iface_server_init2(iface);
+    if (status != UCS_OK) {
+        goto err;
+    }
+
+    /* Get the port which was selected for the socket */
+    /*ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
+    if (ret < 0) {
+        ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
+        status = UCS_ERR_IO_ERROR;
+        goto err_close_sock;
+    }
+
+    status = ucs_sockaddr_get_port((struct sockaddr*)&bind_addr, &port);
+    if (status != UCS_OK) {
+        goto err_close_sock;
+    }
+
+    status = ucs_sockaddr_set_port((struct sockaddr*)&iface->config.ifaddr,
+                                   port);
+    if (status != UCS_OK) {
+        goto err_close_sock;
+    }*/
+
+    /* Register event handler for incoming connections */
+    status = ucs_async_set_event_handler(iface->super.worker->async->mode,
+                                         iface->listen_fd,
+                                         UCS_EVENT_SET_EVREAD |
+                                         UCS_EVENT_SET_EVERR,
+                                         uct_tcp_iface_connect_handler, iface,
+                                         iface->super.worker->async);
+    if (status != UCS_OK) {
+        goto err_close_sock;
+    }
+
+    ucs_debug("tcp_iface %p: listening for connections (fd=%d) on %s netif %s",
+              iface, iface->listen_fd,
+              ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
+                               ip_port_str, sizeof(ip_port_str)),
+              iface->if_name);
+    return UCS_OK;
+
+    err_close_sock:
+    ucs_close_fd(&iface->listen_fd);
+    err:
     return status;
 }
 
@@ -804,7 +919,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
             status = ucs_netif_get_addr3(self->if_name,
                              (struct sockaddr*)&self->config.ifaddr,
                              (struct sockaddr*)&self->config.netmask,
-                             config);
+                             config, &self->listen_fd);
             break;
         }
     }
@@ -831,7 +946,14 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         goto err_cleanup_rx_mpool;
     }
     ucs_warn("Found connectable interface now initializing listener");
-    status = uct_tcp_iface_listener_init(self);
+
+    if (config->enable_tcpunch) {
+        status = uct_tcp_iface_listener_init2(self);
+    } else {
+        status = uct_tcp_iface_listener_init(self);
+    }
+
+
     if (status != UCS_OK) {
         goto err_cleanup_event_set;
     }

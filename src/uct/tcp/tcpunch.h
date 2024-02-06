@@ -19,6 +19,6 @@ typedef struct {
 
 
 
-int pair(int peer_socket, struct sockaddr_in * peer_addr, const char * pairing_name, const char* server_address, int port, int timeout_ms);
+int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms);
 
 #endif //UCX_TCPUNCH_H
