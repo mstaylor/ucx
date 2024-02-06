@@ -564,7 +564,7 @@ static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
 
         if (listen(iface->listen_fd, ucs_socket_max_conn()) < 0) {
             ucs_error("listen(fd=%d addr=%s backlog=%d) failed: %m",
-                      iface->listen_fd, ucs_sockaddr_str(&saddr, ip_port_str, sizeof(ip_port_str)),
+                      iface->listen_fd, ucs_sockaddr_str(&bind_addr, ip_port_str, sizeof(ip_port_str)),
                       ucs_socket_max_conn());
             return UCS_ERR_IO_ERROR;
         } else {
