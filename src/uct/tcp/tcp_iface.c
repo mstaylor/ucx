@@ -532,7 +532,7 @@ static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
     int reuse_address                 = iface->config.reuse_addr;*/
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
 
-    ucs_status_t status;
+    //ucs_status_t status;
     /*size_t addr_len;
     int port, retry;*/
 
@@ -540,7 +540,7 @@ static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
      * retry is 0 for a single value port that is not zero */
     /*retry = (port_range_start == 0) || (port_range_start < port_range_end);*/
 
-    do {
+  //  do {
         /*if (port_range_end != 0) {
             status = ucs_rand_range(port_range_start, port_range_end, &port);
             if (status != UCS_OK) {
@@ -575,9 +575,9 @@ static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
         /*status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
                                         ucs_socket_max_conn(), retry, reuse_address,
                                         &iface->listen_fd);*/
-    } while (retry && (status == UCS_ERR_BUSY));
+   // } while (retry && (status == UCS_ERR_BUSY));
 
-    return status;
+    //return status;
 }
 
 
