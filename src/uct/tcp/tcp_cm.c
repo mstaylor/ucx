@@ -71,7 +71,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
             publicAddress = ip_to_string(&data.ip.s_addr, ipadd, sizeof(ipadd));
             publicPort = ntohs(data.port);
 
-            sprintf(redisValue, "%s:%i", publicAddress, public_port);
+            sprintf(redisValue, "%s:%i", publicAddress, publicPort);
 
             ucs_warn("writing public address to redis - key: %s value:%s", dest_str, redisValue);
             setRedisValue(redis_ip_address, redis_port, dest_str, redisValue);
