@@ -20,7 +20,6 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  uct_tcp_iface_config_t *config, int *peer_socket) {
 
     ucs_status_t status = UCS_ERR_NO_DEVICE;
-    int fd;
     struct sockaddr* addr = NULL;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
