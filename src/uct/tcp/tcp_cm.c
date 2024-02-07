@@ -827,22 +827,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr* addr = NULL;
     struct sockaddr_storage connect_addr;
     size_t addrlen;
-    ucs_status_t status;
+
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     char localIpAddress[UCS_SOCKADDR_STRING_LEN];
     int local_port;
     char* remote_address = NULL;
-
+    har publicAddress[UCS_SOCKADDR_STRING_LEN];
     int publicPort = 0;
     char * token = NULL;
     struct sockaddr_in local_port_addr;
     int i = 0;
     int enable_flag = 1;
-
-
-
-
     ucs_status_t status;
 
     ep->conn_retries++;
@@ -902,7 +898,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             //bind to local
 
-            ucs_sockaddr_str(iface->config.ifaddr, ip_port_str, sizeof(ip_port_str));
+            ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr, ip_port_str, sizeof(ip_port_str));
             i = 0;
             token = strtok(ip_port_str, ":");
             while (token != NULL) {
@@ -916,7 +912,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 i++;
             }
 
-            ucs_warn("parsing local - localIp: %s local port: %", localIpAddress, local_port);
+            ucs_warn("parsing local - localIp: %s local port: %i", localIpAddress, local_port);
 
             local_port_addr.sin_family = AF_INET;
             local_port_addr.sin_addr.s_addr = INADDR_ANY;
