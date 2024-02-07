@@ -833,7 +833,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char localIpAddress[UCS_SOCKADDR_STRING_LEN];
     int local_port;
     char* remote_address = NULL;
-    har publicAddress[UCS_SOCKADDR_STRING_LEN];
+    char publicAddress[UCS_SOCKADDR_STRING_LEN];
     int publicPort = 0;
     char * token = NULL;
     struct sockaddr_in local_port_addr;
