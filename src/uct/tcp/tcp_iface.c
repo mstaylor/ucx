@@ -851,24 +851,26 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
 
     ucs_warn("number of af %i", tcp_md->config.af_prio_count);
 
-    for (i = 0; i < tcp_md->config.af_prio_count; i++) {
-        ucs_warn("Calling ucs_netif_get_addr2");
-        status = ucs_netif_get_addr2(self->if_name,
-                                    tcp_md->config.af_prio_list[i],
-                                    (struct sockaddr*)&self->config.ifaddr,
-                                    (struct sockaddr*)&self->config.netmask,
-                                            self->config.override_private_ip_address,
-                                            0);
-        ucs_warn("status %i address %s", status, self->config.override_private_ip_address);
-        if (status != UCS_OK && self->config.enable_tcpunch) {
-            ucs_warn("Calling ucs_netif_get_addr3");
-            status = ucs_netif_get_addr3(self->if_name,
+    if (self->config.enable_tcpunch) {
+        ucs_warn("Calling ucs_netif_get_addr3");
+        status = ucs_netif_get_addr3(self->if_name,
                              (struct sockaddr*)&self->config.ifaddr,
                              (struct sockaddr*)&self->config.netmask,
                              config);
-            break;
+    } else {
+        for (i = 0; i < tcp_md->config.af_prio_count; i++) {
+            ucs_warn("Calling ucs_netif_get_addr2");
+            status = ucs_netif_get_addr2(self->if_name,
+                             tcp_md->config.af_prio_list[i],
+                             (struct sockaddr*)&self->config.ifaddr,
+                             (struct sockaddr*)&self->config.netmask,
+                             self->config.override_private_ip_address,
+                             0);
+            ucs_warn("status %i address %s", status, self->config.override_private_ip_address);
         }
     }
+
+
 
     if (status != UCS_OK) {
         goto err_cleanup_rx_mpool;
