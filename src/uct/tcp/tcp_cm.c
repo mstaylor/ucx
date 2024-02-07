@@ -38,9 +38,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
 
     if (enable_tcpunch) {
-        ucs_warn("tcpunch enabled");
-
-        ucs_warn("contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address, config->rendezvous_port);
+        ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address, config->rendezvous_port);
 
         connectandBindLocal(&data, &connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 60000);
 
@@ -852,16 +850,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
     if (iface->config.enable_tcpunch) {
-        //tcp punch already connected
-        ucs_warn("already connected to peer - update file descriptor");
+        ucs_warn("tcp punch enabled - now connecting with peer");
 
-
-       ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
+        ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
                         UCS_SOCKADDR_STRING_LEN);
 
-       ucs_warn("dest addr to be passed to redis: %s", dest_str);
+        ucs_warn("dest addr to be passed to redis: %s", dest_str);
 
-       remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
+        remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
 
 
         if (remote_address != NULL) {
@@ -880,24 +876,22 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 i++;
             }
 
-             ucs_warn("configuring to reuse socket port");
-             status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+            ucs_warn("configuring to reuse socket port");
+            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
                                         &enable_flag, sizeof(int));
-             if (status != UCS_OK) {
-                 ucs_warn("could NOT configure to reuse socket port");
+            if (status != UCS_OK) {
+                ucs_warn("could NOT configure to reuse socket port");
 
-             }
+            }
 
-             ucs_warn("configuring to reuse socket address");
-             status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+            ucs_warn("configuring to reuse socket address");
+            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
                                         &enable_flag, sizeof(int));
-             if (status != UCS_OK) {
-                 ucs_warn("could NOT configureto reuse socket address");
-
-             }
+            if (status != UCS_OK) {
+                ucs_warn("could NOT configureto reuse socket address");
+            }
 
             //bind to local
-
             ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr, ip_port_str, sizeof(ip_port_str));
             i = 0;
             token = strtok(ip_port_str, ":");
@@ -923,6 +917,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
                 ucs_warn("Binding to same port failed: %i", local_port);
+                return UCS_ERR_UNREACHABLE;
             }
 
             ucs_warn("configuring endpoint connect address: %s %i", publicAddress, publicPort);
