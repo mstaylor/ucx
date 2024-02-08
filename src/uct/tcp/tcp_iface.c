@@ -530,8 +530,8 @@ static uct_iface_ops_t uct_tcp_iface_ops = {
 static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
 {
     struct sockaddr_storage bind_addr = iface->config.ifaddr;
-    unsigned port_range_start         = iface->port_range.first;
-    unsigned port_range_end           = iface->port_range.last;
+    //unsigned port_range_start         = iface->port_range.first;
+    //unsigned port_range_end           = iface->port_range.last;
     int reuse_address                 = iface->config.reuse_addr;
 
     ucs_status_t status;
@@ -565,7 +565,7 @@ static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
         }
 
         status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
-                                        ucs_socket_max_conn(), retry, reuse_address,
+                                        ucs_socket_max_conn(), 0, reuse_address,
                                         &iface->listen_fd);
     //} while (retry && (status == UCS_ERR_BUSY));
 
