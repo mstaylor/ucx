@@ -40,7 +40,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     if (enable_tcpunch) {
         ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address, config->rendezvous_port);
 
-        connectandBindLocal(&data, &connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 60000);
+        status = connectandBindLocal(&data, &connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 60000);
 
         if (status != UCS_OK) {
             ucs_warn("could not bind via tcpunch");

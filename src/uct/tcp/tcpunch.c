@@ -161,14 +161,7 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
         return UCS_ERR_IO_ERROR;
     }
 
-    /*bytes_received = recv(socket_rendezvous, &peer_data, sizeof(peer_data), MSG_WAITALL);
-    if(bytes_received == -1) {
-        ucs_error("Failed to get peer data from rendezvous server: ");
-        return UCS_ERR_IO_ERROR;
-    } else if(bytes_received == 0) {
-        ucs_error("Server has disconnected when waiting for peer data");
-        return UCS_ERR_IO_ERROR;
-    }*/
+
 
     ucs_warn("client data: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)), ntohs(public_info.port));
 
