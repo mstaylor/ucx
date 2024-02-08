@@ -104,7 +104,7 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     char ipadd[UCS_SOCKADDR_STRING_LEN];
 
 
-    PeerConnectionData peer_data;
+    //PeerConnectionData peer_data;
     //ssize_t bytes_received;
     int enable_flag = 1;
 
