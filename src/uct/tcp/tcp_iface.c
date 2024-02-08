@@ -527,6 +527,51 @@ static uct_iface_ops_t uct_tcp_iface_ops = {
 
 
 
+static ucs_status_t uct_tcp_iface_server_init2(uct_tcp_iface_t *iface)
+{
+    struct sockaddr_storage bind_addr = iface->config.ifaddr;
+    unsigned port_range_start         = iface->port_range.first;
+    unsigned port_range_end           = iface->port_range.last;
+    int reuse_address                 = iface->config.reuse_addr;
+
+    ucs_status_t status;
+    size_t addr_len;
+    int port, retry;
+
+    /* retry is 1 for a range of ports or when port value is zero.
+     * retry is 0 for a single value port that is not zero */
+    retry = (port_range_start == 0) || (port_range_start < port_range_end);
+
+    do {
+        /*if (port_range_end != 0) {
+            status = ucs_rand_range(port_range_start, port_range_end, &port);
+            if (status != UCS_OK) {
+                break;
+            }
+        } else {
+            port = 0;   *//* let the operating system choose the port *//*
+        }*/
+
+        /*ucs_warn("setting port to %i", port);
+
+        status = ucs_sockaddr_set_port((struct sockaddr*)&bind_addr, port);
+        if (status != UCS_OK) {
+            break;
+        }*/
+
+        status = ucs_sockaddr_sizeof((struct sockaddr*)&bind_addr, &addr_len);
+        if (status != UCS_OK) {
+            return status;
+        }
+
+        status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
+                                        ucs_socket_max_conn(), retry, reuse_address,
+                                        &iface->listen_fd);
+    } while (retry && (status == UCS_ERR_BUSY));
+
+    return status;
+}
+
 
 static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 {
@@ -575,20 +620,20 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
 static ucs_status_t uct_tcp_iface_listener_init2(uct_tcp_iface_t *iface)
 {
-    //struct sockaddr_storage bind_addr = iface->config.ifaddr;
-    //socklen_t socklen                 = sizeof(bind_addr);
+    struct sockaddr_storage bind_addr = iface->config.ifaddr;
+    socklen_t socklen                 = sizeof(bind_addr);
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     ucs_status_t status;
-    //uint16_t port;
-    //int ret;
+    uint16_t port;
+    int ret;
 
-    /*status = uct_tcp_iface_server_init2(iface);
+    status = uct_tcp_iface_server_init2(iface);
     if (status != UCS_OK) {
         goto err;
-    }*/
+    }
 
     /* Get the port which was selected for the socket */
-    /*ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
+    ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
     if (ret < 0) {
         ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
         status = UCS_ERR_IO_ERROR;
@@ -604,7 +649,7 @@ static ucs_status_t uct_tcp_iface_listener_init2(uct_tcp_iface_t *iface)
                                    port);
     if (status != UCS_OK) {
         goto err_close_sock;
-    }*/
+    }
 
     /* Register event handler for incoming connections */
     status = ucs_async_set_event_handler(iface->super.worker->async->mode,
