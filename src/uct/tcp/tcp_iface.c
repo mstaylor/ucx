@@ -624,7 +624,7 @@ static ucs_status_t uct_tcp_iface_listener_init2(uct_tcp_iface_t *iface)
     socklen_t socklen                 = sizeof(bind_addr);
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     ucs_status_t status;
-
+    uint16_t port;
     int ret;
 
     status = uct_tcp_iface_server_init2(iface);
