@@ -12,6 +12,7 @@
 
 atomic_bool connection_established = ATOMIC_VAR_INIT(false);
 atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
+int socket_rendezvous = -1;
 
 ucs_status_t peer_listen(void* p) {
     struct sockaddr_in peer_info;
@@ -96,7 +97,7 @@ int msleep(long msec)
 int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms) {
     struct sockaddr_in *sa_in;
     struct timeval timeout;
-    int socket_rendezvous;
+
     struct sockaddr_in server_data;
     PeerConnectionData public_info;
     ssize_t bytes;
