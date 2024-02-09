@@ -952,7 +952,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 status = connect(ep->fd, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
                 if (status != 0) {
                     if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
-                        ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
+                        //ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
                         continue;
                     } else if (errno == EISCONN) {
 
