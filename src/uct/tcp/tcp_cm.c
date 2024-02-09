@@ -838,6 +838,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int i = 0;
     int enable_flag = 1;
     ucs_status_t status;
+    char src_str[UCS_SOCKADDR_STRING_LEN];
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -908,6 +909,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             ucs_warn("parsing local - localIp: %s local port: %i", localIpAddress, local_port);
 
+            memset(&local_port_addr, 0, sizeof(local_port_addr));
+
             local_port_addr.sin_family = AF_INET;
             local_port_addr.sin_addr.s_addr = INADDR_ANY;
             local_port_addr.sin_port = local_port;
@@ -915,10 +918,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             ucs_warn("binding connect interface to %i", local_port);
 
-            if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
+            if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr)) < 0) {
                 ucs_warn("Binding to same port failed: %i", local_port);
                 return UCS_ERR_UNREACHABLE;
             }
+
+            ucs_warn("updated endpoint src address %s", ucs_socket_getname_str(ep->fd, src_str, UCS_SOCKADDR_STRING_LEN))
+
+
 
             ucs_warn("configuring endpoint connect address: %s %i", publicAddress, publicPort);
 
