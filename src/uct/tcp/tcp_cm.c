@@ -40,7 +40,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     if (enable_tcpunch) {
         ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address, config->rendezvous_port);
 
-        status = connectandBindLocal(&data, &connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 60000);
+        status = connectandBindLocal(&data, &connect_addr, "test", config->rendezvous_ip_address, config->rendezvous_port, 900000);
 
         if (status != UCS_OK) {
             ucs_warn("could not bind via tcpunch");
@@ -948,16 +948,17 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 return UCS_ERR_IO_ERROR;
             }
             while(true) {
-                status = connect(fd, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
+                status = connect(fep->d, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
                 if (status != 0) {
                     if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
+                        ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
                         continue;
                     } else if (errno == EISCONN) {
 
                         ucs_warn("Succesfully connected to peer, EISCONN");
                         break;
                     } else {
-
+                        ucs_warn("sleep on connect");
                         msleep(100);
                         //std::this_thread::sleep_for(std::chrono::milliseconds(100));
                         continue;
@@ -972,7 +973,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             flags &= ~(O_NONBLOCK);
             fcntl(ep-fd, F_SETFL, flags);
 
-
+            uct_tcp_cm_conn_complete(ep);
         }
 
     } else {
