@@ -972,7 +972,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             flags = fcntl(ep->fd,  F_GETFL, 0);
             flags &= ~(O_NONBLOCK);
-            fcntl(ep-fd, F_SETFL, flags);
+            fcntl(ep->fd, F_SETFL, flags);
 
             uct_tcp_cm_conn_complete(ep);
         }
