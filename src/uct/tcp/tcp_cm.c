@@ -946,6 +946,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     if (UCS_STATUS_IS_ERR(status)) {
         return status;
     } else if (status == UCS_INPROGRESS) {
+        ucs_warn("connection in progress");
         ucs_assert(iface->config.conn_nb);
         uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
         return UCS_OK;
