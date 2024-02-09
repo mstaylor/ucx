@@ -944,6 +944,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             free(remote_address);
 
+            ep->fd = iface->listen_fd;
+
             if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
                 ucs_error("Setting O_NONBLOCK failed: ");
                 return UCS_ERR_IO_ERROR;
