@@ -10,6 +10,7 @@
 #include "tcp.h"
 #include "tcp/tcp.h"
 #include "tcpunch.h"
+#include <stdbool.h>
 
 
 #include <ucs/async/async.h>
@@ -948,7 +949,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 return UCS_ERR_IO_ERROR;
             }
             while(true) {
-                status = connect(fep->d, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
+                status = connect(ep->fd, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
                 if (status != 0) {
                     if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
                         ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
