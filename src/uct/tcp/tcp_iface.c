@@ -837,6 +837,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     ucs_strncpy_zero(self->config.rendezvous_ip_address, config->rendezvous_ip_address,
         sizeof(self->config.rendezvous_ip_address));
     self->config.enable_tcpunch = config->enable_tcpunch;
+
     self->config.connect_timeout = config->connect_timeout;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
@@ -914,6 +915,8 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                              (struct sockaddr *) &self->config.ifaddr,
                              (struct sockaddr *) &self->config.netmask,
                              config);
+
+
                     break;
             }
         }
