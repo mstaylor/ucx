@@ -55,7 +55,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         if (saddr != NULL) {
             memcpy(saddr, addr, addrlen);
         }
-        atomic_store(&conn_established, true);
+        atomic_store(&conn_initialized, true);
 
     } else {
 
