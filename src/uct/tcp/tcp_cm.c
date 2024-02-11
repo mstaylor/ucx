@@ -42,7 +42,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     int publicPort;
 
     if (!atomic_load(&conn_initialized)) {
-        ucs_warn("initial device initialization so using a fake address")
+        ucs_warn("initial device initialization so using a fake address");
         set_sock_addr(NULL, &connect_addr, af, 0);
 
         addr = (struct sockaddr*)&connect_addr;
