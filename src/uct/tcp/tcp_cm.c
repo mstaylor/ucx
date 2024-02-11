@@ -49,7 +49,8 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
         status = ucs_sockaddr_sizeof(addr, &addrlen);
         if (status != UCS_OK) {
-            goto out_free_ifaddr;
+            ucs_warn("error ucs_sockaddr_sizeof");
+            return status;
         }
 
         if (saddr != NULL) {
