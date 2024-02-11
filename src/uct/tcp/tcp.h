@@ -368,6 +368,7 @@ UCS_PTR_MAP_DEFINE(tcp_ep, 0);
  */
 typedef struct uct_tcp_iface {
     uct_base_iface_t              super;             /* Parent class */
+    int                           initialized;       //support for rendezvous communication
     int                           listen_fd;         /* Server socket */
     ucs_conn_match_ctx_t          conn_match_ctx;    /* Connection matching context that contains EPs
                                                       * created with CONNECT_TO_IFACE method */
@@ -475,6 +476,7 @@ typedef struct uct_tcp_iface_config {
     char *                         rendezvous_ip_address;
     int                            redis_port;
     int                            connect_timeout;
+
 } uct_tcp_iface_config_t;
 
 
