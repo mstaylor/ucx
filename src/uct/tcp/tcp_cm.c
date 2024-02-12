@@ -16,7 +16,7 @@
 
 #include <ucs/async/async.h>
 
-atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
+
 
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
@@ -906,7 +906,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             }
 
             ucs_warn("configuring to reuse socket port");
-            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+            status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEPORT,
                                         &enable_flag, sizeof(int));
             if (status != UCS_OK) {
                 ucs_warn("could NOT configure to reuse socket port");
@@ -914,7 +914,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             }
 
             ucs_warn("configuring to reuse socket address");
-            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+            status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEADDR,
                                         &enable_flag, sizeof(int));
             if (status != UCS_OK) {
                 ucs_warn("could NOT configureto reuse socket address");

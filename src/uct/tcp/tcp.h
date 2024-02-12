@@ -72,7 +72,7 @@
 /* The seconds between individual keepalive probes */
 #define UCT_TCP_EP_DEFAULT_KEEPALIVE_INTVL   2
 
-
+atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
 /**
  * TCP EP connection manager ID
  */
