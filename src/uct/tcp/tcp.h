@@ -387,7 +387,7 @@ typedef struct uct_tcp_iface {
                                                       * (0/1 for each EP) */
     ucs_range_spec_t              port_range;        /** Range of ports to use for bind() */
     char                          mappedTCPunchAddr[INET6_ADDRSTRLEN];
-    int                           mappedTcPunchPort;
+    uint16_t                           mappedTcPunchPort;
 
     struct {
         size_t                    tx_seg_size;       /* TX AM buffer size */
