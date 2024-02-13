@@ -178,10 +178,12 @@ static ucs_status_t uct_tcp_iface_get_device_address(uct_iface_h tl_iface,
         in_addr = ucs_sockaddr_get_inet_addr(saddr);
         status  = ucs_sockaddr_inet_addr_sizeof(saddr, &ip_addr_len);
         if (status != UCS_OK) {
-            return status;
-        }
+            ucs_warn("could not pack address - returning anyway because address will be recreated for tcpunch");
+            //return status;
+        } else {
 
-        memcpy(pack_ptr, in_addr, ip_addr_len);
+            memcpy(pack_ptr, in_addr, ip_addr_len);
+        }
     }
 
     return UCS_OK;
