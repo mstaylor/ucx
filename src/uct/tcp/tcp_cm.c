@@ -85,7 +85,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         }
 
         status = UCS_OK;
-        tomic_store(&conn_initialized, true);
+        atomic_store(&conn_initialized, true);
     } else if (mappedsaddr != NULL){
         status = ucs_sockaddr_sizeof(mappedsaddr, &addrlen);
         if (status != UCS_OK) {
