@@ -25,7 +25,7 @@
 #include <stdbool.h>
 #include <stdatomic.h>
 
-atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
+
 
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
@@ -178,12 +178,10 @@ static ucs_status_t uct_tcp_iface_get_device_address(uct_iface_h tl_iface,
         in_addr = ucs_sockaddr_get_inet_addr(saddr);
         status  = ucs_sockaddr_inet_addr_sizeof(saddr, &ip_addr_len);
         if (status != UCS_OK) {
-            ucs_warn("could not pack address - returning anyway because address will be recreated for tcpunch");
-            //return status;
-        } else {
-
-            memcpy(pack_ptr, in_addr, ip_addr_len);
+            return status;
         }
+        memcpy(pack_ptr, in_addr, ip_addr_len);
+
     }
 
     return UCS_OK;
@@ -201,10 +199,8 @@ static size_t uct_tcp_iface_get_device_address_length(uct_tcp_iface_t *iface)
         addr_len += sizeof(uct_iface_local_addr_ns_t);
     } else {
         status = ucs_sockaddr_inet_addr_sizeof(saddr, &in_addr_len);
-        //ucs_assert_always(status == UCS_OK);
-        if (status != UCS_OK) {
-            ucs_warn("ucs_sockaddr_inet_addr_sizeof failed but continuing");
-        }
+        ucs_assert_always(status == UCS_OK);
+
 
         addr_len += in_addr_len;
     }
@@ -894,11 +890,11 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         goto err;
     }
 
-    if(!atomic_load(&conn_initialized) && self->config.enable_tcpunch) {
+    /*if(!atomic_load(&conn_initialized) && self->config.enable_tcpunch) {
         ucs_warn("not configuring interface for device discovery, only endpoints");
         atomic_store(&conn_initialized, true);
         return UCS_OK;
-    }
+    }*/
 
     ucs_mpool_params_reset(&mp_params);
     uct_iface_mpool_config_copy(&mp_params, &config->rx_mpool);
@@ -925,10 +921,11 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                              0);
             ucs_warn("status %i address %s", status, self->config.override_private_ip_address);
 
-            if (status != UCS_OK && self->config.enable_tcpunch) {
+            if (status != UCS_OK /*&& self->config.enable_tcpunch*/) {
                 ucs_warn("Calling ucs_netif_get_addr3");
                     status = ucs_netif_get_addr3(self->if_name,
                              (struct sockaddr *) &self->config.ifaddr,
+                                                 (struct sockaddr *)&self->mappedaddr,
                              (struct sockaddr *) &self->config.netmask,
                              config);
 

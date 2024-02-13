@@ -386,6 +386,7 @@ typedef struct uct_tcp_iface {
                                                       * waiting for PUT Zcopy operation ACKs
                                                       * (0/1 for each EP) */
     ucs_range_spec_t              port_range;        /** Range of ports to use for bind() */
+    struct sockaddr_storage       mappedaddr;
 
     struct {
         size_t                    tx_seg_size;       /* TX AM buffer size */
@@ -676,6 +677,7 @@ char * getValueFromRedis(const char *hostname, int port, const char *key);
 
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
+                                 struct sockaddr *mappedsaddr,
                                  struct sockaddr *netmask,
                                  uct_tcp_iface_config_t *config);
 

@@ -16,10 +16,11 @@
 
 #include <ucs/async/async.h>
 
-
+atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
 
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
+                                 struct sockaddr *mappedsaddr,
                                  struct sockaddr *netmask,
                                  uct_tcp_iface_config_t *config) {
 
@@ -42,7 +43,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     int publicPort;
 
 
-    if (enable_tcpunch) {
+    if (enable_tcpunch && !atomic_load(&conn_initialized)) {
         ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address,
                  config->rendezvous_port);
 
@@ -64,6 +65,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
         if (saddr != NULL) {
             memcpy(saddr, addr, addrlen);
+            memcpy(mappedsaddr,addr, addrlen);//create copy
         }
 
         //write to redis
@@ -83,6 +85,16 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         }
 
         status = UCS_OK;
+        tomic_store(&conn_initialized, true);
+    } else if (mappedsaddr != NULL){
+        status = ucs_sockaddr_sizeof(mappedsaddr, &addrlen);
+        if (status != UCS_OK) {
+            goto out_free_ifaddr;
+        }
+
+        if (saddr != NULL) {
+            memcpy(saddr, mappedsaddr, addrlen);
+        }
     }
 
 
