@@ -19,8 +19,7 @@
 #include <ucs/sys/event_set.h>
 #include <ucs/sys/iovec.h>
 #include "hiredis/hiredis.h"
-#include <stdbool.h>
-#include <stdatomic.h>
+
 
 #include <net/if.h>
 
@@ -74,7 +73,7 @@
 /* The seconds between individual keepalive probes */
 #define UCT_TCP_EP_DEFAULT_KEEPALIVE_INTVL   2
 
-atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
+
 /**
  * TCP EP connection manager ID
  */

@@ -21,6 +21,12 @@
 
 #define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net"
 
+
+#include <stdbool.h>
+#include <stdatomic.h>
+
+atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
+
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
 static ucs_config_field_t uct_tcp_iface_config_table[] = {
@@ -883,6 +889,12 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         goto err;
     }
 
+    if(!atomic_load(&conn_initialized) && self->config.enable_tcpunch) {
+        ucs_warn("not configuring interface for device discovery, only endpoints");
+        atomic_store(&conn_initialized, true);
+        return UCS_OK;
+    }
+
     ucs_mpool_params_reset(&mp_params);
     uct_iface_mpool_config_copy(&mp_params, &config->rx_mpool);
     mp_params.elems_per_chunk = (config->rx_mpool.bufs_grow == 0) ?
@@ -896,7 +908,6 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     }
 
     ucs_warn("number of af %i", tcp_md->config.af_prio_count);
-
 
 
         for (i = 0; i < tcp_md->config.af_prio_count; i++) {

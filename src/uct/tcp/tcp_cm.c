@@ -41,68 +41,50 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     char * publicAddress;
     int publicPort;
 
-    if (!atomic_load(&conn_initialized)) {
-        ucs_warn("initial device initialization so using a fake address");
-        set_sock_addr(NULL, &connect_addr, AF_INET, 0);
 
-        addr = (struct sockaddr*)&connect_addr;
+    if (enable_tcpunch) {
+        ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address,
+                 config->rendezvous_port);
+
+        status = connectandBindLocal(&data, &connect_addr, "test", config->rendezvous_ip_address,
+                                     config->rendezvous_port, 900000);
+
+        if (status != UCS_OK) {
+            ucs_warn("could not bind via tcpunch");
+            return status;
+        }
+
+        addr = (struct sockaddr *) &connect_addr;
 
         status = ucs_sockaddr_sizeof(addr, &addrlen);
         if (status != UCS_OK) {
-            ucs_warn("error ucs_sockaddr_sizeof");
+            ucs_warn("ucs_sockaddr_sizeof failed");
             return status;
         }
 
         if (saddr != NULL) {
             memcpy(saddr, addr, addrlen);
         }
-        atomic_store(&conn_initialized, true);
 
-    } else {
-
-        if (enable_tcpunch) {
-            ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address,
-                     config->rendezvous_port);
-
-            status = connectandBindLocal(&data, &connect_addr, "test", config->rendezvous_ip_address,
-                                         config->rendezvous_port, 900000);
-
-            if (status != UCS_OK) {
-                ucs_warn("could not bind via tcpunch");
-                return status;
-            }
-
-            addr = (struct sockaddr *) &connect_addr;
-
-            status = ucs_sockaddr_sizeof(addr, &addrlen);
-            if (status != UCS_OK) {
-                ucs_warn("ucs_sockaddr_sizeof failed");
-                return status;
-            }
-
-            if (saddr != NULL) {
-                memcpy(saddr, addr, addrlen);
-            }
-
-            //write to redis
-            if (saddr != NULL) {
+        //write to redis
+        if (saddr != NULL) {
 
 
-                ucs_sockaddr_str(saddr, dest_str,
-                                 UCS_SOCKADDR_STRING_LEN);
+            ucs_sockaddr_str(saddr, dest_str,
+                             UCS_SOCKADDR_STRING_LEN);
 
-                publicAddress = ip_to_string(&data.ip.s_addr, ipadd, sizeof(ipadd));
-                publicPort = ntohs(data.port);
+            publicAddress = ip_to_string(&data.ip.s_addr, ipadd, sizeof(ipadd));
+            publicPort = ntohs(data.port);
 
-                sprintf(redisValue, "%s:%i", publicAddress, publicPort);
+            sprintf(redisValue, "%s:%i", publicAddress, publicPort);
 
-                ucs_warn("writing public address to redis - key: %s value:%s", dest_str, redisValue);
-                setRedisValue(redis_ip_address, redis_port, dest_str, redisValue);
-            }
-
-            status = UCS_OK;
+            ucs_warn("writing public address to redis - key: %s value:%s", dest_str, redisValue);
+            setRedisValue(redis_ip_address, redis_port, dest_str, redisValue);
         }
+
+        status = UCS_OK;
     }
+
 
     return status;
 
