@@ -43,8 +43,8 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
 
     if (enable_tcpunch && !atomic_load(&conn_initialized)) {
-        ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address,
-                 config->rendezvous_port);
+        ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", iface->config.rendezvous_ip_address,
+                 iface->config.rendezvous_port);
 
         status = connectandBindLocal(&data, &connect_addr, "test", iface->config.rendezvous_ip_address,
                                      iface->config.rendezvous_port, 900000);
