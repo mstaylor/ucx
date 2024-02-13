@@ -32,9 +32,9 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char ipadd[UCS_SOCKADDR_STRING_LEN];
 
-    int enable_tcpunch = config->enable_tcpunch;
+    int enable_tcpunch = iface->config.enable_tcpunch;
     PeerConnectionData data;
-    const char * redis_ip_address = config->redis_ip_address;
+    const char * redis_ip_address = iface->config.redis_ip_address;
 
     int redis_port = iface->config.redis_port;
 
@@ -46,8 +46,8 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", config->rendezvous_ip_address,
                  config->rendezvous_port);
 
-        status = connectandBindLocal(&data, &connect_addr, "test", config->rendezvous_ip_address,
-                                     config->rendezvous_port, 900000);
+        status = connectandBindLocal(&data, &connect_addr, "test", iface->config.rendezvous_ip_address,
+                                     iface->config.rendezvous_port, 900000);
 
         if (status != UCS_OK) {
             ucs_warn("could not bind via tcpunch");
