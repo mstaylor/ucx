@@ -20,9 +20,8 @@ atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
 
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
-                                 struct sockaddr *mappedsaddr,
                                  struct sockaddr *netmask,
-                                 uct_tcp_iface_config_t *config) {
+                                 uct_tcp_iface_t *iface) {
 
     ucs_status_t status = UCS_ERR_NO_DEVICE;
     struct sockaddr* addr = NULL;
@@ -37,7 +36,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     PeerConnectionData data;
     const char * redis_ip_address = config->redis_ip_address;
 
-    int redis_port = config->redis_port;
+    int redis_port = iface->config.redis_port;
 
     char * publicAddress;
     int publicPort;
@@ -65,8 +64,22 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
         if (saddr != NULL) {
             memcpy(saddr, addr, addrlen);
-            memcpy(mappedsaddr,addr, addrlen);//create copy
         }
+
+        //write the ip/port to the interface to be recalled
+        status = ucs_sockaddr_get_ipstr(saddr, iface->mappedTCPunchAddr, INET6_ADDRSTRLEN);
+
+        if (status != UCS_OK) {
+            ucs_warn("unable to retrieve ip address in ucs_sockaddr_get_ipstr for mapped");
+            return status;
+        }
+        status = ucs_sockaddr_get_port(saddr, &iface->mappedTcPunchPort);
+        if (status != UCS_OK) {
+            ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped");
+            return status;
+        }
+
+        ucs_warn("saved ip: %s port: %i to iface", iface->mappedTCPunchAddr, iface->mappedTcPunchPort);
 
         //write to redis
         if (saddr != NULL) {
@@ -86,14 +99,18 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
 
         status = UCS_OK;
         atomic_store(&conn_initialized, true);
-    } else if (mappedsaddr != NULL){
-        status = ucs_sockaddr_sizeof(mappedsaddr, &addrlen);
+    } else {
+        set_sock_addr(iface->mappedTCPunchAddr, &connect_addr, AF_INET, iface->mappedTcPunchPort);
+
+        addr = (struct sockaddr*)&connect_addr;
+
+        status = ucs_sockaddr_sizeof(addr, &addrlen);
         if (status != UCS_OK) {
-           return status;
+            return status;
         }
 
         if (saddr != NULL) {
-            memcpy(saddr, mappedsaddr, addrlen);
+            memcpy(saddr, addr, addrlen);
         }
     }
 
