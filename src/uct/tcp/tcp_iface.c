@@ -202,6 +202,9 @@ static size_t uct_tcp_iface_get_device_address_length(uct_tcp_iface_t *iface)
     } else {
         status = ucs_sockaddr_inet_addr_sizeof(saddr, &in_addr_len);
         //ucs_assert_always(status == UCS_OK);
+        if (status != UCS_OK) {
+            ucs_warn("ucs_sockaddr_inet_addr_sizeof failed but continuing");
+        }
 
         addr_len += in_addr_len;
     }
