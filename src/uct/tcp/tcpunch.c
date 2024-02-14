@@ -9,6 +9,10 @@
 #include <stdbool.h>
 #include <time.h>
 #include <errno.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+
+
 
 atomic_bool connection_established = ATOMIC_VAR_INIT(false);
 atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
@@ -102,6 +106,9 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     PeerConnectionData public_info;
     ssize_t bytes;
     char ipadd[UCS_SOCKADDR_STRING_LEN];
+    int keepidle = 60; // seconds
+    int keepinterval = 10; // seconds
+    int keepcount = 5; // tries
 
 
     //PeerConnectionData peer_data;
@@ -130,9 +137,26 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
         ucs_error("Setting REUSE options failed: ");
         return UCS_ERR_IO_ERROR;
     }
-    if (setsockopt(socket_rendezvous, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout) < 0 ||
+    if (/*setsockopt(socket_rendezvous, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout) < 0 ||*/
+
         setsockopt(socket_rendezvous, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
         ucs_error("Setting timeout failed: ");
+        return UCS_ERR_IO_ERROR;
+    }
+
+    if (setsockopt(server_socket, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle))) {
+        ucs_error("Setting TCP_KEEPIDLE failed: ");
+        return UCS_ERR_IO_ERROR;
+    }
+
+    if(setsockopt(server_socket, IPPROTO_TCP, TCP_KEEPINTVL, &keepinterval, sizeof(keepinterval)) < 0) {
+        ucs_error("Setting TCP_KEEPINTVL failed: ");
+        return UCS_ERR_IO_ERROR;
+    }
+
+
+    if (setsockopt(server_socket, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount)) < 0) {
+        ucs_error("Setting TCP_KEEPCNT failed: ");
         return UCS_ERR_IO_ERROR;
     }
 
