@@ -876,7 +876,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int i = 0;
     int enable_flag = 1;
     ucs_status_t status;
-    char src_str[UCS_SOCKADDR_STRING_LEN];
+    //char src_str[UCS_SOCKADDR_STRING_LEN];
     int fd = 0;
 
     ep->conn_retries++;
@@ -915,6 +915,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 token = strtok(NULL, ":");
                 i++;
             }
+
+            ucs_warn("public address: %s public port: %i", publicAddress, publicPort);
 
             fd = socket(AF_INET, SOCK_STREAM, 0);
 
