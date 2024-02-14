@@ -144,18 +144,18 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
         return UCS_ERR_IO_ERROR;
     }
 
-    if (setsockopt(server_socket, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle))) {
+    if (setsockopt(socket_rendezvous, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle))) {
         ucs_error("Setting TCP_KEEPIDLE failed: ");
         return UCS_ERR_IO_ERROR;
     }
 
-    if(setsockopt(server_socket, IPPROTO_TCP, TCP_KEEPINTVL, &keepinterval, sizeof(keepinterval)) < 0) {
+    if(setsockopt(socket_rendezvous, IPPROTO_TCP, TCP_KEEPINTVL, &keepinterval, sizeof(keepinterval)) < 0) {
         ucs_error("Setting TCP_KEEPINTVL failed: ");
         return UCS_ERR_IO_ERROR;
     }
 
 
-    if (setsockopt(server_socket, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount)) < 0) {
+    if (setsockopt(socket_rendezvous, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount)) < 0) {
         ucs_error("Setting TCP_KEEPCNT failed: ");
         return UCS_ERR_IO_ERROR;
     }
