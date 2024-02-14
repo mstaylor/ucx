@@ -916,6 +916,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 i++;
             }
 
+            fd = socket(AF_INET, SOCK_STREAM, 0);
             ucs_warn("configuring to reuse socket port");
             status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEPORT,
                                         &enable_flag, sizeof(int));
@@ -925,6 +926,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             }
 
             ucs_warn("configuring to reuse socket address");
+
             status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEADDR,
                                         &enable_flag, sizeof(int));
             if (status != UCS_OK) {
