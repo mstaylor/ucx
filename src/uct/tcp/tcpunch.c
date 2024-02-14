@@ -121,8 +121,8 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     atomic_store(&connection_established, false);
     atomic_store(&accepting_socket, -1);
 
-    timeout.tv_sec = timeout_ms / 1000;
-    timeout.tv_usec = (timeout_ms % 1000) * 1000;
+    //timeout.tv_sec = timeout_ms / 1000;
+    //timeout.tv_usec = (timeout_ms % 1000) * 1000;
 
     socket_rendezvous = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_rendezvous == -1) {
