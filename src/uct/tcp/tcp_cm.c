@@ -961,7 +961,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             local_port_addr.sin_port = local_port;
 
 
-            /*ucs_warn("binding connect interface to %i", local_port);
+            ucs_warn("binding connect interface to %i", local_port);
 
             if (bind(fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr)) < 0) {
                 ucs_warn("Binding to same port failed: %i", local_port);
@@ -989,7 +989,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-            if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
+            /*if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                 ucs_error("Setting O_NONBLOCK failed: ");
                 return UCS_ERR_IO_ERROR;
             }
