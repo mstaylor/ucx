@@ -916,15 +916,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 i++;
             }
 
-            status = ucs_socket_create(AF_INET, SOCK_STREAM, &fd);
-            if (status != UCS_OK) {
-                ucs_warn("unable to create socket");
-                return status;
-            }
+            fd = socket(AF_INET, SOCK_STREAM, 0);
 
             ucs_warn("configuring to reuse socket port");
             status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEPORT,
-                                        &enable_flag, sizeof(int));
+                                        &enable_flag, sizeof(enable_flag));
             if (status != UCS_OK) {
                 ucs_warn("could NOT configure to reuse socket port");
                 return status;
@@ -933,7 +929,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             ucs_warn("configuring to reuse socket address");
 
             status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEADDR,
-                                        &enable_flag, sizeof(int));
+                                        &enable_flag, sizeof(enable_flag));
             if (status != UCS_OK) {
                 ucs_warn("could NOT configureto reuse socket address");
                 return status;
@@ -999,7 +995,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 status = connect(fd, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
                 if (status != 0) {
                     if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
-                        //ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
+                        ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
                         continue;
                     } else if (errno == EISCONN) {
 
