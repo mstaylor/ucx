@@ -864,13 +864,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     //size_t addrlen;
 
     //int flags;
-    //char dest_str[UCS_SOCKADDR_STRING_LEN];
-    //char ip_port_str[UCS_SOCKADDR_STRING_LEN];
-    //char localIpAddress[UCS_SOCKADDR_STRING_LEN];
+    char dest_str[UCS_SOCKADDR_STRING_LEN];
+    char ip_port_str[UCS_SOCKADDR_STRING_LEN];
+    char localIpAddress[UCS_SOCKADDR_STRING_LEN];
     int local_port = 0;
     char* remote_address = NULL;
-    //char publicAddress[UCS_SOCKADDR_STRING_LEN];
-    //int publicPort = 0;
+    char publicAddress[UCS_SOCKADDR_STRING_LEN];
+    int publicPort = 0;
     char * token = NULL;
     struct sockaddr_in local_port_addr;
     int i = 0;
