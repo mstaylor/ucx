@@ -100,7 +100,7 @@ int msleep(long msec)
 
 int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms) {
     struct sockaddr_in *sa_in;
-    struct timeval timeout;
+    //struct timeval timeout;
 
     struct sockaddr_in server_data;
     PeerConnectionData public_info;
