@@ -859,9 +859,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
 
-    //struct sockaddr* addr = NULL;
-    //struct sockaddr_storage connect_addr;
-    //size_t addrlen;
+    struct sockaddr* addr = NULL;
+    struct sockaddr_storage connect_addr;
+    size_t addrlen;
 
     //int flags;
     char dest_str[UCS_SOCKADDR_STRING_LEN];
@@ -876,7 +876,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int i = 0;
     int enable_flag = 1;
     ucs_status_t status;
-    //char src_str[UCS_SOCKADDR_STRING_LEN];
+    char src_str[UCS_SOCKADDR_STRING_LEN];
     int fd = 0;
 
     ep->conn_retries++;
