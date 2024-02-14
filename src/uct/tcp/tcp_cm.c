@@ -859,18 +859,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
 
-    struct sockaddr* addr = NULL;
-    struct sockaddr_storage connect_addr;
-    size_t addrlen;
+    //struct sockaddr* addr = NULL;
+    //struct sockaddr_storage connect_addr;
+    //size_t addrlen;
 
-    int flags;
-    char dest_str[UCS_SOCKADDR_STRING_LEN];
-    char ip_port_str[UCS_SOCKADDR_STRING_LEN];
-    char localIpAddress[UCS_SOCKADDR_STRING_LEN];
+    //int flags;
+    //char dest_str[UCS_SOCKADDR_STRING_LEN];
+    //char ip_port_str[UCS_SOCKADDR_STRING_LEN];
+    //char localIpAddress[UCS_SOCKADDR_STRING_LEN];
     int local_port = 0;
     char* remote_address = NULL;
-    char publicAddress[UCS_SOCKADDR_STRING_LEN];
-    int publicPort = 0;
+    //char publicAddress[UCS_SOCKADDR_STRING_LEN];
+    //int publicPort = 0;
     char * token = NULL;
     struct sockaddr_in local_port_addr;
     int i = 0;
@@ -959,7 +959,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             local_port_addr.sin_port = local_port;
 
 
-            ucs_warn("binding connect interface to %i", local_port);
+            /*ucs_warn("binding connect interface to %i", local_port);
 
             if (bind(fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr)) < 0) {
                 ucs_warn("Binding to same port failed: %i", local_port);
@@ -1030,7 +1030,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 if (status != UCS_OK) {
                     return status;
                 }
-            }
+            }*/
 
             uct_tcp_cm_conn_complete(ep);
 
