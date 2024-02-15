@@ -18,16 +18,18 @@ atomic_bool connection_established = ATOMIC_VAR_INIT(false);
 atomic_bool end_connection = ATOMIC_VAR_INIT(false);
 atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
 int socket_rendezvous = -1;
+pthread_t ping_thread;
 
 void endPing() {
     atomic_store(&end_connection, true);
 }
 
-void ping(const char* pairName) {
+void ping(void* pairing_name) {
 
     ssize_t bytes;
     PeerConnectionData public_info;
     char ipadd[UCS_SOCKADDR_STRING_LEN];
+    const char * pairName = (const char*)pairing_name;
 
     while(!atomic_load(&end_connection)) {
 
@@ -147,6 +149,8 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     int keepidle = 60; // seconds
     int keepinterval = 10; // seconds
     int keepcount = 5; // tries
+    int thread_return;
+
 
 
     //PeerConnectionData peer_data;
@@ -233,6 +237,12 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
 
     data->ip = public_info.ip;
     data->port = public_info.port;
+
+    thread_return = pthread_create(&ping_thread, NULL, (void *)ping_thread, (void*) &pairing_name);
+    if(thread_return) {
+        ucs_error("Error when creating thread for listening: ");
+        return UCS_ERR_IO_ERROR;
+    }
 
     return UCS_OK;
 }
