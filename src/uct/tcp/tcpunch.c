@@ -238,7 +238,7 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     data->ip = public_info.ip;
     data->port = public_info.port;
 
-    thread_return = pthread_create(&ping_thread, NULL, (void *)ping_thread, (void*) &pairing_name);
+    thread_return = pthread_create(&ping_thread, NULL, (void *)ping, (void*) &pairing_name);
     if(thread_return) {
         ucs_error("Error when creating thread for listening: ");
         return UCS_ERR_IO_ERROR;
