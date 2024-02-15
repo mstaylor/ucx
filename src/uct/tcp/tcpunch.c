@@ -32,17 +32,17 @@ void ping(const char* pairName) {
 
         if (send(socket_rendezvous, pairName, strlen(pairName), MSG_DONTWAIT) == -1) {
             ucs_error("Failed to send data to rendezvous server: ");
-            return UCS_ERR_IO_ERROR;
+            //return UCS_ERR_IO_ERROR;
         }
 
 
         bytes = recv(socket_rendezvous, &public_info, sizeof(public_info), MSG_WAITALL);
         if (bytes == -1) {
             ucs_error("Failed to get data from rendezvous server: ");
-            return UCS_ERR_IO_ERROR;
+            //return UCS_ERR_IO_ERROR;
         } else if (bytes == 0) {
             ucs_error("Server has disconnected");
-            return UCS_ERR_IO_ERROR;
+            //return UCS_ERR_IO_ERROR;
         }
         ucs_warn("client data: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)), ntohs(public_info.port));
 
