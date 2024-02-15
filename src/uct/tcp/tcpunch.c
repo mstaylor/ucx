@@ -27,6 +27,7 @@ void ping(const char* pairName) {
 
     ssize_t bytes;
     PeerConnectionData public_info;
+    char ipadd[UCS_SOCKADDR_STRING_LEN];
 
     while(!atomic_load(&end_connection)) {
 
