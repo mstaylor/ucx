@@ -25,9 +25,12 @@ void endPing() {
 
 void ping(const char* pairName) {
 
+    ssize_t bytes;
+    PeerConnectionData public_info;
+
     while(!atomic_load(&end_connection)) {
 
-        if (send(socket_rendezvous, pairing_name, strlen(pairName), MSG_DONTWAIT) == -1) {
+        if (send(socket_rendezvous, pairName, strlen(pairName), MSG_DONTWAIT) == -1) {
             ucs_error("Failed to send data to rendezvous server: ");
             return UCS_ERR_IO_ERROR;
         }
@@ -41,8 +44,9 @@ void ping(const char* pairName) {
             ucs_error("Server has disconnected");
             return UCS_ERR_IO_ERROR;
         }
+        ucs_warn("client data: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)), ntohs(public_info.port));
 
-        msleep(100);//sleep for 100 ms
+        msleep(1000);//sleep for 100 ms
 
     }
 
@@ -100,6 +104,8 @@ ucs_status_t peer_listen(void* p) {
             return UCS_OK;
         }
     }
+
+
 }
 
 char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size) {
