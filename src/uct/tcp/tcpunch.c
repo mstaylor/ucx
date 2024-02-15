@@ -15,8 +15,39 @@
 
 
 atomic_bool connection_established = ATOMIC_VAR_INIT(false);
+atomic_bool end_connection = ATOMIC_VAR_INIT(false);
 atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
 int socket_rendezvous = -1;
+
+void endPing() {
+    atomic_store(&end_connection, true);
+}
+
+void ping(const char* pairName) {
+
+    while(!atomic_load(&end_connection)) {
+
+        if (send(socket_rendezvous, pairing_name, strlen(pairName), MSG_DONTWAIT) == -1) {
+            ucs_error("Failed to send data to rendezvous server: ");
+            return UCS_ERR_IO_ERROR;
+        }
+
+
+        bytes = recv(socket_rendezvous, &public_info, sizeof(public_info), MSG_WAITALL);
+        if (bytes == -1) {
+            ucs_error("Failed to get data from rendezvous server: ");
+            return UCS_ERR_IO_ERROR;
+        } else if (bytes == 0) {
+            ucs_error("Server has disconnected");
+            return UCS_ERR_IO_ERROR;
+        }
+
+        msleep(100);//sleep for 100 ms
+
+    }
+
+
+}
 
 ucs_status_t peer_listen(void* p) {
     struct sockaddr_in peer_info;
