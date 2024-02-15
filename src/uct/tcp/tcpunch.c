@@ -47,7 +47,7 @@ void ping(void* pairing_name) {
             ucs_error("Server has disconnected");
             //return UCS_ERR_IO_ERROR;
         }
-        ucs_warn("client data: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)), ntohs(public_info.port));
+        ucs_warn("ping client data: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)), ntohs(public_info.port));
 
         msleep(1000);//sleep for 100 ms
 
