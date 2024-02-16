@@ -987,7 +987,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             free(remote_address);
 
-
+            endPing();
 
             /*if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                 ucs_error("Setting O_NONBLOCK failed: ");
