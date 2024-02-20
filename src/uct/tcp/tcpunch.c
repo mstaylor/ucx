@@ -33,10 +33,10 @@ void ping(void* pairing_name) {
 
     while(!atomic_load(&end_connection)) {
 
-        if (send(socket_rendezvous, pairName, strlen(pairName), MSG_DONTWAIT) == -1) {
+        /*if (send(socket_rendezvous, pairName, strlen(pairName), MSG_DONTWAIT) == -1) {
             ucs_error("Failed to send data to rendezvous server: ");
             //return UCS_ERR_IO_ERROR;
-        }
+        }*/
 
 
         bytes = recv(socket_rendezvous, &public_info, sizeof(public_info), MSG_WAITALL);
@@ -49,7 +49,7 @@ void ping(void* pairing_name) {
         }
         ucs_warn("ping client data: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)), ntohs(public_info.port));
 
-        msleep(1000);//sleep for 100 ms
+
 
     }
 
