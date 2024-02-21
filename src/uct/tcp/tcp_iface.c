@@ -935,7 +935,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                     status = ucs_netif_get_addr3(self->if_name,
                              (struct sockaddr *) &self->config.ifaddr,
                              (struct sockaddr *) &self->config.netmask,
-                             self);
+                             self, config);
 
 
                     break;

@@ -21,7 +21,8 @@ atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
                                  struct sockaddr *netmask,
-                                 uct_tcp_iface_t *iface) {
+                                 uct_tcp_iface_t *iface,
+                                 uct_tcp_iface_config_t *config) {
 
     ucs_status_t status = UCS_ERR_NO_DEVICE;
     struct sockaddr* addr = NULL;
@@ -46,8 +47,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     char * publicAddress;
     int publicPort;
 
-    int putStatus;
-    char env_string[200];
+
 
 
     if (enable_tcpunch && !atomic_load(&conn_initialized)) {
@@ -87,26 +87,13 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
             return status;
         }
 
-        sprintf(env_string, "%s=%s", "UCX_TCP_MAPPED_TCPUNCH_IP", tcpunch_ip_str);
+        ucs_strncpy_zero(config->mappedTCPunchAddr, tcpunch_ip_str,
+                         sizeof(config->mappedTCPunchAddr));
 
-        putStatus = putenv(env_string);
-
-        if (putStatus != 0) {
-            ucs_warn("could not write UCX_TCP_MAPPED_TCPUNCH_IP env");
-            return UCS_ERR_IO_ERROR;
-        }
-
-        sprintf(env_string, "%s=%i", "UCX_TCP_MAPPED_TCPUNCH_PORT", tcpunch_port);
-
-        putStatus = putenv(env_string);
-
-        if (putStatus != 0) {
-            ucs_warn("could not write UCX_TCP_MAPPED_TCPUNCH_PORT env");
-            return UCS_ERR_IO_ERROR;
-        }
+        config->mappedTcPunchPort = tcpunch_port;
 
 
-        ucs_warn("saved ip: %s port: %i to iface", tcpunch_ip_str, tcpunch_port);
+        ucs_warn("saved ip: %s port: %i to config", config->mappedTCPunchAddr, config->mappedTcPunchPort);
 
         //write to redis
         if (saddr != NULL) {
