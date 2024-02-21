@@ -54,7 +54,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         ucs_warn("tcpunch enabled contacting rendezvous host: %s, port %i ", iface->config.rendezvous_ip_address,
                  iface->config.rendezvous_port);
 
-        status = connectandBindLocal(&data, &connect_addr, "test", iface->config.rendezvous_ip_address,
+        status = connectandBindLocal(&data, &connect_addr, "cylon", iface->config.rendezvous_ip_address,
                                      iface->config.rendezvous_port, 900000);
 
         if (status != UCS_OK) {
