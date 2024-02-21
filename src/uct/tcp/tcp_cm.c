@@ -47,7 +47,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     int publicPort;
 
     int putStatus;
-    char env_string[UCS_SOCKADDR_STRING_LEN];
+    char env_string[200];
 
 
     if (enable_tcpunch && !atomic_load(&conn_initialized)) {
