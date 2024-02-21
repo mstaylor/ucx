@@ -32,14 +32,22 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char ipadd[UCS_SOCKADDR_STRING_LEN];
 
+    char tcpunch_ip_str[UCS_SOCKADDR_STRING_LEN];
+    uint16_t              tcpunch_port;
+
     int enable_tcpunch = iface->config.enable_tcpunch;
     PeerConnectionData data;
     const char * redis_ip_address = iface->config.redis_ip_address;
 
+    const char * tcpunch_mapped_ip_address = iface->config.mappedTCPunchAddr;
+    int tcpunch_mapped_port = iface->config.mappedTcPunchPort;
     int redis_port = iface->config.redis_port;
 
     char * publicAddress;
     int publicPort;
+
+    int putStatus;
+    char env_string[UCS_SOCKADDR_STRING_LEN];
 
 
     if (enable_tcpunch && !atomic_load(&conn_initialized)) {
@@ -67,23 +75,41 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         }
 
         //write the ip/port to the interface to be recalled
-        status = ucs_sockaddr_get_ipstr(saddr, iface->mappedTCPunchAddr, INET6_ADDRSTRLEN);
+        status = ucs_sockaddr_get_ipstr(saddr, tcpunch_ip_str, UCS_SOCKADDR_STRING_LEN);
 
         if (status != UCS_OK) {
             ucs_warn("unable to retrieve ip address in ucs_sockaddr_get_ipstr for mapped");
             return status;
         }
-        status = ucs_sockaddr_get_port(saddr, &iface->mappedTcPunchPort);
+        status = ucs_sockaddr_get_port(saddr, &tcpunch_port);
         if (status != UCS_OK) {
             ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped");
             return status;
         }
 
-        ucs_warn("saved ip: %s port: %i to iface", iface->mappedTCPunchAddr, iface->mappedTcPunchPort);
+        sprintf(env_string, "%s=%s", "UCX_TCP_MAPPED_TCPUNCH_IP", tcpunch_ip_str);
+
+        putStatus = putenv(env_string);
+
+        if (putStatus != 0) {
+            ucs_warn("could not write UCX_TCP_MAPPED_TCPUNCH_IP env");
+            return UCS_ERR_IO_ERROR;
+        }
+
+        sprintf(env_string, "%s=%i", "UCX_TCP_MAPPED_TCPUNCH_PORT", tcpunch_port);
+
+        putStatus = putenv(env_string);
+
+        if (putStatus != 0) {
+            ucs_warn("could not write UCX_TCP_MAPPED_TCPUNCH_PORT env");
+            return UCS_ERR_IO_ERROR;
+        }
+
+
+        ucs_warn("saved ip: %s port: %i to iface", tcpunch_ip_str, tcpunch_port);
 
         //write to redis
         if (saddr != NULL) {
-
 
             ucs_sockaddr_str(saddr, dest_str,
                              UCS_SOCKADDR_STRING_LEN);
@@ -100,7 +126,8 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         status = UCS_OK;
         atomic_store(&conn_initialized, true);
     } else {
-        set_sock_addr(iface->mappedTCPunchAddr, &connect_addr, AF_INET, iface->mappedTcPunchPort);
+        ucs_warn("writing env ip: %s %i", tcpunch_mapped_ip_address, tcpunch_mapped_port);
+        set_sock_addr(tcpunch_mapped_ip_address, &connect_addr, AF_INET, tcpunch_mapped_port);
 
         addr = (struct sockaddr*)&connect_addr;
 

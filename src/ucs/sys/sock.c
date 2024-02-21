@@ -636,7 +636,6 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
 
     }
 
-    //TODO: for nat hole punching, may need to connect and send payload and then bind
 
     ret = bind(fd, saddr, socklen);
     if (ret < 0) {

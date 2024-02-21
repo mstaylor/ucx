@@ -88,6 +88,12 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {"REDIS_PORT", "0",
    "Redis Port\n",
    ucs_offsetof(uct_tcp_iface_config_t, redis_port), UCS_CONFIG_TYPE_INT},
+  {"MAPPED_TCPUNCH_IP", "",
+   "Mapped TCPUNCH IP ",
+   ucs_offsetof(uct_tcp_iface_config_t, mappedTCPunchAddr), UCS_CONFIG_TYPE_STRING},
+  {"MAPPED_TCPUNCH_PORT", "0",
+   "Mapped TCPunch Port\n",
+   ucs_offsetof(uct_tcp_iface_config_t, mappedTcPunchPort), UCS_CONFIG_TYPE_INT},
   {"RENDEZVOUS_IP", "",
    "Rendezvous IP ",
    ucs_offsetof(uct_tcp_iface_config_t, rendezvous_ip_address), UCS_CONFIG_TYPE_STRING},
@@ -843,6 +849,9 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.rendezvous_port = config->rendezvous_port;
     ucs_strncpy_zero(self->config.rendezvous_ip_address, config->rendezvous_ip_address,
         sizeof(self->config.rendezvous_ip_address));
+    ucs_strncpy_zero(self->config.mappedTCPunchAddr, config->mappedTCPunchAddr,
+        sizeof(self->config.mappedTCPunchAddr));
+    self->config.mappedTcPunchPort = config->mappedTcPunchPort;
     self->config.enable_tcpunch = config->enable_tcpunch;
 
     self->config.connect_timeout = config->connect_timeout;

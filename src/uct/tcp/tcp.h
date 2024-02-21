@@ -386,8 +386,7 @@ typedef struct uct_tcp_iface {
                                                       * waiting for PUT Zcopy operation ACKs
                                                       * (0/1 for each EP) */
     ucs_range_spec_t              port_range;        /** Range of ports to use for bind() */
-    char                          mappedTCPunchAddr[INET6_ADDRSTRLEN];
-    uint16_t                           mappedTcPunchPort;
+
 
     struct {
         size_t                    tx_seg_size;       /* TX AM buffer size */
@@ -424,6 +423,8 @@ typedef struct uct_tcp_iface {
         int                       rendezvous_port;
         int                       enable_tcpunch;
         int                       connect_timeout;
+        char                      mappedTCPunchAddr[INET6_ADDRSTRLEN];
+        int                       mappedTcPunchPort;
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -478,6 +479,8 @@ typedef struct uct_tcp_iface_config {
     char *                         rendezvous_ip_address;
     int                            redis_port;
     int                            connect_timeout;
+    char  *                        mappedTCPunchAddr;
+    int                             mappedTcPunchPort;
 
 } uct_tcp_iface_config_t;
 
