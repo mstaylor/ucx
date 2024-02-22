@@ -977,6 +977,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             memset(&local_port_addr, 0, sizeof(local_port_addr));
 
+            endPing();
+
             local_port_addr.sin_family = AF_INET;
             local_port_addr.sin_addr.s_addr = INADDR_ANY;
             local_port_addr.sin_port = local_port;
