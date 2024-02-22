@@ -891,7 +891,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int enable_flag = 1;
     uint16_t port_p;
 
-    char src_str[UCS_SOCKADDR_STRING_LEN];
+    //char src_str[UCS_SOCKADDR_STRING_LEN];
     int fd = 0;
 
     ucs_status_t status;
