@@ -53,6 +53,8 @@ void ping(void* pairing_name) {
 
     }
 
+    close(socket_rendezvous);
+
 
 }
 
