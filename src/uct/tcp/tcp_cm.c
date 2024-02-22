@@ -977,7 +977,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             memset(&local_port_addr, 0, sizeof(local_port_addr));
 
-            local_port_addr.sin_family = AF_INET;
+            /*local_port_addr.sin_family = AF_INET;
             local_port_addr.sin_addr.s_addr = INADDR_ANY;
             local_port_addr.sin_port = local_port;
 
@@ -990,7 +990,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             }
 
             ucs_warn("updated endpoint src address %i %s", local_port, ucs_socket_getname_str(fd, src_str, UCS_SOCKADDR_STRING_LEN));
-
+            */
             ucs_warn("configuring endpoint connect address: %s %i", publicAddress, publicPort);
 
             set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
@@ -1010,15 +1010,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             endPing();
 
-            if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
+           /* if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                 ucs_error("Setting O_NONBLOCK failed: ");
                 return UCS_ERR_IO_ERROR;
-            }
+            }*/
             while(true) {
-                status = connect(fd, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
+                status = connect(mapped_tcpunch_port, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
                 if (status != 0) {
                     if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
-                        ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
+                        //ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
                         continue;
                     } else if (errno == EISCONN) {
 
