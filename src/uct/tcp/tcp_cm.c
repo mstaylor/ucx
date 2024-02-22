@@ -873,7 +873,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
 
-    /*struct sockaddr* addr = NULL;
+    struct sockaddr* addr = NULL;
     struct sockaddr_storage connect_addr;
     size_t addrlen;
 
@@ -889,9 +889,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in local_port_addr;
     int i = 0;
     int enable_flag = 1;
+    uint16_t port_p;
 
     char src_str[UCS_SOCKADDR_STRING_LEN];
-    int fd = 0;*/
+    int fd = 0;
 
     ucs_status_t status;
 
@@ -904,14 +905,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTING);
 
-/*
-    if (iface->config.enable_tcpunch) {
+    ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
+                     UCS_SOCKADDR_STRING_LEN);
+    ucs_warn("peer address: %s", dest_str);
+
+    if (ucs_sockaddr_get_port((const struct sockaddr*)&ep->peer_addr, &port_p) != UCS_OK) {
+        ucs_warn("could not retrieve peer port");
+    }
+
+
+    if (iface->config.enable_tcpunch && port_p != mapped_tcpunch_port) {
         ucs_warn("tcp punch enabled - now connecting with peer");
 
-        ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
-                        UCS_SOCKADDR_STRING_LEN);
-
-        ucs_warn("dest addr to be passed to redis: %s", dest_str);
 
         remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
 
@@ -1004,8 +1009,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             free(remote_address);
 
             endPing();
-*/
-            /*if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
+
+            if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                 ucs_error("Setting O_NONBLOCK failed: ");
                 return UCS_ERR_IO_ERROR;
             }
@@ -1048,14 +1053,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 if (status != UCS_OK) {
                     return status;
                 }
-            }*/
+            }
 
-          /*  uct_tcp_cm_conn_complete(ep);
+            uct_tcp_cm_conn_complete(ep);
 
 
         }
 
-    } else {*/
+    } else {
         ucs_warn("connecting to socket address cm");
         status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
         if (UCS_STATUS_IS_ERR(status)) {
@@ -1077,8 +1082,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         }
 
         uct_tcp_cm_conn_complete(ep);
-  /*  }
-*/
+    }
+
 
     return UCS_OK;
 }
