@@ -877,7 +877,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_storage connect_addr;
     size_t addrlen;
 
-    int flags;
+    //int flags;
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     char localIpAddress[UCS_SOCKADDR_STRING_LEN];
