@@ -17,7 +17,7 @@
 #include <ucs/async/async.h>
 
 atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
-
+int mapped_tcpunch_port = 0;
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
                                  struct sockaddr *netmask,
@@ -40,8 +40,8 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     PeerConnectionData data;
     const char * redis_ip_address = iface->config.redis_ip_address;
 
-    const char * tcpunch_mapped_ip_address = iface->config.mappedTCPunchAddr;
-    int tcpunch_mapped_port = iface->config.mappedTcPunchPort;
+    //const char * tcpunch_mapped_ip_address = iface->config.mappedTCPunchAddr;
+    //int tcpunch_mapped_port = iface->config.mappedTcPunchPort;
     int redis_port = iface->config.redis_port;
 
     char * publicAddress;
@@ -87,13 +87,13 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
             return status;
         }
 
-        ucs_strncpy_zero(config->mappedTCPunchAddr, tcpunch_ip_str,
-                         sizeof(config->mappedTCPunchAddr));
+        //ucs_strncpy_zero(config->mappedTCPunchAddr, tcpunch_ip_str,
+        //                 sizeof(config->mappedTCPunchAddr));
 
-        config->mappedTcPunchPort = tcpunch_port;
+        //config->mappedTcPunchPort = tcpunch_port;
+        mapped_tcpunch_port = tcpunch_port;
 
-
-        ucs_warn("saved ip: %s port: %i to config", config->mappedTCPunchAddr, config->mappedTcPunchPort);
+        ucs_warn("saved ip: %s port: %i to config", tcpunch_ip_str, tcpunch_port);
 
         //write to redis
         if (saddr != NULL) {
@@ -113,8 +113,8 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         status = UCS_OK;
         atomic_store(&conn_initialized, true);
     } else {
-        ucs_warn("writing env ip: %s %i", tcpunch_mapped_ip_address, tcpunch_mapped_port);
-        set_sock_addr(tcpunch_mapped_ip_address, &connect_addr, AF_INET, tcpunch_mapped_port);
+        ucs_warn("writing port: %i", mapped_tcpunch_port);
+        set_sock_addr(NULL, &connect_addr, AF_INET, mapped_tcpunch_port);
 
         addr = (struct sockaddr*)&connect_addr;
 
@@ -873,7 +873,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
 
-    struct sockaddr* addr = NULL;
+    /*struct sockaddr* addr = NULL;
     struct sockaddr_storage connect_addr;
     size_t addrlen;
 
@@ -891,7 +891,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int enable_flag = 1;
     ucs_status_t status;
     char src_str[UCS_SOCKADDR_STRING_LEN];
-    int fd = 0;
+    int fd = 0;*/
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -902,7 +902,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTING);
 
-
+/*
     if (iface->config.enable_tcpunch) {
         ucs_warn("tcp punch enabled - now connecting with peer");
 
@@ -1002,7 +1002,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             free(remote_address);
 
             endPing();
-
+*/
             /*if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                 ucs_error("Setting O_NONBLOCK failed: ");
                 return UCS_ERR_IO_ERROR;
@@ -1048,12 +1048,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 }
             }*/
 
-            uct_tcp_cm_conn_complete(ep);
+          /*  uct_tcp_cm_conn_complete(ep);
 
 
         }
 
-    } else {
+    } else {*/
         ucs_warn("connecting to socket address cm");
         status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
         if (UCS_STATUS_IS_ERR(status)) {
@@ -1075,8 +1075,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         }
 
         uct_tcp_cm_conn_complete(ep);
-    }
-
+  /*  }
+*/
 
     return UCS_OK;
 }
