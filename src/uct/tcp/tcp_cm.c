@@ -991,7 +991,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 return UCS_ERR_UNREACHABLE;
             }
 
-            ucs_warn("updated endpoint src address %i %s", local_port, ucs_socket_getname_str(fd, src_str, UCS_SOCKADDR_STRING_LEN));
+            ucs_warn("updated endpoint src address %i %s", local_port, ucs_socket_getname_str(ep->fd, src_str, UCS_SOCKADDR_STRING_LEN));
 
             ucs_warn("configuring endpoint connect address: %s %i", publicAddress, publicPort);
 
