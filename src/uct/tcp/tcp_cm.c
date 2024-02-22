@@ -892,7 +892,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     uint16_t port_p;
 
     char src_str[UCS_SOCKADDR_STRING_LEN];
-    int fd = 0;
+    //int fd = 0;
 
     ucs_status_t status;
 
@@ -939,10 +939,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             ucs_warn("public address: %s public port: %i", publicAddress, publicPort);
 
-            fd = socket(AF_INET, SOCK_STREAM, 0);
+            //fd = socket(AF_INET, SOCK_STREAM, 0);
 
             ucs_warn("configuring to reuse socket port");
-            status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEPORT,
+            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
                                         &enable_flag, sizeof(enable_flag));
             if (status != UCS_OK) {
                 ucs_warn("could NOT configure to reuse socket port");
@@ -951,7 +951,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             ucs_warn("configuring to reuse socket address");
 
-            status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEADDR,
+            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
                                         &enable_flag, sizeof(enable_flag));
             if (status != UCS_OK) {
                 ucs_warn("could NOT configureto reuse socket address");
@@ -986,7 +986,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
             ucs_warn("binding connect interface to %i", local_port);
 
-            if (bind(fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr)) < 0) {
+            if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr)) < 0) {
                 ucs_warn("Binding to same port failed: %i", local_port);
                 return UCS_ERR_UNREACHABLE;
             }
@@ -1012,11 +1012,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-            if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
+           /* if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                 ucs_error("Setting O_NONBLOCK failed: ");
                 return UCS_ERR_IO_ERROR;
-            }
-            while(true) {
+            }*/
+            /*while(true) {
                 status = connect(fd, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
                 if (status != 0) {
                     if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -1038,15 +1038,27 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                     status = UCS_OK;
                     break;
                 }
-            }
+            }*/
 
-            flags = fcntl(fd,  F_GETFL, 0);
+            /*flags = fcntl(fd,  F_GETFL, 0);
             flags &= ~(O_NONBLOCK);
             fcntl(fd, F_SETFL, flags);
 
-            ep->fd = fd;
+            ep->fd = fd;*/
 
             //ep->fd = iface->listen_fd;
+
+            //ucs_assert(status == UCS_OK);
+
+            status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
+            if (UCS_STATUS_IS_ERR(status)) {
+                return status;
+            } else if (status == UCS_INPROGRESS) {
+                ucs_warn("connection in progress");
+                ucs_assert(iface->config.conn_nb);
+                uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
+                return UCS_OK;
+            }
 
             ucs_assert(status == UCS_OK);
 
