@@ -889,9 +889,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in local_port_addr;
     int i = 0;
     int enable_flag = 1;
-    ucs_status_t status;
+
     char src_str[UCS_SOCKADDR_STRING_LEN];
     int fd = 0;*/
+
+    ucs_status_t status;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
