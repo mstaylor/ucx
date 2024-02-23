@@ -202,7 +202,6 @@ int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_
     //struct sockaddr_in peer_addr;
     struct sockaddr_in *sa_in;
     struct timeval timeout;
-    int socket_rendez;
     struct sockaddr_in server_data;
     PeerConnectionData public_info;
     ssize_t bytes;
