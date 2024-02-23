@@ -868,6 +868,63 @@ err:
     return 0;
 }
 
+static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
+{
+    struct sockaddr_storage bind_addr = iface->config.ifaddr;
+    socklen_t socklen                 = sizeof(bind_addr);
+    char ip_port_str[UCS_SOCKADDR_STRING_LEN];
+    ucs_status_t status;
+    uint16_t port;
+    int ret;
+
+    status = uct_tcp_iface_server_init2(iface);
+    if (status != UCS_OK) {
+        goto err;
+    }
+
+    /* Get the port which was selected for the socket */
+    ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
+    if (ret < 0) {
+        ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
+        status = UCS_ERR_IO_ERROR;
+        goto err_close_sock;
+    }
+
+    status = ucs_sockaddr_get_port((struct sockaddr*)&bind_addr, &port);
+    if (status != UCS_OK) {
+        goto err_close_sock;
+    }
+
+    status = ucs_sockaddr_set_port((struct sockaddr*)&iface->config.ifaddr,
+                                   port);
+    if (status != UCS_OK) {
+        goto err_close_sock;
+    }
+
+    /* Register event handler for incoming connections */
+    status = ucs_async_set_event_handler(iface->super.worker->async->mode,
+                                         iface->listen_fd,
+                                         UCS_EVENT_SET_EVREAD |
+                                         UCS_EVENT_SET_EVERR,
+                                         uct_tcp_iface_connect_handler, iface,
+                                         iface->super.worker->async);
+    if (status != UCS_OK) {
+        goto err_close_sock;
+    }
+
+    ucs_debug("tcp_iface %p: listening for connections (fd=%d) on %s netif %s",
+              iface, iface->listen_fd,
+              ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
+                               ip_port_str, sizeof(ip_port_str)),
+              iface->if_name);
+    return UCS_OK;
+
+    err_close_sock:
+    ucs_close_fd(&iface->listen_fd);
+    err:
+    return status;
+}
+
 static ucs_status_t uct_tcp_iface_reinit(uct_tcp_iface_t *iface)
 {
 
@@ -890,6 +947,8 @@ static ucs_status_t uct_tcp_iface_reinit(uct_tcp_iface_t *iface)
         status = UCS_ERR_IO_ERROR;
     }
     ucs_warn("tcp_cm reinit - now initializing listener");
+
+    status = uct_tcp_iface_listener_init2(self);
 
     return status;
 }
