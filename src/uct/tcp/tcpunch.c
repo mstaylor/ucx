@@ -111,10 +111,10 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     PeerConnectionData public_info;
     ssize_t bytes;
     char ipadd[UCS_SOCKADDR_STRING_LEN];
-    int keepidle = 60; // seconds
-    int keepinterval = 10; // seconds
-    int keepcount = 5; // tries
-    int thread_return;
+    //int keepidle = 60; // seconds
+    //int keepinterval = 10; // seconds
+    //int keepcount = 5; // tries
+    //int thread_return;
     int socket_rendezvous = -1;
 
 
@@ -228,7 +228,7 @@ int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_
 
 
 
-    socket_rendez = socket(AF_INET, SOCK_STREAM, 0);
+    socket_rendezvous = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_rendez == -1) {
         ucs_error("Could not create socket for rendezvous server: ");
         return UCS_ERR_IO_ERROR;
@@ -236,13 +236,13 @@ int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_
 
     // Enable binding multiple sockets to the same local endpoint, see https://bford.info/pub/net/p2pnat/ for details
 
-    if (setsockopt(socket_rendez, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
-        setsockopt(socket_rendez, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
+    if (setsockopt(socket_rendezvous, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
+        setsockopt(socket_rendezvous, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
         ucs_error("Setting REUSE options failed: ");
         return UCS_ERR_IO_ERROR;
     }
-    if (setsockopt(socket_rendez, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout) < 0 ||
-        setsockopt(socket_rendez, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
+    if (setsockopt(socket_rendezvous, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout) < 0 ||
+        setsockopt(socket_rendezvous, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
         ucs_error("Setting timeout failed: ");
         return UCS_ERR_IO_ERROR;
     }
@@ -251,19 +251,19 @@ int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_
     server_data.sin_addr.s_addr = inet_addr(server_address);
     server_data.sin_port = htons(port);
 
-    if (connect(socket_rendez, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
+    if (connect(socket_rendezvous, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
         ucs_error("Connection with the rendezvous server failed: ");
         return UCS_ERR_IO_ERROR;
 
     }
 
-    if(send(socket_rendez, pairing_name, strlen(pairing_name), MSG_DONTWAIT) == -1) {
+    if(send(socket_rendezvous, pairing_name, strlen(pairing_name), MSG_DONTWAIT) == -1) {
         ucs_error("Failed to send data to rendezvous server: ");
         return UCS_ERR_IO_ERROR;
     }
 
 
-    bytes = recv(socket_rendez, &public_info, sizeof(public_info), MSG_WAITALL);
+    bytes = recv(socket_rendezvous, &public_info, sizeof(public_info), MSG_WAITALL);
     if (bytes == -1) {
         ucs_error("Failed to get data from rendezvous server: ");
         return UCS_ERR_IO_ERROR;
@@ -282,7 +282,7 @@ int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_
 
 
     // Wait until rendezvous server sends info about peer
-    bytes_received = recv(socket_rendez, &peer_data, sizeof(peer_data), MSG_WAITALL);
+    bytes_received = recv(socket_rendezvous, &peer_data, sizeof(peer_data), MSG_WAITALL);
     if(bytes_received == -1) {
         ucs_error("Failed to get peer data from rendezvous server: ");
         return UCS_ERR_IO_ERROR;
