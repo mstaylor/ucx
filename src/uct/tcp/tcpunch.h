@@ -23,7 +23,7 @@ int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_
 
 char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size);
 
-void endPing();
+
 
 int msleep(long msec);
 

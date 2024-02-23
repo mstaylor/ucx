@@ -17,46 +17,9 @@
 atomic_bool connection_established = ATOMIC_VAR_INIT(false);
 atomic_bool end_connection = ATOMIC_VAR_INIT(false);
 atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
-int socket_rendezvous = -1;
-pthread_t ping_thread;
-
-void endPing() {
-    atomic_store(&end_connection, true);
-}
-
-void ping(void* pairing_name) {
-
-    ssize_t bytes;
-    PeerConnectionData public_info;
-    char ipadd[UCS_SOCKADDR_STRING_LEN];
-    char * pairName = (char*)pairing_name;
-
-    while(!atomic_load(&end_connection)) {
-
-        /*if (send(socket_rendezvous, pairName, strlen(pairName), MSG_DONTWAIT) == -1) {
-            ucs_error("Failed to send data to rendezvous server: ");
-            //return UCS_ERR_IO_ERROR;
-        }*/
-
-
-        bytes = recv(socket_rendezvous, &public_info, sizeof(public_info), MSG_WAITALL);
-        if (bytes == -1) {
-            ucs_error("Failed to get data from rendezvous server: ");
-            //return UCS_ERR_IO_ERROR;
-        } else if (bytes == 0) {
-            ucs_error("Server has disconnected");
-            //return UCS_ERR_IO_ERROR;
-        }
-        ucs_warn("ping client data: pairname:%s %s:%i", pairName, ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)), ntohs(public_info.port));
 
 
 
-    }
-
-    close(socket_rendezvous);
-
-
-}
 
 ucs_status_t peer_listen(void* p) {
     struct sockaddr_in peer_info;
@@ -142,7 +105,7 @@ int msleep(long msec)
 
 int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms) {
     struct sockaddr_in *sa_in;
-    //struct timeval timeout;
+    struct timeval timeout;
 
     struct sockaddr_in server_data;
     PeerConnectionData public_info;
@@ -152,6 +115,7 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     int keepinterval = 10; // seconds
     int keepcount = 5; // tries
     int thread_return;
+    int socket_rendezvous = -1;
 
 
 
@@ -165,8 +129,8 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     atomic_store(&connection_established, false);
     atomic_store(&accepting_socket, -1);
 
-    //timeout.tv_sec = timeout_ms / 1000;
-    //timeout.tv_usec = (timeout_ms % 1000) * 1000;
+    timeout.tv_sec = timeout_ms / 1000;
+    timeout.tv_usec = (timeout_ms % 1000) * 1000;
 
     socket_rendezvous = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_rendezvous == -1) {
@@ -181,28 +145,12 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
         ucs_error("Setting REUSE options failed: ");
         return UCS_ERR_IO_ERROR;
     }
-    if (/*setsockopt(socket_rendezvous, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout) < 0 ||*/
-
+    if (setsockopt(socket_rendezvous, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout) < 0 ||
         setsockopt(socket_rendezvous, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
         ucs_error("Setting timeout failed: ");
         return UCS_ERR_IO_ERROR;
     }
 
-    if (setsockopt(socket_rendezvous, IPPROTO_TCP, TCP_KEEPIDLE, &keepidle, sizeof(keepidle))) {
-        ucs_error("Setting TCP_KEEPIDLE failed: ");
-        return UCS_ERR_IO_ERROR;
-    }
-
-    if(setsockopt(socket_rendezvous, IPPROTO_TCP, TCP_KEEPINTVL, &keepinterval, sizeof(keepinterval)) < 0) {
-        ucs_error("Setting TCP_KEEPINTVL failed: ");
-        return UCS_ERR_IO_ERROR;
-    }
-
-
-    if (setsockopt(socket_rendezvous, IPPROTO_TCP, TCP_KEEPCNT, &keepcount, sizeof(keepcount)) < 0) {
-        ucs_error("Setting TCP_KEEPCNT failed: ");
-        return UCS_ERR_IO_ERROR;
-    }
 
     server_data.sin_family = AF_INET;
     server_data.sin_addr.s_addr = inet_addr(server_address);
@@ -240,11 +188,11 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
     data->ip = public_info.ip;
     data->port = public_info.port;
 
-    thread_return = pthread_create(&ping_thread, NULL, (void *)ping, (void*) pairing_name);
+    /*thread_return = pthread_create(&ping_thread, NULL, (void *)ping, (void*) pairing_name);
     if(thread_return) {
         ucs_error("Error when creating thread for listening: ");
         return UCS_ERR_IO_ERROR;
-    }
+    }*/
 
     return UCS_OK;
 }
@@ -268,6 +216,7 @@ int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_
     int peer_status;
     int flags;
     int fd;
+    int socket_rendezvous = -1;
 
     memset(saddr, 0, sizeof(*saddr));
     sa_in = (struct sockaddr_in*)saddr;
