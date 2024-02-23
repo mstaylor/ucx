@@ -28,24 +28,24 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     struct sockaddr* addr = NULL;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
-    char redisValue[200];
+    //char redisValue[200];
 
-    char dest_str[UCS_SOCKADDR_STRING_LEN];
-    char ipadd[UCS_SOCKADDR_STRING_LEN];
+    //char dest_str[UCS_SOCKADDR_STRING_LEN];
+    //char ipadd[UCS_SOCKADDR_STRING_LEN];
 
     char tcpunch_ip_str[UCS_SOCKADDR_STRING_LEN];
     uint16_t              tcpunch_port;
 
     int enable_tcpunch = iface->config.enable_tcpunch;
     PeerConnectionData data;
-    const char * redis_ip_address = iface->config.redis_ip_address;
+    //const char * redis_ip_address = iface->config.redis_ip_address;
 
     //const char * tcpunch_mapped_ip_address = iface->config.mappedTCPunchAddr;
     //int tcpunch_mapped_port = iface->config.mappedTcPunchPort;
-    int redis_port = iface->config.redis_port;
+    //int redis_port = iface->config.redis_port;
 
-    char * publicAddress;
-    int publicPort;
+    //char * publicAddress;
+    //int publicPort;
 
 
 
@@ -920,7 +920,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     uint16_t port_p;
     PeerConnectionData data;
     char src_str[UCS_SOCKADDR_STRING_LEN];
-    struct sockaddr* addr = NULL;
 
     struct sockaddr_storage connect_addr;
     //int fd = 0;
