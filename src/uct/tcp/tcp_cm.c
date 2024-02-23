@@ -1029,7 +1029,7 @@ static ucs_status_t uct_tcp_iface_reinit(uct_tcp_iface_t *iface)
     }
     ucs_warn("tcp_cm reinit - now initializing listener");
 
-    status = uct_tcp_iface_listener_init3(self);
+    status = uct_tcp_iface_listener_init3(iface);
 
     return status;
 }
