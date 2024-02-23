@@ -921,7 +921,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     PeerConnectionData data;
     char src_str[UCS_SOCKADDR_STRING_LEN];
 
-    struct sockaddr_storage connect_addr;
+//    struct sockaddr_storage connect_addr;
     //int fd = 0;
 
     ucs_status_t status;
@@ -970,7 +970,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             return status;
         }
 
-        if (saddr != NULL) {
+        if (iface->config.saddr != NULL) {
             memcpy(iface->config.saddr, addrList, addrListlen);
         }
 
