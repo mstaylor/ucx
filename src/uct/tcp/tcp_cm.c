@@ -891,7 +891,7 @@ static ucs_status_t uct_tcp_iface_reinit(uct_tcp_iface_t *iface)
     }
     ucs_warn("tcp_cm reinit - now initializing listener");
 
-
+    return status;
 }
 
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
