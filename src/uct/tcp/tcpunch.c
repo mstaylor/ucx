@@ -229,7 +229,7 @@ int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_
 
 
     socket_rendezvous = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_rendez == -1) {
+    if (socket_rendezvous == -1) {
         ucs_error("Could not create socket for rendezvous server: ");
         return UCS_ERR_IO_ERROR;
     }
