@@ -962,7 +962,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             return status;
         }
 
-        addr = (struct sockaddr *) &connect_addr;
+        addrList = (struct sockaddr *) &connect_addr;
 
         status = ucs_sockaddr_sizeof(addrList, &addrListlen);
         if (status != UCS_OK) {
@@ -970,8 +970,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             return status;
         }
 
-        if (iface->config.ifaddr != NULL) {
-            memcpy(iface->config.ifaddr, addrList, addrListlen);
+        if ((struct sockaddr *) &iface->config.ifaddr != NULL) {
+            memcpy((struct sockaddr *) &iface->config.ifaddr, addrList, addrListlen);
         }
 
         //step 2: reinitialize endpoint to listen address returned by rendezvous
