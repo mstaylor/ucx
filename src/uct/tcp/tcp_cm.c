@@ -970,13 +970,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             return status;
         }
 
-        if (iface->config.saddr != NULL) {
-            memcpy(iface->config.saddr, addrList, addrListlen);
+        if (iface->config.ifaddr != NULL) {
+            memcpy(iface->config.ifaddr, addrList, addrListlen);
         }
 
         //step 2: reinitialize endpoint to listen address returned by rendezvous
 
-
+        uct_tcp_iface_reinit(iface);
 
 
         //step 3: persist connection info to redis
