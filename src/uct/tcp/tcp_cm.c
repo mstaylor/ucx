@@ -1069,10 +1069,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     PeerConnectionData data;
     char src_str[UCS_SOCKADDR_STRING_LEN];
 
-//    struct sockaddr_storage connect_addr;
-    //int fd = 0;
 
     ucs_status_t status;
+
+    const char * redis_ip_address = iface->config.redis_ip_address;
+
+    int redis_port = iface->config.redis_port;
+
+    char * publicAddress;
+    int publicPort;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -1129,9 +1134,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         //step 3: persist connection info to redis
 
 
-        if (saddr != NULL) {
+        if ((struct sockaddr *) &iface->config.ifaddr != NULL) {
 
-            ucs_sockaddr_str(saddr, dest_str,
+            ucs_sockaddr_str((struct sockaddr *) &iface->config.ifaddr, dest_str,
                              UCS_SOCKADDR_STRING_LEN);
 
             publicAddress = ip_to_string(&data.ip.s_addr, ipadd, sizeof(ipadd));
