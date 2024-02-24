@@ -1042,10 +1042,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr* addr = NULL;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
+    struct sockaddr_storage peer_connect_addr;
     struct sockaddr* addrList = NULL;
     size_t addrListlen;
 
-    //int flags;
+    int flags;
+
+    char redisValue[200];
+
+    int peer_status;
+    char ipadd[UCS_SOCKADDR_STRING_LEN];
+
+
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     char localIpAddress[UCS_SOCKADDR_STRING_LEN];
@@ -1118,9 +1126,22 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         uct_tcp_iface_reinit(iface);
 
-
         //step 3: persist connection info to redis
 
+
+        if (saddr != NULL) {
+
+            ucs_sockaddr_str(saddr, dest_str,
+                             UCS_SOCKADDR_STRING_LEN);
+
+            publicAddress = ip_to_string(&data.ip.s_addr, ipadd, sizeof(ipadd));
+            publicPort = ntohs(data.port);
+
+            sprintf(redisValue, "%s:%i", publicAddress, publicPort);
+
+            ucs_warn("writing public address to redis - key: %s value:%s", dest_str, redisValue);
+            setRedisValue(redis_ip_address, redis_port, dest_str, redisValue);
+        }
 
         //step 4: find remote address and pass that to connect non-blocking
 
@@ -1131,120 +1152,159 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         //wait until address is returned
 
+        while (true) {
+            if (remote_address == NULL) {
+                msleep(50);
+                remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
+            }
 
-        if (remote_address != NULL) {
+            if (remote_address != NULL) {
 
-            ucs_warn("remote address returned from redis: %s", remote_address);
-            token = strtok(remote_address, ":");
+                ucs_warn("remote address returned from redis: %s", remote_address);
+                token = strtok(remote_address, ":");
 
-            while (token != NULL) {
-                if (i == 0) {
-                    strcpy(publicAddress, token);
-                } else if (i == 1){
-                    publicPort = atoi(token);
+                while (token != NULL) {
+                    if (i == 0) {
+                        strcpy(publicAddress, token);
+                    } else if (i == 1){
+                        publicPort = atoi(token);
+                    }
+
+                    token = strtok(NULL, ":");
+                    i++;
                 }
 
-                token = strtok(NULL, ":");
-                i++;
-            }
+                ucs_warn("parsed public address: %s public port: %i", publicAddress, publicPort);
 
-            ucs_warn("public address: %s public port: %i", publicAddress, publicPort);
 
-            //fd = socket(AF_INET, SOCK_STREAM, 0);
+                ucs_warn("configuring to reuse socket port");
 
-            ucs_warn("configuring to reuse socket port");
-            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
-                                        &enable_flag, sizeof(enable_flag));
-            if (status != UCS_OK) {
-                ucs_warn("could NOT configure to reuse socket port");
-                return status;
-            }
-
-            ucs_warn("configuring to reuse socket address");
-
-            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
-                                        &enable_flag, sizeof(enable_flag));
-            if (status != UCS_OK) {
-                ucs_warn("could NOT configureto reuse socket address");
-                return status;
-            }
-
-            //bind to local
-            ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr, ip_port_str, sizeof(ip_port_str));
-            i = 0;
-            token = strtok(ip_port_str, ":");
-            while (token != NULL) {
-                if (i == 0) {
-                    strcpy(localIpAddress, token);
-                } else if (i == 1){
-                    local_port = atoi(token);
+                status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                                           &enable_flag, sizeof(enable_flag));
+                if (status != UCS_OK) {
+                    ucs_warn("could NOT configure to reuse socket port");
+                    return status;
                 }
 
-                token = strtok(NULL, ":");
-                i++;
-            }
+                ucs_warn("configuring to reuse socket address");
 
-            ucs_warn("parsing local - localIp: %s local port: %i", localIpAddress, local_port);
+                status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+                                           &enable_flag, sizeof(enable_flag));
+                if (status != UCS_OK) {
+                    ucs_warn("could NOT configureto reuse socket address");
+                    return status;
+                }
 
-            memset(&local_port_addr, 0, sizeof(local_port_addr));
+                //get ip and port from local address bound to fake interface
+                ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr, ip_port_str, sizeof(ip_port_str));
+                i = 0;
+                token = strtok(ip_port_str, ":");
+                while (token != NULL) {
+                    if (i == 0) {
+                        strcpy(localIpAddress, token);
+                    } else if (i == 1){
+                        local_port = atoi(token);
+                    }
 
+                    token = strtok(NULL, ":");
+                    i++;
+                }
 
+                ucs_warn("parsing local - localIp: %s local port: %i", localIpAddress, local_port);
 
-            local_port_addr.sin_family = AF_INET;
-            local_port_addr.sin_addr.s_addr = INADDR_ANY;
-            local_port_addr.sin_port = local_port;
-
-
-            ucs_warn("binding connect interface to %i", local_port);
-
-            if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr)) < 0) {
-                ucs_warn("Binding to same port failed: %i", local_port);
-                return UCS_ERR_UNREACHABLE;
-            }
-
-            ucs_warn("updated endpoint src address %i %s", local_port, ucs_socket_getname_str(ep->fd, src_str, UCS_SOCKADDR_STRING_LEN));
-
-            ucs_warn("configuring endpoint connect address: %s %i", publicAddress, publicPort);
-
-            set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
-
-            addr = (struct sockaddr*)&connect_addr;
-
-            status = ucs_sockaddr_sizeof(addr, &addrlen);
-            if (status != UCS_OK) {
-                return status;
-            }
-
-            if ((struct sockaddr*)&ep->peer_addr != NULL) {
-                memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
-            }
-
-            free(remote_address);
+                //zero out the local_port_addr
+                memset(&local_port_addr, 0, sizeof(local_port_addr));
 
 
-            status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
-            if (UCS_STATUS_IS_ERR(status)) {
-                return status;
-            } else if (status == UCS_INPROGRESS) {
-                ucs_warn("connection in progress");
-                ucs_assert(iface->config.conn_nb);
-                uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
-                return UCS_OK;
-            }
 
-            ucs_assert(status == UCS_OK);
+                local_port_addr.sin_family = AF_INET;
+                local_port_addr.sin_addr.s_addr = INADDR_ANY;
+                local_port_addr.sin_port = local_port;
 
-            if (!iface->config.conn_nb) {
-                status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
+
+                ucs_warn("binding connect interface to %i", local_port);
+
+                //set endpoint as non-blocking for connect
+                if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+                    ucs_error("Setting O_NONBLOCK failed: ");
+                    return UCS_ERR_IO_ERROR;
+                }
+
+                //close initial binding
+
+                ucs_close_fd(&ep->fd);
+
+                if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr)) < 0) {
+                    ucs_warn("Binding to same port failed: %i", local_port);
+                    return UCS_ERR_UNREACHABLE;
+                }
+
+                //ucs_warn("updated endpoint src address %i %s", local_port, ucs_socket_getname_str(ep->fd, src_str, UCS_SOCKADDR_STRING_LEN));
+
+                ucs_warn("configuring endpoint connect address: %s %i", publicAddress, publicPort);
+
+                //copy actual public address to peer_addr (overwrite local)
+
+                set_sock_addr(publicAddress, &peer_connect_addr, AF_INET, publicPort);
+
+                addr = (struct sockaddr*)&peer_connect_addr;
+
+                status = ucs_sockaddr_sizeof(addr, &addrlen);
                 if (status != UCS_OK) {
                     return status;
                 }
-            }
 
-            uct_tcp_cm_conn_complete(ep);
+                if ((struct sockaddr*)&ep->peer_addr != NULL) {
+                    memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
+                }
+
+                free(remote_address);
+
+                while(true) {
+                    peer_status = connect(ep->fd, (struct sockaddr *)&ep->peer_addr, sizeof(struct sockaddr));
+                    if (peer_status != 0) {
+                        if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
+                            continue;
+                        } else if(errno == EISCONN) {
+
+                            ucs_warn("Succesfully connected to peer, EISCONN");
+                            break;
+                        } else {
+
+                            msleep(100);
+                            //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                            continue;
+                        }
+                    } else {
+                        ucs_warn("Succesfully connected to peer, peer_status");
+                        break;
+                    }
+                }
+
+
+                flags = fcntl(fd,  F_GETFL, 0);
+                flags &= ~(O_NONBLOCK);
+                fcntl(fd, F_SETFL, flags);
+
+                ucs_assert(status == UCS_OK);
+
+                if (!iface->config.conn_nb) {
+                    status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
+                    if (status != UCS_OK) {
+                        return status;
+                    }
+                }
+
+                uct_tcp_cm_conn_complete(ep);
+
+                break;
+            }
 
 
         }
+
+
+
 
     } else {
         ucs_warn("connecting to socket address cm");
