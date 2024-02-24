@@ -665,7 +665,7 @@ static ucs_status_t uct_tcp_iface_listener_init2(uct_tcp_iface_t *iface)
     }
 
     /* Register event handler for incoming connections */
-    status = ucs_async_set_event_handler(iface->super.worker->async->mode,
+    /*status = ucs_async_set_event_handler(iface->super.worker->async->mode,
                                          iface->listen_fd,
                                          UCS_EVENT_SET_EVREAD |
                                          UCS_EVENT_SET_EVERR,
@@ -673,7 +673,7 @@ static ucs_status_t uct_tcp_iface_listener_init2(uct_tcp_iface_t *iface)
                                          iface->super.worker->async);
     if (status != UCS_OK) {
         goto err_close_sock;
-    }
+    }*/
 
     ucs_debug("tcp_iface %p: listening for connections (fd=%d) on %s netif %s",
               iface, iface->listen_fd,
