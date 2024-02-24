@@ -1072,12 +1072,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     ucs_status_t status;
 
+    char * redis_publicAddress;
+    int redis_publicPort;
+
     const char * redis_ip_address = iface->config.redis_ip_address;
 
     int redis_port = iface->config.redis_port;
 
-    char * publicAddress;
-    int publicPort;
+
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -1139,10 +1141,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             ucs_sockaddr_str((struct sockaddr *) &iface->config.ifaddr, dest_str,
                              UCS_SOCKADDR_STRING_LEN);
 
-            publicAddress = ip_to_string(&data.ip.s_addr, ipadd, sizeof(ipadd));
-            publicPort = ntohs(data.port);
+            redis_publicAddress = ip_to_string(&data.ip.s_addr, ipadd, sizeof(ipadd));
+            redis_publicPort = ntohs(data.port);
 
-            sprintf(redisValue, "%s:%i", publicAddress, publicPort);
+            sprintf(redisValue, "%s:%i", redis_publicAddress, redis_publicPort);
 
             ucs_warn("writing public address to redis - key: %s value:%s", dest_str, redisValue);
             setRedisValue(redis_ip_address, redis_port, dest_str, redisValue);
