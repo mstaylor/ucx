@@ -1067,7 +1067,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int enable_flag = 1;
     uint16_t port_p;
     PeerConnectionData data;
-    char src_str[UCS_SOCKADDR_STRING_LEN];
+    //char src_str[UCS_SOCKADDR_STRING_LEN];
 
 
     ucs_status_t status;
@@ -1289,7 +1289,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 }
 
 
-                flags = fcntl(fd,  F_GETFL, 0);
+                flags = fcntl(ep->fd,  F_GETFL, 0);
                 flags &= ~(O_NONBLOCK);
                 fcntl(fd, F_SETFL, flags);
 
