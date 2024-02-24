@@ -983,6 +983,8 @@ static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
         goto err_close_sock;
     }
 
+    ucs_async_remove_handler(iface->listen_fd, 1);
+
     /* Register event handler for incoming connections */
     status = ucs_async_set_event_handler(iface->super.worker->async->mode,
                                          iface->listen_fd,
