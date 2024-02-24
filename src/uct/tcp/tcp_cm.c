@@ -1053,7 +1053,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr* addrList = NULL;
     size_t addrListlen;
 
-    int flags;
+    //int flags;
 
     char redisValue[200];
 
