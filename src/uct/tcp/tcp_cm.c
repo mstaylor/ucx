@@ -1240,10 +1240,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 ucs_warn("binding connect interface to %i", local_port);
 
                 //set endpoint as non-blocking for connect
-                if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+                /*if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
                     ucs_error("Setting O_NONBLOCK failed: ");
                     return UCS_ERR_IO_ERROR;
-                }
+                }*/
 
                 //close initial binding
 
@@ -1280,6 +1280,16 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
                 ucs_warn("now connecting with peer : %s",public_dest_str );
 
+                status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
+                if (UCS_STATUS_IS_ERR(status)) {
+                    return status;
+                } else if (status == UCS_INPROGRESS) {
+                    ucs_warn("connection in progress");
+                    ucs_assert(iface->config.conn_nb);
+                    uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
+                    return UCS_OK;
+                }
+
                 /*while(true) {
                     peer_status = connect(ep->fd, (struct sockaddr *)&ep->peer_addr, sizeof(struct sockaddr));
                     if (peer_status != 0) {
@@ -1302,9 +1312,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 }*/
 
 
-                flags = fcntl(ep->fd,  F_GETFL, 0);
+                /*flags = fcntl(ep->fd,  F_GETFL, 0);
                 flags &= ~(O_NONBLOCK);
-                fcntl(ep->fd, F_SETFL, flags);
+                fcntl(ep->fd, F_SETFL, flags);*/
 
                 ucs_assert(status == UCS_OK);
 
