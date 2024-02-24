@@ -939,6 +939,9 @@ static ucs_status_t uct_tcp_iface_server_init3(uct_tcp_iface_t *iface)
         return status;
     }
 
+    //close existing binding
+    ucs_close_fd(&iface->listen_fd);
+
     status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
                                     ucs_socket_max_conn(), 0, reuse_address,
                                     &iface->listen_fd);
