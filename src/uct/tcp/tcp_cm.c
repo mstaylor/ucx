@@ -577,7 +577,7 @@ uct_tcp_cm_simult_conn_accept_remote_conn(uct_tcp_ep_t *accept_ep,
     ucs_assertv(connect_ep->events == 0,
                 "Requested epoll events must be 0-ed for ep=%p", connect_ep);
 
-    //ucs_close_fd(&connect_ep->fd);
+    ucs_close_fd(&connect_ep->fd);
     connect_ep->fd = accept_ep->fd;
 
     /* 2. Migrate RX from the EP allocated during accepting connection to
@@ -940,7 +940,7 @@ static ucs_status_t uct_tcp_iface_server_init3(uct_tcp_iface_t *iface)
     }
 
     //close existing binding
-    ucs_close_fd(&iface->listen_fd);
+    //ucs_close_fd(&iface->listen_fd);
 
     status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
                                     ucs_socket_max_conn(), 0, reuse_address,
@@ -983,7 +983,7 @@ static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
         goto err_close_sock;
     }
 
-    ucs_async_remove_handler(iface->listen_fd, 1);
+
 
     /* Register event handler for incoming connections */
     status = ucs_async_set_event_handler(iface->super.worker->async->mode,
@@ -1033,6 +1033,8 @@ static ucs_status_t uct_tcp_iface_reinit(uct_tcp_iface_t *iface)
         status = UCS_ERR_IO_ERROR;
     }
     ucs_warn("tcp_cm reinit - now initializing listener");
+
+    ucs_async_remove_handler(iface->listen_fd, 1);
 
     status = uct_tcp_iface_listener_init3(iface);
 
