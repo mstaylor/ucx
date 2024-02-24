@@ -1280,7 +1280,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
                 ucs_warn("now connecting with peer : %s",public_dest_str );
 
-                while(true) {
+                /*while(true) {
                     peer_status = connect(ep->fd, (struct sockaddr *)&ep->peer_addr, sizeof(struct sockaddr));
                     if (peer_status != 0) {
                         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -1299,7 +1299,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                         ucs_warn("Succesfully connected to peer, peer_status");
                         break;
                     }
-                }
+                }*/
 
 
                 flags = fcntl(ep->fd,  F_GETFL, 0);
