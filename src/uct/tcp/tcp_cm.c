@@ -1057,7 +1057,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     char redisValue[200];
 
-    int peer_status;
+    //int peer_status;
     char ipadd[UCS_SOCKADDR_STRING_LEN];
 
 
@@ -1075,7 +1075,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int enable_flag = 1;
     uint16_t port_p;
     PeerConnectionData data;
-    //char src_str[UCS_SOCKADDR_STRING_LEN];
+
 
 
     ucs_status_t status;
