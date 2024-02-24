@@ -1058,6 +1058,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
     char dest_str[UCS_SOCKADDR_STRING_LEN];
+    char public_dest_str[UCS_SOCKADDR_STRING_LEN];
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     char localIpAddress[UCS_SOCKADDR_STRING_LEN];
     int local_port = 0;
@@ -1269,6 +1270,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 }
 
                 free(remote_address);
+
+                ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, public_dest_str,
+                                 UCS_SOCKADDR_STRING_LEN);
+
+                ucs_warn("now connecting with peer : %s",public_dest_str );
 
                 while(true) {
                     peer_status = connect(ep->fd, (struct sockaddr *)&ep->peer_addr, sizeof(struct sockaddr));
