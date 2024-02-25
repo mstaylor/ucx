@@ -1125,8 +1125,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                                                      source_str);
         }
         if (local_remote_address != NULL) {
-            free(local_remote_address);//release memory
             ucs_warn("redis address already created so try to connect again");
+
+
             status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
             if (UCS_STATUS_IS_ERR(status)) {
                 return status;
@@ -1147,6 +1148,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             }
 
             uct_tcp_cm_conn_complete(ep);
+
+            free(local_remote_address);//release memory
         } else {
 
 
