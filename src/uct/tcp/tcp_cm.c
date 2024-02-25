@@ -1053,11 +1053,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr* addrList = NULL;
     size_t addrListlen;
 
-    int flags;
+    //int flags;
 
     char redisValue[200];
 
-    int peer_status;
+    //int peer_status;
     char ipadd[UCS_SOCKADDR_STRING_LEN];
 
 
