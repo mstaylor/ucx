@@ -1068,7 +1068,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char localIpAddress[UCS_SOCKADDR_STRING_LEN];
     int local_port = 0;
     char* remote_address = NULL;
-    char * local_remote_address = NULL;
+    //char * local_remote_address = NULL;
     char publicAddress[UCS_SOCKADDR_STRING_LEN];
     int publicPort = 0;
     char * token = NULL;
