@@ -1112,13 +1112,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     if (iface->config.enable_tcpunch && port_p != mapped_tcpunch_port) {
 
         //populate the source_str
-        /*if ((struct sockaddr *) &iface->config.ifaddr != NULL) {
+        if ((struct sockaddr *) &iface->config.ifaddr != NULL) {
 
             ucs_warn("retrieving source address");
             ucs_sockaddr_str((struct sockaddr *) &iface->config.ifaddr, source_str,
                              UCS_SOCKADDR_STRING_LEN);
+        }
 
-            ucs_warn("calling redis to see if an entry has been added");
+       /*     ucs_warn("calling redis to see if an entry has been added");
 
             //check to see if redis has been populated, if so use the remote address
             local_remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port,
