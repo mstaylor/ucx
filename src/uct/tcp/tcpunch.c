@@ -14,12 +14,6 @@
 
 
 
-connection_established = ATOMIC_VAR_INIT(false);
-end_connection = ATOMIC_VAR_INIT(false);
-accepting_socket = ATOMIC_VAR_INIT(-1);
-
-
-
 
 ucs_status_t peer_listen(void* p) {
     struct sockaddr_in peer_info;
