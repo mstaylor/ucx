@@ -11,6 +11,7 @@
 
 #include <arpa/inet.h>
 #include <stdatomic.h>
+#include <stdbool.h>
 
 
 typedef struct {
