@@ -14,9 +14,9 @@
 
 
 
-atomic_bool connection_established = ATOMIC_VAR_INIT(false);
-atomic_bool end_connection = ATOMIC_VAR_INIT(false);
-atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
+connection_established = ATOMIC_VAR_INIT(false);
+end_connection = ATOMIC_VAR_INIT(false);
+accepting_socket = ATOMIC_VAR_INIT(-1);
 
 
 
