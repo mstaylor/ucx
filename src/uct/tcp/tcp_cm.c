@@ -1069,7 +1069,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     pthread_t peer_listen_thread;
 
-    int fd;
+    int fd = -1;
 
     int thread_return;
 
