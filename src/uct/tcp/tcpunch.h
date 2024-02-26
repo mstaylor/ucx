@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 
 #include <arpa/inet.h>
+#include <stdatomic.h>
 
 
 typedef struct {
@@ -26,6 +27,8 @@ int connectandBindLocal(PeerConnectionData * data, struct sockaddr_storage *sadd
 int pair(int *peer_socket, struct sockaddr_storage *saddr, const char * pairing_name, const char* server_address, int port, int timeout_ms);
 
 char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size);
+
+ucs_status_t peer_listen(void* p);
 
 
 

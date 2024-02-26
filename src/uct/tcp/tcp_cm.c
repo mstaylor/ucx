@@ -1071,6 +1071,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     int fd;
 
+    int thread_return;
+
     ucs_warn("uct_tcp_cm_conn_start");
 
     ep->conn_retries++;
