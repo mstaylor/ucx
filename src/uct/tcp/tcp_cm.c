@@ -1372,7 +1372,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 flags &= ~(O_NONBLOCK);
                 fcntl(ep->fd, F_SETFL, flags);
 
-
+                ucs_warn("peer fd : %i", fd);
 
                 ucs_assert(status == UCS_OK);
 
