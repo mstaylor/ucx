@@ -1052,7 +1052,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char * token = NULL;
     struct sockaddr_in local_port_addr;
     int i = 0;
-    int enable_flag = 1;
+    //int enable_flag = 1;
     uint16_t port_p;
     PeerConnectionData data;
 
