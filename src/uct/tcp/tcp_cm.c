@@ -868,7 +868,7 @@ err:
     return 0;
 }
 
-/**
+
 static void
 uct_tcp_iface_connect_handler2(int listen_fd, ucs_event_set_types_t events,
                               void *arg)
@@ -924,8 +924,8 @@ static ucs_status_t uct_tcp_iface_server_init3(uct_tcp_iface_t *iface)
 
 
     return status;
-}*/
-/*
+}
+
 static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
 {
     struct sockaddr_storage bind_addr = iface->config.ifaddr;
@@ -938,10 +938,10 @@ static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
     status = uct_tcp_iface_server_init3(iface);
     if (status != UCS_OK) {
         goto err;
-    }*/
+    }
 
     /* Get the port which was selected for the socket */
-    /*ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
+    ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
     if (ret < 0) {
         ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
         status = UCS_ERR_IO_ERROR;
@@ -958,11 +958,11 @@ static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
     if (status != UCS_OK) {
         goto err_close_sock;
     }
-*/
+
 
 
     /* Register event handler for incoming connections */
-  /*  status = ucs_async_set_event_handler(iface->super.worker->async->mode,
+    status = ucs_async_set_event_handler(iface->super.worker->async->mode,
                                          iface->listen_fd,
                                          UCS_EVENT_SET_EVREAD |
                                          UCS_EVENT_SET_EVERR,
@@ -1015,7 +1015,7 @@ static ucs_status_t uct_tcp_iface_reinit(uct_tcp_iface_t *iface)
     status = uct_tcp_iface_listener_init3(iface);
 
     return status;
-}*/
+}
 
 
 
@@ -1067,11 +1067,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     int redis_port = iface->config.redis_port;
 
-    pthread_t peer_listen_thread;
+    //pthread_t peer_listen_thread;
 
     int fd = -1;
 
-    int thread_return;
+    //int thread_return;
 
     ucs_warn("uct_tcp_cm_conn_start");
 
@@ -1176,11 +1176,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             return status;
         }
 
-        thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen, (void*) &data);
+        /*thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen, (void*) &data);
         if(thread_return) {
             ucs_error("Error when creating thread for listening: ");
             return UCS_ERR_IO_ERROR;
-        }
+        }*/
 
         addrList = (struct sockaddr *) &connect_addr;
 
@@ -1196,7 +1196,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         //step 2: reinitialize endpoint to listen address returned by rendezvous
 
-        //uct_tcp_iface_reinit(iface);
+        uct_tcp_iface_reinit(iface);
 
         //step 3: persist connection info to redis
 
@@ -1246,12 +1246,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
                 ucs_warn("configuring to reuse socket port");
 
-                fd = socket(AF_INET, SOCK_STREAM, 0);
-                if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
+                fd=iface->listen_fd;
+                //fd = socket(AF_INET, SOCK_STREAM, 0);
+                /*if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
                     setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
                     ucs_error("Setting REUSE options failed");
                     return UCS_ERR_IO_ERROR;
-                }
+                }*/
 
                 //Set socket to non blocking for the following polling operations
                 if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
@@ -1313,10 +1314,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
                 //ucs_close_fd(&ep->fd);
 
-                if (bind(fd, (const struct sockaddr *) &local_port_addr, sizeof(local_port_addr)) < 0) {
+                /*if (bind(fd, (const struct sockaddr *) &local_port_addr, sizeof(local_port_addr)) < 0) {
                     ucs_warn("Binding to same port failed: %i", local_port);
                     return UCS_ERR_UNREACHABLE;
-                }
+                }*/
 
                 //ucs_warn("updated endpoint src address %i %s", local_port, ucs_socket_getname_str(ep->fd, src_str, UCS_SOCKADDR_STRING_LEN));
 
