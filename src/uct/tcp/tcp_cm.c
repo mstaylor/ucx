@@ -868,7 +868,7 @@ err:
     return 0;
 }
 
-
+/*
 static void
 uct_tcp_iface_connect_handler2(int listen_fd, ucs_event_set_types_t events,
                               void *arg)
@@ -939,9 +939,9 @@ static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
     if (status != UCS_OK) {
         goto err;
     }
-
+*/
     /* Get the port which was selected for the socket */
-    ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
+  /*  ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
     if (ret < 0) {
         ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
         status = UCS_ERR_IO_ERROR;
@@ -959,10 +959,10 @@ static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
         goto err_close_sock;
     }
 
-
+*/
 
     /* Register event handler for incoming connections */
-    status = ucs_async_set_event_handler(iface->super.worker->async->mode,
+  /*  status = ucs_async_set_event_handler(iface->super.worker->async->mode,
                                          iface->listen_fd,
                                          UCS_EVENT_SET_EVREAD |
                                          UCS_EVENT_SET_EVERR,
@@ -1017,7 +1017,7 @@ static ucs_status_t uct_tcp_iface_reinit(uct_tcp_iface_t *iface)
     return status;
 }
 
-
+*/
 
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
@@ -1031,11 +1031,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr* addrList = NULL;
     size_t addrListlen;
 
-    int flags;
+    //int flags;
 
     char redisValue[200];
 
-    int peer_status;
+    //int peer_status;
     char ipadd[UCS_SOCKADDR_STRING_LEN];
 
 
@@ -1192,7 +1192,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         //step 2: reinitialize endpoint to listen address returned by rendezvous
 
-        uct_tcp_iface_reinit(iface);
+        //uct_tcp_iface_reinit(iface);
 
         //step 3: persist connection info to redis
 
@@ -1301,10 +1301,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 ucs_warn("binding connect interface to %i", local_port);
 
                 //set endpoint as non-blocking for connect
-                if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
+               /* if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                     ucs_error("Setting O_NONBLOCK failed: ");
                     return UCS_ERR_IO_ERROR;
-                }
+                }*/
 
 
                 /*if (bind(fd, (const struct sockaddr *) &local_port_addr, sizeof(local_port_addr)) < 0) {
@@ -1338,7 +1338,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
                 ucs_warn("now connecting with peer : %s", public_dest_str);
 
-                /*status = ucs_socket_connect(fd, addr);
+                status = ucs_socket_connect(fd, addr);
                 if (UCS_STATUS_IS_ERR(status)) {
                     return status;
                 } else if (status == UCS_INPROGRESS) {
@@ -1346,9 +1346,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                     ucs_assert(iface->config.conn_nb);
                     uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
                     return UCS_OK;
-                }*/
+                }
 
-                while(true) {
+                /*while(true) {
                     peer_status = connect(fd, addr, sizeof(struct sockaddr));
                     if (peer_status != 0) {
                         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -1368,7 +1368,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                         ucs_warn("Succesfully connected to peer, peer_status");
                         break;
                     }
-                }
+                }*/
 
                 /*if(atomic_load(&connection_established)) {
                     pthread_join(peer_listen_thread, NULL);
@@ -1376,9 +1376,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 }*/
 
 
-                flags = fcntl(fd,  F_GETFL, 0);
+                /*flags = fcntl(fd,  F_GETFL, 0);
                 flags &= ~(O_NONBLOCK);
-                fcntl(fd, F_SETFL, flags);
+                fcntl(fd, F_SETFL, flags);*/
 
                 ucs_warn("peer fd : %i", fd);
 
