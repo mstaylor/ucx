@@ -1031,11 +1031,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr* addrList = NULL;
     size_t addrListlen;
 
-    //int flags;
+    int flags;
 
     char redisValue[200];
 
-    //int peer_status;
+    int peer_status;
     char ipadd[UCS_SOCKADDR_STRING_LEN];
 
 
@@ -1176,11 +1176,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             return status;
         }
 
-        /*thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen, (void*) &data);
-        if(thread_return) {
-            ucs_error("Error when creating thread for listening: ");
-            return UCS_ERR_IO_ERROR;
-        }*/
+
 
         addrList = (struct sockaddr *) &connect_addr;
 
@@ -1305,10 +1301,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 ucs_warn("binding connect interface to %i", local_port);
 
                 //set endpoint as non-blocking for connect
-                /*if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
+                if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                     ucs_error("Setting O_NONBLOCK failed: ");
                     return UCS_ERR_IO_ERROR;
-                }*/
+                }
 
 
                 /*if (bind(fd, (const struct sockaddr *) &local_port_addr, sizeof(local_port_addr)) < 0) {
@@ -1352,7 +1348,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                     return UCS_OK;
                 }*/
 
-                /*while(true) {
+                while(true) {
                     peer_status = connect(fd, addr, sizeof(struct sockaddr));
                     if (peer_status != 0) {
                         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -1372,7 +1368,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                         ucs_warn("Succesfully connected to peer, peer_status");
                         break;
                     }
-                }*/
+                }
 
                 /*if(atomic_load(&connection_established)) {
                     pthread_join(peer_listen_thread, NULL);
@@ -1380,13 +1376,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 }*/
 
 
-               /* flags = fcntl(fd,  F_GETFL, 0);
+                flags = fcntl(fd,  F_GETFL, 0);
                 flags &= ~(O_NONBLOCK);
                 fcntl(fd, F_SETFL, flags);
-*/
+
                 ucs_warn("peer fd : %i", fd);
 
                 ucs_assert(status == UCS_OK);
+
+                ep->fd = fd;
 
 
 
