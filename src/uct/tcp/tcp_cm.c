@@ -1377,10 +1377,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                     }
                 }
 
-                if(atomic_load(&connection_established)) {
+                /*if(atomic_load(&connection_established)) {
                     pthread_join(peer_listen_thread, NULL);
-                    //fd = atomic_load(&accepting_socket);
-                }
+                    fd = atomic_load(&accepting_socket);
+                }*/
 
 
                 flags = fcntl(fd,  F_GETFL, 0);
