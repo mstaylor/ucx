@@ -475,7 +475,8 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
             }
 
             if (errno == EISCONN) {
-                status = UCS_ERR_ALREADY_EXISTS;
+                //status = UCS_ERR_ALREADY_EXISTS;
+                //Assume EISCONN is ok for tcpunch
                 break;
             }
 

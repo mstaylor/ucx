@@ -868,7 +868,7 @@ err:
     return 0;
 }
 
-/*
+
 static void
 uct_tcp_iface_connect_handler2(int listen_fd, ucs_event_set_types_t events,
                               void *arg)
@@ -939,9 +939,9 @@ static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
     if (status != UCS_OK) {
         goto err;
     }
-*/
+
     /* Get the port which was selected for the socket */
-  /*  ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
+    ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
     if (ret < 0) {
         ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
         status = UCS_ERR_IO_ERROR;
@@ -959,10 +959,10 @@ static ucs_status_t uct_tcp_iface_listener_init3(uct_tcp_iface_t *iface)
         goto err_close_sock;
     }
 
-*/
+
 
     /* Register event handler for incoming connections */
-  /*  status = ucs_async_set_event_handler(iface->super.worker->async->mode,
+    status = ucs_async_set_event_handler(iface->super.worker->async->mode,
                                          iface->listen_fd,
                                          UCS_EVENT_SET_EVREAD |
                                          UCS_EVENT_SET_EVERR,
@@ -1017,7 +1017,7 @@ static ucs_status_t uct_tcp_iface_reinit(uct_tcp_iface_t *iface)
     return status;
 }
 
-*/
+
 
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
@@ -1192,7 +1192,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         //step 2: reinitialize endpoint to listen address returned by rendezvous
 
-        //uct_tcp_iface_reinit(iface);
+        uct_tcp_iface_reinit(iface);
 
         //step 3: persist connection info to redis
 
