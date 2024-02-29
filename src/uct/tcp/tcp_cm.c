@@ -1052,7 +1052,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char * token = NULL;
     struct sockaddr_in local_port_addr;
     int i = 0;
-    //int enable_flag = 1;
+    int enable_flag = 1;
     uint16_t port_p;
     PeerConnectionData data;
 
@@ -1242,21 +1242,21 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
                 ucs_warn("configuring to reuse socket port");
 
-                fd = iface->listen_fd;
-                //fd = socket(AF_INET, SOCK_STREAM, 0);
-                /*if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
+                //fd = iface->listen_fd;
+                fd = socket(AF_INET, SOCK_STREAM, 0);
+                if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
                     setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
                     ucs_error("Setting REUSE options failed");
                     return UCS_ERR_IO_ERROR;
-                }*/
+                }
 
                 //Set socket to non blocking for the following polling operations
-                /*if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
+                if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                     ucs_error("Setting O_NONBLOCK failed: ");
                     return UCS_ERR_IO_ERROR;
-                }*/
+                }
 
-                /*status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
                                            &enable_flag, sizeof(enable_flag));
                 if (status != UCS_OK) {
                     ucs_warn("could NOT configure to reuse socket port");
@@ -1270,7 +1270,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 if (status != UCS_OK) {
                     ucs_warn("could NOT configureto reuse socket address");
                     return status;
-                }*/
+                }
 
                 //get ip and port from local address bound to fake interface
                 ucs_sockaddr_str((struct sockaddr *) &iface->config.ifaddr, ip_port_str, sizeof(ip_port_str));
@@ -1307,10 +1307,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 }*/
 
 
-                /*if (bind(fd, (const struct sockaddr *) &local_port_addr, sizeof(local_port_addr)) < 0) {
+                if (bind(fd, (const struct sockaddr *) &local_port_addr, sizeof(local_port_addr)) < 0) {
                     ucs_warn("Binding to same port failed: %i", local_port);
                     return UCS_ERR_UNREACHABLE;
-                }*/
+                }
 
                 //ucs_warn("updated endpoint src address %i %s", local_port, ucs_socket_getname_str(ep->fd, src_str, UCS_SOCKADDR_STRING_LEN));
 
