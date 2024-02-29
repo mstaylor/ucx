@@ -116,7 +116,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         atomic_store(&conn_initialized, true);
     } else {
         ucs_warn("writing port: %i", mapped_tcpunch_port);
-        set_sock_addr(tcpunch_ip_str, &connect_addr, AF_INET, mapped_tcpunch_port);
+        set_sock_addr(NULL, &connect_addr, AF_INET, mapped_tcpunch_port);
 
         addr = (struct sockaddr*)&connect_addr;
 
@@ -675,6 +675,9 @@ uct_tcp_cm_handle_conn_req(uct_tcp_ep_t **ep_p,
     ucs_status_t status;
     uct_tcp_ep_t *peer_ep;
     int connect_to_self;
+
+
+
 
     ucs_assert(/* EP received the connection request after the TCP
                 * connection was accepted */
