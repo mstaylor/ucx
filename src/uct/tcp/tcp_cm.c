@@ -18,6 +18,8 @@
 
 atomic_bool conn_initialized = ATOMIC_VAR_INIT(false);
 int mapped_tcpunch_port = 0;
+char tcpunch_ip_str[UCS_SOCKADDR_STRING_LEN];
+
 ucs_status_t ucs_netif_get_addr3(const char *if_name,
                                  struct sockaddr *saddr,
                                  struct sockaddr *netmask,
@@ -33,7 +35,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
     //char dest_str[UCS_SOCKADDR_STRING_LEN];
     //char ipadd[UCS_SOCKADDR_STRING_LEN];
 
-    char tcpunch_ip_str[UCS_SOCKADDR_STRING_LEN];
+
     uint16_t              tcpunch_port;
 
     int enable_tcpunch = iface->config.enable_tcpunch;
@@ -114,7 +116,7 @@ ucs_status_t ucs_netif_get_addr3(const char *if_name,
         atomic_store(&conn_initialized, true);
     } else {
         ucs_warn("writing port: %i", mapped_tcpunch_port);
-        set_sock_addr(NULL, &connect_addr, AF_INET, mapped_tcpunch_port);
+        set_sock_addr(tcpunch_ip_str, &connect_addr, AF_INET, mapped_tcpunch_port);
 
         addr = (struct sockaddr*)&connect_addr;
 
@@ -213,7 +215,7 @@ void uct_tcp_cm_change_conn_state(uct_tcp_ep_t *ep,
     }
 
     if (full_log) {
-        ucs_debug("tcp_ep %p: %s -> %s for the [%s]<->[%s]:%"PRIu64" connection %s",
+        ucs_warn("tcp_ep %p: %s -> %s for the [%s]<->[%s]:%"PRIu64" connection %s",
                   ep, uct_tcp_ep_cm_state[old_conn_state].name,
                   uct_tcp_ep_cm_state[ep->conn_state].name,
                   ucs_sockaddr_str((const struct sockaddr*)&iface->config.ifaddr,
@@ -223,7 +225,7 @@ void uct_tcp_cm_change_conn_state(uct_tcp_ep_t *ep,
                   uct_tcp_ep_get_cm_id(ep),
                   uct_tcp_ep_ctx_caps_str(ep->flags, str_ctx_caps));
     } else {
-        ucs_debug("tcp_ep %p: %s -> %s",
+        ucs_warn("tcp_ep %p: %s -> %s",
                   ep, uct_tcp_ep_cm_state[old_conn_state].name,
                   uct_tcp_ep_cm_state[ep->conn_state].name);
     }
@@ -1103,66 +1105,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                              UCS_SOCKADDR_STRING_LEN);
         }
 
-         //   ucs_warn("calling redis to see if an entry has been added");
 
-            //check to see if redis has been populated, if so use the remote address
-       //     local_remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port,
-         //                                            source_str);
-    /*    }
-        if (local_remote_address != NULL) {
-            ucs_warn("redis address already created so try to connect again");
-
-            token = strtok(local_remote_address, ":");
-
-            while (token != NULL) {
-                if (i == 0) {
-                    strcpy(publicAddress, token);
-                } else if (i == 1) {
-                    publicPort = atoi(token);
-                }
-
-                token = strtok(NULL, ":");
-                i++;
-            }
-
-            set_sock_addr(publicAddress, &peer_connect_addr, AF_INET, publicPort);
-
-            addr = (struct sockaddr *) &peer_connect_addr;
-
-            status = ucs_sockaddr_sizeof(addr, &addrlen);
-            if (status != UCS_OK) {
-                return status;
-            }
-
-            if ((struct sockaddr *) &ep->peer_addr != NULL) {
-                memcpy((struct sockaddr *) &ep->peer_addr, addr, addrlen);
-            }
-
-            status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
-            if (UCS_STATUS_IS_ERR(status)) {
-                return status;
-            } else if (status == UCS_INPROGRESS) {
-                ucs_warn("connection in progress");
-                ucs_assert(iface->config.conn_nb);
-                uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
-                return UCS_OK;
-            }
-
-            ucs_assert(status == UCS_OK);
-
-            if (!iface->config.conn_nb) {
-                status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
-                if (status != UCS_OK) {
-                    return status;
-                }
-            }
-
-            uct_tcp_cm_conn_complete(ep);
-
-            free(local_remote_address);//release memory
-        } else {
-
-*/
 
         ucs_warn("tcp punch enabled - now connecting with peer");
 
@@ -1175,8 +1118,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             ucs_warn("could not bind via tcpunch");
             return status;
         }
-
-
 
         addrList = (struct sockaddr *) &connect_addr;
 
@@ -1250,27 +1191,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                     return UCS_ERR_IO_ERROR;
                 }
 
-                //Set socket to non blocking for the following polling operations
-                /*if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
-                    ucs_error("Setting O_NONBLOCK failed: ");
-                    return UCS_ERR_IO_ERROR;
-                }*/
 
-                /*status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
-                                           &enable_flag, sizeof(enable_flag));
-                if (status != UCS_OK) {
-                    ucs_warn("could NOT configure to reuse socket port");
-                    return status;
-                }
-
-                ucs_warn("configuring to reuse socket address");
-
-                status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
-                                           &enable_flag, sizeof(enable_flag));
-                if (status != UCS_OK) {
-                    ucs_warn("could NOT configureto reuse socket address");
-                    return status;
-                }*/
 
                 //get ip and port from local address bound to fake interface
                 ucs_sockaddr_str((struct sockaddr *) &iface->config.ifaddr, ip_port_str, sizeof(ip_port_str));
@@ -1338,7 +1259,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
                 ucs_warn("now connecting with peer : %s", public_dest_str);
 
-                status = ucs_socket_connect(fd, addr);
+                ep->fd = fd;
+
+                status = ucs_socket_connect(ep->fd, addr);
                 if (UCS_STATUS_IS_ERR(status)) {
                     return status;
                 } else if (status == UCS_INPROGRESS) {
@@ -1383,8 +1306,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 ucs_warn("peer fd : %i", fd);
 
                 ucs_assert(status == UCS_OK);
-
-                ep->fd = fd;
 
 
 
