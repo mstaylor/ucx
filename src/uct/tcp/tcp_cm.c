@@ -1251,12 +1251,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 }
 
                 //Set socket to non blocking for the following polling operations
-                if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
+                /*if(fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
                     ucs_error("Setting O_NONBLOCK failed: ");
                     return UCS_ERR_IO_ERROR;
-                }
+                }*/
 
-                status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                /*status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
                                            &enable_flag, sizeof(enable_flag));
                 if (status != UCS_OK) {
                     ucs_warn("could NOT configure to reuse socket port");
@@ -1270,7 +1270,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                 if (status != UCS_OK) {
                     ucs_warn("could NOT configureto reuse socket address");
                     return status;
-                }
+                }*/
 
                 //get ip and port from local address bound to fake interface
                 ucs_sockaddr_str((struct sockaddr *) &iface->config.ifaddr, ip_port_str, sizeof(ip_port_str));
