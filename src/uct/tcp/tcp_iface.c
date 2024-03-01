@@ -19,7 +19,7 @@
 #include <dirent.h>
 #include <float.h>
 
-#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net/blah"
+#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net"
 
 
 #include <stdbool.h>
