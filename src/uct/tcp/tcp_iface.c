@@ -1073,15 +1073,16 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     struct dirent *entry;
     unsigned num_devices;
     int is_active, i;
-    ucs_status_t status;
+    ucs_status_t status = UCS_OK;
     DIR *dir;
     const char *sysfs_path;
     char path_buffer[PATH_MAX];
     ucs_sys_device_t sys_dev;
 
+    ucs_warn("tcp_query_device");
     dir = opendir(UCT_TCP_IFACE_NETDEV_DIR);
     if (dir == NULL) {
-        ucs_error("opendir(%s) failed: %m assuming aws lambda", UCT_TCP_IFACE_NETDEV_DIR);
+        ucs_warn("opendir(%s) failed: %m assuming aws lambda", UCT_TCP_IFACE_NETDEV_DIR);
         status = UCS_ERR_IO_ERROR;
         //goto out;
     }
