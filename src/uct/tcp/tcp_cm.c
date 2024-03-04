@@ -584,6 +584,7 @@ uct_tcp_cm_handle_conn_req(uct_tcp_ep_t **ep_p,
 
     connect_to_self = uct_tcp_ep_is_self(ep);
     if (connect_to_self) {
+        ucs_warn("connecting to self - calling accept_conn");
         goto accept_conn;
     }
 
@@ -592,6 +593,7 @@ uct_tcp_cm_handle_conn_req(uct_tcp_ep_t **ep_p,
                                     cm_req_pkt->cm_id.conn_sn,
                                     UCT_TCP_EP_FLAG_CTX_TYPE_TX);
         if (peer_ep != NULL) {
+            ucs_warn("peer endpoint null - calling uct_tcp_cm_handle_simult_conn");
             progress_count = uct_tcp_cm_handle_simult_conn(iface, ep, peer_ep);
             ucs_assert(!(ep->flags & UCT_TCP_EP_FLAG_CTX_TYPE_TX));
             goto out_destroy_ep;
@@ -629,6 +631,7 @@ accept_conn:
 send_ack:
     /* Just accept this connection and make it operational for RX events */
     if (!(cm_req_pkt->flags & UCT_TCP_CM_CONN_REQ_PKT_FLAG_CONNECT_TO_EP)) {
+        ucs_warn("sending ack");
         status = uct_tcp_cm_send_event(ep, UCT_TCP_CM_CONN_ACK, 1);
         if (status != UCS_OK) {
             goto out_destroy_ep;
@@ -651,7 +654,7 @@ static void uct_tcp_cm_handle_conn_ack(uct_tcp_ep_t *ep,
 {
     uct_tcp_cm_trace_conn_pkt(ep, UCS_LOG_LEVEL_TRACE,
                               "%s received from", cm_event);
-
+    ucs_warn("closing stale fd %i", ep->stale_fd);
     ucs_close_fd(&ep->stale_fd);
     if (ep->conn_state != new_conn_state) {
         uct_tcp_cm_change_conn_state(ep, new_conn_state);

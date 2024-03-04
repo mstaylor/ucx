@@ -151,6 +151,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
     struct sockaddr* addr;
     size_t addrlen;
     struct sockaddr_storage connect_addr;
+    char addressStr[200];
 
     if (getifaddrs(&ifaddrs)) {
         ucs_warn("getifaddrs error: %m");
@@ -184,6 +185,8 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
 
             if (overrideAddress != NULL && strlen(overrideAddress) > 0) {
 
+                ucs_warn("using overrie address...");
+
                 set_sock_addr(overrideAddress, &connect_addr, af);
 
                 addr = (struct sockaddr*)&connect_addr;
@@ -196,8 +199,11 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                 if (saddr != NULL) {
                     memcpy(saddr, addr, addrlen);
                 }
-
+                ucs_warn("using override ip %s",
+                          ucs_sockaddr_str(saddr, addressStr, UCS_SOCKADDR_STRING_LEN));
             } else {
+                ucs_warn("using interface address");
+
                 status = ucs_sockaddr_sizeof(ifa->ifa_addr, &addrlen);
                 if (status != UCS_OK) {
                     goto out_free_ifaddr;
@@ -211,6 +217,9 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
             if (netmask != NULL) {
                 memcpy(netmask, ifa->ifa_netmask, addrlen);
             }
+
+            ucs_warn("using non-override ip %s",
+                     ucs_sockaddr_str(saddr, addressStr, UCS_SOCKADDR_STRING_LEN));
 
             status = UCS_OK;
             break;
