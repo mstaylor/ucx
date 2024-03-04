@@ -762,13 +762,17 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         }
     }
 
+
+
     if (status != UCS_OK) {
+        ucs_warn("current status is %i", status);
         goto err_cleanup_rx_mpool;
     }
 
     status = ucs_sockaddr_sizeof((struct sockaddr*)&self->config.ifaddr,
                                  &self->config.sockaddr_len);
     if (status != UCS_OK) {
+        ucs_warn("cound not retrieve socket addr size");
         return status;
     }
 
@@ -780,12 +784,14 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
 
     status = ucs_event_set_create(&self->event_set);
     if (status != UCS_OK) {
+        ucs_warn("could not create event set");
         status = UCS_ERR_IO_ERROR;
         goto err_cleanup_rx_mpool;
     }
-
+    ucs_warn("creating tcp listener");
     status = uct_tcp_iface_listener_init(self);
     if (status != UCS_OK) {
+        ucs_warn("could not create listener");
         goto err_cleanup_event_set;
     }
 
@@ -847,7 +853,7 @@ static UCS_CLASS_CLEANUP_FUNC(uct_tcp_iface_t)
 {
     ucs_status_t status;
 
-    ucs_debug("tcp_iface %p: destroying", self);
+    ucs_warn("tcp_iface %p: destroying", self);
 
     uct_base_iface_progress_disable(&self->super.super,
                                     UCT_PROGRESS_SEND |

@@ -201,6 +201,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                 }
                 ucs_warn("using override ip %s",
                           ucs_sockaddr_str(saddr, addressStr, UCS_SOCKADDR_STRING_LEN));
+                return status;
             } else {
                 ucs_warn("using interface address");
 
@@ -222,7 +223,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                      ucs_sockaddr_str(saddr, addressStr, UCS_SOCKADDR_STRING_LEN));
 
             status = UCS_OK;
-            break;
+            return status;
         }
     }
 
