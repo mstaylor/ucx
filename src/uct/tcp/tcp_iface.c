@@ -752,11 +752,10 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     }
 
     for (i = 0; i < tcp_md->config.af_prio_count; i++) {
-        status = ucs_netif_get_addr2(self->if_name,
-                                    tcp_md->config.af_prio_list[i],
-                                    (struct sockaddr*)&self->config.ifaddr,
-                                    (struct sockaddr*)&self->config.netmask,
-                                            self->config.override_ip_address);
+        status = ucs_netif_get_addr(self->if_name,
+                                     tcp_md->config.af_prio_list[i],
+                                     (struct sockaddr*)&self->config.ifaddr,
+                                     (struct sockaddr*)&self->config.netmask);
         if (status == UCS_OK) {
             break;
         }
