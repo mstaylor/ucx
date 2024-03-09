@@ -9,6 +9,7 @@
 %bcond_with    ugni
 %bcond_with    xpmem
 %bcond_with    vfs
+%bcond_with    mad
 
 Name: ucx
 Version: @VERSION@
@@ -57,6 +58,9 @@ BuildRequires: fuse3-devel
 %endif
 %if "%{debug}" == "1"
 BuildRequires: valgrind-devel
+%endif
+%if %{with mad}
+BuildRequires: libibmad-devel libibumad-devel
 %endif
 
 %description
@@ -112,6 +116,7 @@ Provides header files and examples for developing with UCX.
            %_with_arg xpmem xpmem \
            %_with_arg vfs fuse3 \
            %_with_arg ugni ugni \
+           %_with_arg mad mad \
            %{?configure_options}
 make %{?_smp_mflags} V=1
 
@@ -126,6 +131,7 @@ rm -f %{buildroot}%{_libdir}/ucx/lib*.so
 %{_libdir}/lib*.so.*
 %{_bindir}/ucx_info
 %{_bindir}/ucx_perftest
+%{_bindir}/ucx_perftest_daemon
 %{_bindir}/ucx_read_profile
 %if "%{debug}" == "1"
 %{_bindir}/ucs_stats_parser
@@ -243,6 +249,20 @@ hardware-offloaded data transfer.
 %{_libdir}/ucx/libuct_ib.so.*
 %endif
 
+%if %{with mad}
+%package mad
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Summary: UCX Infiniband MAD support
+Group: System Environment/Libraries
+
+%description mad
+Provide Infiniband MAD support for UCX. Enables running perftest using
+Infiniband datagrams for out-of-band communications.
+
+%files mad
+%{_libdir}/ucx/libucx_perftest_mad.so.*
+%endif
+
 %if %{with knem}
 %package knem
 Requires: %{name}%{?_isa} = %{version}-%{release}
@@ -343,6 +363,8 @@ library internals, protocol objects, transports status, and more.
 %endif
 
 %changelog
+* Tue Oct 31 2023 Yossi Itigin <yosefe@nvidia.com> 1.17.0-1
+- Bump version to 1.17.0
 * Fri Apr 28 2023 Yossi Itigin <yosefe@nvidia.com> 1.16.0-1
 - Bump version to 1.16.0
 * Mon Oct 24 2022 Yossi Itigin <yosefe@mellanox.com> 1.15.0-1

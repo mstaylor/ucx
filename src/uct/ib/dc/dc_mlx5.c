@@ -1153,9 +1153,10 @@ uct_dc_mlx5_iface_fc_handler(uct_rc_iface_t *rc_iface, unsigned qp_num,
 {
     uct_dc_mlx5_iface_t *iface = ucs_derived_of(rc_iface, uct_dc_mlx5_iface_t);
     uint8_t fc_hdr             = uct_rc_fc_get_fc_hdr(hdr->am_id);
+    const union ibv_gid *gid;
     uct_dc_fc_sender_data_t *sender;
     uct_dc_fc_request_t *dc_req;
-    int16_t cur_wnd;
+    int16_t cur_wnd, flid;
     ucs_status_t status;
     uct_dc_mlx5_ep_t *ep;
     ucs_arbiter_t *waitq;
@@ -1178,8 +1179,11 @@ uct_dc_mlx5_iface_fc_handler(uct_rc_iface_t *rc_iface, unsigned qp_num,
         dc_req->super.super.func = uct_dc_mlx5_iface_fc_grant;
         dc_req->super.ep         = &ep->super.super;
         dc_req->dct_num          = imm_data;
-        dc_req->lid              = lid;
         dc_req->sender           = *((uct_dc_fc_sender_data_t*)(hdr + 1));
+
+        gid         = ucs_unaligned_ptr(&dc_req->sender.payload.gid);
+        flid        = uct_ib_iface_resolve_remote_flid(&rc_iface->super, gid);
+        dc_req->lid = (flid == 0) ? lid : htons(flid); /* dc_req->lid is BE */
 
         status = uct_dc_mlx5_iface_fc_grant(&dc_req->super.super);
         if (status == UCS_ERR_NO_RESOURCE){
@@ -1271,7 +1275,7 @@ static uct_rc_iface_ops_t uct_dc_mlx5_iface_ops = {
             .ep_invalidate         = uct_dc_mlx5_ep_invalidate,
             .ep_connect_to_ep_v2   = ucs_empty_function_return_unsupported,
             .iface_is_reachable_v2 = uct_dc_mlx5_iface_is_reachable_v2,
-            .ep_is_connected       = (uct_ep_is_connected_func_t)ucs_empty_function_return_zero_int
+            .ep_is_connected       = uct_dc_mlx5_ep_is_connected
         },
         .create_cq      = uct_rc_mlx5_iface_common_create_cq,
         .destroy_cq     = uct_rc_mlx5_iface_common_destroy_cq,
@@ -1576,6 +1580,8 @@ static UCS_CLASS_INIT_FUNC(uct_dc_mlx5_iface_t, uct_md_h tl_md, uct_worker_h wor
     UCT_DC_MLX5_CHECK_FORCE_FULL_HANDSHAKE(self, config, dct, DCT, status, err);
 
     ucs_assert(self->tx.num_dci_pools <= UCT_DC_MLX5_IFACE_MAX_DCI_POOLS);
+    UCS_STATIC_ASSERT((UCT_DC_MLX5_IFACE_MAX_DCI_POOLS - 1) <=
+                      UCT_DC_MLX5_EP_FLAG_POOL_INDEX_MASK);
 
     /* create DC target */
     status = uct_dc_mlx5_iface_create_dct(self, config);

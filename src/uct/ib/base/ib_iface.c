@@ -62,7 +62,7 @@ static const char *uct_ib_iface_addr_types[] = {
 };
 
 ucs_config_field_t uct_ib_iface_config_table[] = {
-  {"", "", NULL,
+  {"", "ALLOC=thp,mmap,heap", NULL,
    ucs_offsetof(uct_ib_iface_config_t, super), UCS_CONFIG_TYPE_TABLE(uct_iface_config_table)},
 
   {"SEG_SIZE", "8192",
@@ -134,6 +134,10 @@ ucs_config_field_t uct_ib_iface_config_table[] = {
    "Force interface to use global routing.",
    ucs_offsetof(uct_ib_iface_config_t, is_global), UCS_CONFIG_TYPE_BOOL},
 
+  {"FLID_ROUTE", "y",
+   "Enable FLID based routing with site-local GIDs.",
+   ucs_offsetof(uct_ib_iface_config_t, flid_enabled), UCS_CONFIG_TYPE_BOOL},
+
   {"SL", "auto",
    "InfiniBand: Service level. 'auto' will select a value matching UCX_IB_AR configuration.\n"
    "RoCEv2: Ethernet Priority. 'auto' will select 0 by default.",
@@ -196,6 +200,10 @@ ucs_config_field_t uct_ib_iface_config_table[] = {
    "Counter set ID to use for performance counters. A value of 'auto' will try to\n"
    "detect the default value by creating a dummy QP." ,
    ucs_offsetof(uct_ib_iface_config_t, counter_set_id), UCS_CONFIG_TYPE_ULUNITS},
+
+  {"REVERSE_SL", "auto",
+   "Reverse Service level. 'auto' will set the same value of sl\n",
+   ucs_offsetof(uct_ib_iface_config_t, reverse_sl), UCS_CONFIG_TYPE_ULUNITS},
 
   {NULL}
 };
@@ -342,6 +350,18 @@ size_t uct_ib_address_size(const uct_ib_address_pack_params_t *params)
     return size;
 }
 
+static int uct_ib_address_gid_is_site_local(const union ibv_gid *gid)
+{
+    return (gid->global.subnet_prefix & UCT_IB_SITE_LOCAL_MASK) ==
+           UCT_IB_SITE_LOCAL_PREFIX;
+}
+
+static int uct_ib_address_gid_is_global(const union ibv_gid *gid)
+{
+    return !uct_ib_address_gid_is_site_local(gid) &&
+           (gid->global.subnet_prefix != UCT_IB_LINK_LOCAL_PREFIX);
+}
+
 void uct_ib_address_pack(const uct_ib_address_pack_params_t *params,
                          uct_ib_address_t *ib_addr)
 {
@@ -375,14 +395,13 @@ void uct_ib_address_pack(const uct_ib_address_pack_params_t *params,
         }
 
         if (params->flags & UCT_IB_ADDRESS_PACK_FLAG_SUBNET_PREFIX) {
-            if ((params->gid.global.subnet_prefix & UCT_IB_SITE_LOCAL_MASK) ==
-                                                    UCT_IB_SITE_LOCAL_PREFIX) {
+            if (uct_ib_address_gid_is_site_local(&params->gid)) {
                 /* Site-local */
                 ib_addr->flags |= UCT_IB_ADDRESS_FLAG_SUBNET16;
                 *ucs_serialize_next(&ptr, uint16_t) =
                         params->gid.global.subnet_prefix >> 48;
-            } else if (params->gid.global.subnet_prefix != UCT_IB_LINK_LOCAL_PREFIX) {
-                /* Global */
+            } else if (uct_ib_address_gid_is_global(&params->gid)) {
+                /* Global or site local GID with non-zero FLID */
                 ib_addr->flags |= UCT_IB_ADDRESS_FLAG_SUBNET64;
                 *ucs_serialize_next(&ptr, uint64_t) =
                         params->gid.global.subnet_prefix;
@@ -666,28 +685,45 @@ uct_ib_iface_roce_is_reachable(const uct_ib_device_gid_info_t *local_gid_info,
     return ret;
 }
 
-static int uct_ib_iface_is_same_device(uct_ib_iface_t *iface,
-                                       const uct_ib_address_t *ib_addr)
+int uct_ib_iface_is_same_device(const uct_ib_address_t *ib_addr, uint16_t dlid,
+                                const union ibv_gid *dgid)
 {
-    const union ibv_gid *gid = &iface->gid_info.gid;
     uct_ib_address_pack_params_t params;
 
     uct_ib_address_unpack(ib_addr, &params);
 
+    if (!(params.flags & UCT_IB_ADDRESS_PACK_FLAG_ETH) &&
+        (dlid != params.lid)) {
+        return 0;
+    }
+
+    if (dgid == NULL) {
+        return !(params.flags & (UCT_IB_ADDRESS_PACK_FLAG_ETH |
+                                 UCT_IB_ADDRESS_PACK_FLAG_INTERFACE_ID));
+    }
+
     if (params.flags & UCT_IB_ADDRESS_PACK_FLAG_ETH) {
-        return !memcmp(gid->raw, params.gid.raw, sizeof(params.gid.raw));
+        return !memcmp(dgid->raw, params.gid.raw, sizeof(params.gid.raw));
     }
 
-    if (uct_ib_iface_port_attr(iface)->lid != params.lid) {
+    return !(params.flags & UCT_IB_ADDRESS_PACK_FLAG_INTERFACE_ID) ||
+           (params.gid.global.interface_id == dgid->global.interface_id);
+}
+
+static int uct_ib_iface_gid_extract_flid(const union ibv_gid *gid)
+{
+    if ((gid->global.subnet_prefix & UCT_IB_SITE_LOCAL_FLID_MASK) !=
+        UCT_IB_SITE_LOCAL_PREFIX) {
         return 0;
     }
 
-    if ((params.flags & UCT_IB_ADDRESS_PACK_FLAG_INTERFACE_ID) &&
-        (params.gid.global.interface_id != gid->global.interface_id)) {
-        return 0;
-    }
+    return ntohs(*((uint16_t*)UCS_PTR_BYTE_OFFSET(gid->raw, 4)));
+}
 
-    return 1;
+static int uct_ib_iface_is_flid_enabled(uct_ib_iface_t *iface)
+{
+    return iface->config.flid_enabled &&
+           (uct_ib_iface_gid_extract_flid(&iface->gid_info.gid) != 0);
 }
 
 static int uct_ib_iface_dev_addr_is_reachable(uct_ib_iface_t *iface,
@@ -706,9 +742,14 @@ static int uct_ib_iface_dev_addr_is_reachable(uct_ib_iface_t *iface,
     }
 
     if (!is_local_eth && !(ib_addr->flags & UCT_IB_ADDRESS_FLAG_LINK_LAYER_ETH)) {
-        /* same subnet prefix */
-        return params.gid.global.subnet_prefix ==
-               iface->gid_info.gid.global.subnet_prefix;
+        if (params.gid.global.subnet_prefix ==
+            iface->gid_info.gid.global.subnet_prefix) {
+            return 1;
+        }
+
+        /* Check FLID route: is enabled locally, and remote GID has it */
+        return (uct_ib_iface_is_flid_enabled(iface) &&
+                uct_ib_iface_gid_extract_flid(&params.gid) != 0);
     } else if (is_local_eth && (ib_addr->flags & UCT_IB_ADDRESS_FLAG_LINK_LAYER_ETH)) {
         /* there shouldn't be a lid and the UCT_IB_ADDRESS_FLAG_LINK_LAYER_ETH
          * flag should be on. If reachable, the remote and local RoCE versions
@@ -747,7 +788,9 @@ int uct_ib_iface_is_reachable_v2(const uct_iface_h tl_iface,
     scope = UCS_PARAM_VALUE(UCT_IFACE_IS_REACHABLE_FIELD, params, scope, SCOPE,
                             UCT_IFACE_REACHABILITY_SCOPE_NETWORK);
     return (scope == UCT_IFACE_REACHABILITY_SCOPE_NETWORK) ||
-           uct_ib_iface_is_same_device(iface, device_addr);
+           uct_ib_iface_is_same_device(device_addr,
+                                       uct_ib_iface_port_attr(iface)->lid,
+                                       &iface->gid_info.gid);
 }
 
 ucs_status_t uct_ib_iface_create_ah(uct_ib_iface_t *iface,
@@ -789,8 +832,10 @@ void uct_ib_iface_fill_ah_attr_from_gid_lid(uct_ib_iface_t *iface, uint16_t lid,
         ah_attr->src_path_bits = path_bits;
     }
 
-    if (iface->config.force_global_addr ||
-        (iface->gid_info.gid.global.subnet_prefix != gid->global.subnet_prefix)) {
+    if ((gid != NULL) &&
+        (iface->config.force_global_addr ||
+         (iface->gid_info.gid.global.subnet_prefix !=
+          gid->global.subnet_prefix))) {
         ucs_assert_always(gid->global.interface_id != 0);
         ah_attr->is_global      = 1;
         ah_attr->grh.dgid       = *gid;
@@ -804,12 +849,35 @@ void uct_ib_iface_fill_ah_attr_from_gid_lid(uct_ib_iface_t *iface, uint16_t lid,
               uct_ib_ah_attr_str(buf, sizeof(buf), ah_attr));
 }
 
+static uint16_t uct_ib_gid_site_local_subnet_prefix(const union ibv_gid *gid)
+{
+    return be64toh(gid->global.subnet_prefix) & 0xffff;
+}
+
+uint16_t uct_ib_iface_resolve_remote_flid(uct_ib_iface_t *iface,
+                                          const union ibv_gid *gid)
+{
+    if (!uct_ib_iface_is_flid_enabled(iface)) {
+        return 0;
+    }
+
+    if (uct_ib_gid_site_local_subnet_prefix(gid) ==
+        uct_ib_gid_site_local_subnet_prefix(&iface->gid_info.gid)) {
+        /* On the same subnet, no need to use FLID*/
+        return 0;
+    }
+
+    return uct_ib_iface_gid_extract_flid(gid);
+}
+
 void uct_ib_iface_fill_ah_attr_from_addr(uct_ib_iface_t *iface,
                                          const uct_ib_address_t *ib_addr,
                                          unsigned path_index,
                                          struct ibv_ah_attr *ah_attr,
                                          enum ibv_mtu *path_mtu)
 {
+    union ibv_gid *gid = NULL;
+    uint16_t lid, flid = 0;
     uct_ib_address_pack_params_t params;
 
     ucs_assert(!uct_ib_iface_is_roce(iface) ==
@@ -830,9 +898,17 @@ void uct_ib_iface_fill_ah_attr_from_addr(uct_ib_iface_t *iface,
         params.gid_index = iface->gid_info.gid_index;
     }
 
-    uct_ib_iface_fill_ah_attr_from_gid_lid(iface, params.lid, &params.gid,
-                                           params.gid_index, path_index,
-                                           ah_attr);
+    if (ucs_test_all_flags(params.flags,
+                           UCT_IB_ADDRESS_PACK_FLAG_INTERFACE_ID |
+                           UCT_IB_ADDRESS_PACK_FLAG_SUBNET_PREFIX) ||
+        params.flags & UCT_IB_ADDRESS_PACK_FLAG_ETH) {
+        gid  = &params.gid;
+        flid = uct_ib_iface_resolve_remote_flid(iface, gid);
+    }
+
+    lid = (flid == 0) ? params.lid : flid;
+    uct_ib_iface_fill_ah_attr_from_gid_lid(iface, lid, gid, params.gid_index,
+                                           path_index, ah_attr);
 }
 
 static ucs_status_t uct_ib_iface_init_pkey(uct_ib_iface_t *iface,
@@ -1018,7 +1094,7 @@ ucs_status_t uct_ib_iface_create_qp(uct_ib_iface_t *iface,
         uct_ib_check_memlock_limit_msg(
                 UCS_LOG_LEVEL_ERROR,
                 "iface=%p: failed to create %s QP "
-                "TX wr:%d sge:%d inl:%d resp:%d RX wr:%d sge:%d resp:%d: %m",
+                "TX wr:%d sge:%d inl:%d resp:%d RX wr:%d sge:%d resp:%d",
                 iface, uct_ib_qp_type_str(attr->qp_type), attr->cap.max_send_wr,
                 attr->cap.max_send_sge, attr->cap.max_inline_data,
                 attr->max_inl_cqe[UCT_IB_DIR_TX], attr->cap.max_recv_wr,
@@ -1210,6 +1286,46 @@ out_mask_info_failed:
     return UCS_OK;
 }
 
+static unsigned uct_ib_iface_gid_index(uct_ib_iface_t *iface,
+                                       unsigned long cfg_gid_index)
+{
+    uct_ib_device_t *dev = uct_ib_iface_device(iface);
+    uint8_t port_num     = iface->config.port_num;
+    int gid_tbl_len      = uct_ib_device_port_attr(dev, port_num)->gid_tbl_len;
+    unsigned gid_index   = UCT_IB_DEVICE_DEFAULT_GID_INDEX;
+    uct_ib_device_gid_info_t gid_info;
+    ucs_status_t status;
+    uint32_t oui;
+
+    if (cfg_gid_index != UCS_ULUNITS_AUTO) {
+        return cfg_gid_index;
+    }
+
+    if (!iface->config.flid_enabled ||
+        (gid_tbl_len <= UCT_IB_DEVICE_ROUTABLE_FLID_GID_INDEX)) {
+        goto out;
+    }
+
+    status = uct_ib_device_query_gid_info(
+                          dev->ibv_context, uct_ib_device_name(dev), port_num,
+                          UCT_IB_DEVICE_ROUTABLE_FLID_GID_INDEX, &gid_info);
+    if (status != UCS_OK) {
+        goto out;
+    }
+
+    if (uct_ib_iface_gid_extract_flid(&gid_info.gid) == 0) {
+        goto out;
+    }
+
+    oui = be32toh(gid_info.gid.global.interface_id & 0xffffff) >> 8;
+    if (oui == UCT_IB_GUID_OPENIB_OUI) {
+        gid_index = UCT_IB_DEVICE_ROUTABLE_FLID_GID_INDEX;
+    }
+
+out:
+    return gid_index;
+}
+
 static ucs_status_t
 uct_ib_iface_init_gid_info(uct_ib_iface_t *iface,
                            const uct_ib_iface_config_t *config)
@@ -1231,10 +1347,8 @@ uct_ib_iface_init_gid_info(uct_ib_iface_t *iface,
             goto out;
         }
     } else {
-        gid_info->gid_index             = (cfg_gid_index ==
-                                           UCS_ULUNITS_AUTO) ?
-                                          UCT_IB_MD_DEFAULT_GID_INDEX :
-                                          cfg_gid_index;
+        gid_info->gid_index             = uct_ib_iface_gid_index(iface,
+                                                                 cfg_gid_index);
         gid_info->roce_info.ver         = UCT_IB_DEVICE_ROCE_ANY;
         gid_info->roce_info.addr_family = 0;
     }
@@ -1284,6 +1398,18 @@ uint8_t uct_ib_iface_config_select_sl(const uct_ib_iface_config_t *ib_config)
 
     ucs_assert(ib_config->sl < UCT_IB_SL_NUM);
     return (uint8_t)ib_config->sl;
+}
+
+void uct_ib_iface_set_reverse_sl(uct_ib_iface_t *ib_iface,
+                                 const uct_ib_iface_config_t *ib_config)
+{
+    if (ib_config->reverse_sl == UCS_ULUNITS_AUTO) {
+        ib_iface->config.reverse_sl = ib_iface->config.sl;
+        return;
+    }
+
+    ucs_assert(ib_config->reverse_sl < UCT_IB_SL_NUM);
+    ib_iface->config.reverse_sl = (uint8_t)ib_config->reverse_sl;
 }
 
 UCS_CLASS_INIT_FUNC(uct_ib_iface_t, uct_iface_ops_t *tl_ops,
@@ -1348,9 +1474,11 @@ UCS_CLASS_INIT_FUNC(uct_ib_iface_t, uct_iface_ops_t *tl_ops,
     self->config.port_num           = port_num;
     /* initialize to invalid value */
     self->config.sl                 = UCT_IB_SL_NUM;
+    self->config.reverse_sl         = UCT_IB_SL_NUM;
     self->config.hop_limit          = config->hop_limit;
     self->release_desc.cb           = uct_ib_iface_release_desc;
     self->config.qp_type            = init_attr->qp_type;
+    self->config.flid_enabled       = config->flid_enabled;
     uct_ib_iface_set_path_mtu(self, config);
 
     if (ucs_derived_of(worker, uct_priv_worker_t)->thread_mode == UCS_THREAD_MODE_MULTI) {
@@ -1425,6 +1553,7 @@ UCS_CLASS_INIT_FUNC(uct_ib_iface_t, uct_iface_ops_t *tl_ops,
     /* Address scope and size */
     if (uct_ib_iface_is_roce(self) || config->is_global ||
         uct_ib_grh_required(uct_ib_iface_port_attr(self)) ||
+        uct_ib_address_gid_is_global(&self->gid_info.gid) ||
         /* check ADDR_TYPE for backward compatibility */
         (config->addr_type == UCT_IB_ADDRESS_TYPE_SITE_LOCAL) ||
         (config->addr_type == UCT_IB_ADDRESS_TYPE_GLOBAL)) {

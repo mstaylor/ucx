@@ -136,13 +136,13 @@ static uct_iface_ops_t uct_cma_iface_tl_ops = {
 
 static uct_scopy_iface_ops_t uct_cma_iface_ops = {
     .super = {
-        .iface_estimate_perf   = uct_base_iface_estimate_perf,
+        .iface_estimate_perf   = uct_scopy_iface_estimate_perf,
         .iface_vfs_refresh     = (uct_iface_vfs_refresh_func_t)ucs_empty_function,
         .ep_query              = (uct_ep_query_func_t)ucs_empty_function_return_unsupported,
         .ep_invalidate         = (uct_ep_invalidate_func_t)ucs_empty_function_return_unsupported,
         .ep_connect_to_ep_v2   = ucs_empty_function_return_unsupported,
         .iface_is_reachable_v2 = uct_cma_iface_is_reachable_v2,
-        .ep_is_connected       = (uct_ep_is_connected_func_t)ucs_empty_function_return_zero_int
+        .ep_is_connected       = uct_cma_ep_is_connected
     },
     .ep_tx = uct_cma_ep_tx,
 };

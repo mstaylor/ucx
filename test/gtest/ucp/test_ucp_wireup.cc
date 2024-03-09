@@ -84,22 +84,6 @@ protected:
     bool ep_iface_has_caps(const entity& e, const std::string& tl,
                            uint64_t caps);
 
-    size_t count_resources(const ucp_test_base::entity &e,
-                           const std::string &tl_name) const
-    {
-        return std::count_if(e.ucph()->tl_rscs,
-                             e.ucph()->tl_rscs + e.ucph()->num_tls,
-                             [&](const ucp_tl_resource_desc_t &rsc) {
-                                 return tl_name == rsc.tl_rsc.tl_name;
-                             });
-    }
-
-    bool has_resource(const ucp_test_base::entity &e,
-                      const std::string &tl_name) const
-    {
-        return count_resources(e, tl_name) != 0;
-    }
-
 protected:
     vec_type                               m_send_data;
     vec_type                               m_recv_data;
@@ -304,12 +288,18 @@ void test_ucp_wireup::send_nb(ucp_ep_h ep, size_t length, int repeat,
             reqs.push_back(req);
         }
 
-        ucs_status_t status = ucp_worker_fence(ep->worker);
-        ASSERT_UCS_OK(status);
+        /* FIXME: using flush here instead of fence, because strong fence
+         * implementation is currently blocking and may hang if target side
+         * is not progressed. Need to use fence here as soon as strong fence
+         * implementation is updated to be non-blocking. */
+        ucp_request_param_t param = {};
+        void *req = ucp_ep_flush_nbx(ep, &param);
+        ASSERT_UCS_PTR_OK(req);
+        reqs.push_back(req);
 
-        void *req = ucp_put_nb(ep, &m_send_data[0], sizeof(m_send_data[0]),
-                               (uintptr_t)&m_recv_data[length], rkey,
-                               send_completion);
+        req = ucp_put_nb(ep, &m_send_data[0], sizeof(m_send_data[0]),
+                         (uintptr_t)&m_recv_data[length], rkey,
+                         send_completion);
         ASSERT_UCS_PTR_OK(req);
         reqs.push_back(req);
     }
@@ -477,7 +467,7 @@ UCS_TEST_P(test_ucp_wireup_1sided, address) {
     EXPECT_LE(size, 2048ul); /* Expect a reasonable address size */
     EXPECT_EQ(addr_v, sender().ucph()->config.ext.worker_addr_version);
 
-    UCS_BITMAP_FOR_EACH_BIT(sender().worker()->context->tl_bitmap, tl) {
+    UCS_STATIC_BITMAP_FOR_EACH_BIT(tl, &sender().worker()->context->tl_bitmap) {
         const ucp_tl_resource_desc_t &rsc =
                 sender().worker()->context->tl_rscs[tl];
         packed_dev_priorities.insert(
@@ -1037,7 +1027,7 @@ public:
     bool check_scalable_tls(const ucp_worker_h worker, size_t est_num_eps) {
         ucp_rsc_index_t rsc_index;
 
-        UCS_BITMAP_FOR_EACH_BIT(worker->context->tl_bitmap, rsc_index) {
+        UCS_STATIC_BITMAP_FOR_EACH_BIT(rsc_index, &worker->context->tl_bitmap) {
             ucp_md_index_t md_index         = worker->context->tl_rscs[rsc_index].md_index;
             const uct_md_attr_v2_t *md_attr = &worker->context->tl_mds[md_index].attr;
 
@@ -1048,13 +1038,14 @@ public:
                 continue;
             }
 
-            if (ucp_worker_iface_get_attr(worker, rsc_index)->max_num_eps >= est_num_eps) {
-                EXPECT_TRUE(
-                        UCS_BITMAP_GET(worker->scalable_tl_bitmap, rsc_index));
+            if (ucp_worker_iface_get_attr(worker, rsc_index)->max_num_eps >=
+                est_num_eps) {
+                EXPECT_TRUE(UCS_STATIC_BITMAP_GET(worker->scalable_tl_bitmap,
+                                                  rsc_index));
                 return true;
             } else {
-                EXPECT_TRUE(UCS_BITMAP_GET(worker->scalable_tl_bitmap,
-                                           rsc_index) == 0);
+                EXPECT_FALSE(UCS_STATIC_BITMAP_GET(worker->scalable_tl_bitmap,
+                                                   rsc_index));
             }
         }
 
@@ -1390,8 +1381,8 @@ protected:
                 device_atomics_cnt++;
             }
         }
-        bool device_atomics_supported = !UCS_BITMAP_IS_ZERO_INPLACE(
-                &sender().worker()->atomic_tls);
+        bool device_atomics_supported = !UCS_STATIC_BITMAP_IS_ZERO(
+                sender().worker()->atomic_tls);
 
         test_ucp_wireup::cleanup();
 

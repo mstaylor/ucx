@@ -651,7 +651,7 @@ const uct_ib_device_spec_t* uct_ib_device_spec(uct_ib_device_t *dev)
 static unsigned long uct_ib_device_get_ib_gid_index(uct_ib_md_t *md)
 {
     if (md->config.gid_index == UCS_ULUNITS_AUTO) {
-        return UCT_IB_MD_DEFAULT_GID_INDEX;
+        return UCT_IB_DEVICE_DEFAULT_GID_INDEX;
     } else {
         return md->config.gid_index;
     }
@@ -907,7 +907,7 @@ ucs_status_t uct_ib_device_select_gid(uct_ib_device_t *dev, uint8_t port_num,
         }
     }
 
-    gid_info->gid_index             = UCT_IB_MD_DEFAULT_GID_INDEX;
+    gid_info->gid_index             = UCT_IB_DEVICE_DEFAULT_GID_INDEX;
     gid_info->roce_info.ver         = UCT_IB_DEVICE_ROCE_V1;
     gid_info->roce_info.addr_family = AF_INET;
 
@@ -1169,6 +1169,30 @@ uct_ib_device_create_ah(uct_ib_device_t *dev, struct ibv_ah_attr *ah_attr,
 
     *ah_p = ah;
     return UCS_OK;
+}
+
+ucs_status_t uct_ib_device_get_ah_cached(uct_ib_device_t *dev,
+                                         struct ibv_ah_attr *ah_attr,
+                                         struct ibv_ah **ah_p)
+{
+    ucs_status_t status = UCS_OK;
+    khiter_t iter;
+
+    ucs_recursive_spin_lock(&dev->ah_lock);
+
+    /* looking for existing AH with same attributes */
+    iter = kh_get(uct_ib_ah, &dev->ah_hash, *ah_attr);
+    if (iter == kh_end(&dev->ah_hash)) {
+        status = UCS_ERR_NO_ELEM;
+        goto unlock;
+    } else {
+        /* found existing AH */
+        *ah_p = kh_value(&dev->ah_hash, iter);
+    }
+
+unlock:
+    ucs_recursive_spin_unlock(&dev->ah_lock);
+    return status;
 }
 
 ucs_status_t

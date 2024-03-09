@@ -50,7 +50,8 @@
 #endif
 
 #if HAVE_ROCM
-#  include <hip_runtime.h>
+#include <hip_runtime.h>
+#include <hip_version.h>
 
 #define ROCM_CALL(_code) \
     do { \
@@ -108,7 +109,31 @@ bool mem_buffer::is_rocm_managed_supported()
     }
 
     hipFree(dptr);
+
+#if HIP_VERSION >= 50500000
+    return attr.type == hipMemoryTypeUnified;
+#else
     return attr.memoryType == hipMemoryTypeUnified;
+#endif
+
+#else
+    return false;
+#endif
+}
+
+bool mem_buffer::is_rocm_malloc_pitch_supported()
+{
+#if HAVE_ROCM
+    hipError_t ret;
+    int imageSupport;
+
+    ret = hipDeviceGetAttribute(&imageSupport, hipDeviceAttributeImageSupport,
+                                0);
+    if (ret != hipSuccess) {
+        return false;
+    }
+
+    return (imageSupport == 1);
 #else
     return false;
 #endif
@@ -133,6 +158,14 @@ const std::vector<ucs_memory_type_t>&  mem_buffer::supported_mem_types()
     }
 
     return vec;
+}
+
+bool mem_buffer::is_mem_type_supported(ucs_memory_type_t mem_type)
+{
+    auto &mem_types = supported_mem_types();
+
+    return std::find(mem_types.begin(), mem_types.end(), mem_type) !=
+           mem_types.end();
 }
 
 void mem_buffer::set_device_context()

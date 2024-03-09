@@ -14,6 +14,9 @@
 #include <ucs/time/time.h>
 
 
+#define REVERSE_SL_MASK   UCS_MASK(4)
+
+
 static UCS_F_ALWAYS_INLINE void
 uct_dc_mlx5_add_flush_remote(uct_dc_mlx5_ep_t *ep)
 {
@@ -35,6 +38,11 @@ uct_dc_mlx5_set_dgram_seg(uct_ib_mlx5_txwq_t *txwq,
     to_av->stat_rate_sl = iface->super.super.super.config.sl;
     to_av->fl_mlid      = iface->tx.av_fl_mlid;
     to_av->rlid         = av->rlid;
+
+    /* Setting reverse_sl */
+    to_av->dqp_dct &= ~REVERSE_SL_MASK;
+    to_av->dqp_dct |= iface->super.super.super.config.reverse_sl &
+                      REVERSE_SL_MASK;
 
     return uct_ib_mlx5_set_dgram_seg_grh(seg, grh_av);
 }
@@ -1812,4 +1820,41 @@ uct_dc_mlx5_ep_check(uct_ep_h tl_ep, unsigned flags, uct_completion_t *comp)
     uct_rc_txqp_add_send_op_sn(txqp, op, txwq->sig_pi);
     ep->flags |= UCT_DC_MLX5_EP_FLAG_KEEPALIVE_POSTED;
     return UCS_OK;
+}
+
+int uct_dc_mlx5_ep_is_connected(const uct_ep_h tl_ep,
+                                const uct_ep_is_connected_params_t *params)
+{
+    uct_dc_mlx5_ep_t *ep = ucs_derived_of(tl_ep, uct_dc_mlx5_ep_t);
+    uct_dc_mlx5_iface_t *iface;
+    const uct_dc_mlx5_iface_addr_t *dc_addr;
+    uct_dc_mlx5_grh_ep_t *grh_ep;
+    union ibv_gid *rgid;
+    uint32_t dct;
+
+    UCT_EP_IS_CONNECTED_CHECK_DEV_IFACE_ADDRS(params);
+
+    dc_addr = (const uct_dc_mlx5_iface_addr_t*)params->iface_addr;
+    iface   = ucs_derived_of(tl_ep->iface, uct_dc_mlx5_iface_t);
+
+    if (((dc_addr->flags & UCT_DC_MLX5_IFACE_ADDR_DC_VERS) !=
+         iface->version_flag) ||
+        (UCT_DC_MLX5_IFACE_ADDR_TM_ENABLED(dc_addr) !=
+         UCT_RC_MLX5_TM_ENABLED(&iface->super))) {
+        return 0;
+    }
+
+    if (ep->flags & UCT_DC_MLX5_EP_FLAG_GRH) {
+        grh_ep = ucs_derived_of(tl_ep, uct_dc_mlx5_grh_ep_t);
+        rgid   = (union ibv_gid*)grh_ep->grh_av.rgid;
+    } else {
+        rgid = NULL;
+    }
+
+    dct = ntohl(ep->av.dqp_dct) & UCS_MASK(UCT_IB_QPN_ORDER);
+
+    return uct_ib_iface_is_same_device((const uct_ib_address_t*)
+                                               params->device_addr,
+                                       ntohs(ep->av.rlid), rgid) &&
+           (dct == uct_ib_unpack_uint24(dc_addr->qp_num));
 }

@@ -100,7 +100,7 @@ static ucs_status_t ucp_proto_rndv_rtr_common_send(ucp_request_t *req)
                                                       rpriv->pack_cb, req,
                                                       max_rtr_size, NULL, 0);
     if (status == UCS_OK) {
-        UCP_WORKER_STAT_RNDV(worker, SEND_RTR, +1);
+        UCP_WORKER_STAT_RNDV(worker, RTR, +1);
     }
 
     return status;
@@ -181,7 +181,8 @@ static ucs_status_t ucp_proto_rndv_rtr_progress(uct_pending_req_t *self)
         status = ucp_datatype_iter_mem_reg(req->send.ep->worker->context,
                                            &req->send.state.dt_iter,
                                            rpriv->super.md_map,
-                                           UCT_MD_MEM_ACCESS_REMOTE_PUT,
+                                           UCT_MD_MEM_ACCESS_REMOTE_PUT |
+                                           UCT_MD_MEM_FLAG_HIDE_ERRORS,
                                            UCP_DT_MASK_ALL);
         if (status != UCS_OK) {
             ucp_proto_request_abort(req, status);
@@ -237,12 +238,29 @@ static void ucp_proto_rndv_rtr_query(const ucp_proto_query_params_t *params,
     attr->lane_map      = UCS_BIT(rpriv->lane);
 }
 
+static void ucp_proto_rndv_rtr_abort_super(void *request, ucs_status_t status,
+                                           void *user_data)
+{
+    ucp_request_t *req = (ucp_request_t*)request - 1;
+    ucp_proto_rndv_recv_complete(req);
+}
+
 static void ucp_proto_rndv_rtr_abort(ucp_request_t *req, ucs_status_t status)
 {
     const ucp_proto_rndv_rtr_priv_t *rpriv = req->send.proto_config->priv;
     ucp_request_t *rreq                    = ucp_request_get_super(req);
 
     rreq->status = status;
+    ucp_request_set_callback(req, send.cb, ucp_proto_rndv_rtr_abort_super);
+
+    if (ucp_request_memh_invalidate(req, status)) {
+        if (req->send.rndv.rkey != NULL) {
+            ucp_proto_rndv_rkey_destroy(req);
+        }
+        ucp_proto_request_zcopy_id_reset(req);
+        return;
+    }
+
     rpriv->data_received(req, 0);
 }
 
@@ -276,8 +294,9 @@ static size_t ucp_proto_rndv_rtr_mtype_pack(void *dest, void *arg)
     mem_info.type    = mdesc->memh->mem_type;
     mem_info.sys_dev = UCS_SYS_DEVICE_ID_UNKNOWN;
     packed_rkey_size = ucp_rkey_pack_memh(req->send.ep->worker->context, md_map,
-                                          mdesc->memh, &mem_info, 0, NULL, 0,
-                                          rtr + 1);
+                                          mdesc->memh, mdesc->ptr,
+                                          req->send.state.dt_iter.length,
+                                          &mem_info, 0, NULL, 0, rtr + 1);
     if (packed_rkey_size < 0) {
         ucs_error("failed to pack remote key: %s",
                   ucs_status_string((ucs_status_t)packed_rkey_size));

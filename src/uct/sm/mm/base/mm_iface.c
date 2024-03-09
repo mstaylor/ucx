@@ -1,6 +1,7 @@
 /**
  * Copyright (c) UT-Battelle, LLC. 2014-2015. ALL RIGHTS RESERVED.
  * Copyright (c) NVIDIA CORPORATION & AFFILIATES, 2001-2021. ALL RIGHTS RESERVED.
+ * Copyright (C) Huawei Technologies Co., Ltd. 2023. ALL RIGHTS RESERVED.
  * See file LICENSE for terms.
  */
 
@@ -243,6 +244,10 @@ uct_mm_progress_fifo_tail(uct_mm_iface_t *iface)
     if (iface->read_index & iface->fifo_release_factor_mask) {
         return;
     }
+
+    /* memory barrier - make sure that the memory is flushed before update the
+     * FIFO tail */
+    ucs_memory_cpu_store_fence();
 
     iface->recv_fifo_ctl->tail = iface->read_index;
 }
@@ -580,7 +585,7 @@ static uct_iface_internal_ops_t uct_mm_iface_internal_ops = {
     .ep_invalidate         = (uct_ep_invalidate_func_t)ucs_empty_function_return_unsupported,
     .ep_connect_to_ep_v2   = ucs_empty_function_return_unsupported,
     .iface_is_reachable_v2 = uct_mm_iface_is_reachable_v2,
-    .ep_is_connected       = (uct_ep_is_connected_func_t)ucs_empty_function_return_zero_int
+    .ep_is_connected       = uct_mm_ep_is_connected
 };
 
 static void uct_mm_iface_recv_desc_init(uct_iface_h tl_iface, void *obj,

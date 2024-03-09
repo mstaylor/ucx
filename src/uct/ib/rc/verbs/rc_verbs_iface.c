@@ -298,6 +298,7 @@ static UCS_CLASS_INIT_FUNC(uct_rc_verbs_iface_t, uct_md_h tl_md,
     self->super.config.fence_mode        = (uct_rc_fence_mode_t)config->super.super.fence_mode;
     self->super.progress                 = uct_rc_verbs_iface_progress;
     self->super.super.config.sl          = uct_ib_iface_config_select_sl(ib_config);
+    uct_ib_iface_set_reverse_sl(&self->super.super, ib_config);
 
     if ((config->super.super.fence_mode == UCT_RC_FENCE_MODE_WEAK) ||
         (config->super.super.fence_mode == UCT_RC_FENCE_MODE_AUTO)) {
@@ -511,7 +512,7 @@ static uct_rc_iface_ops_t uct_rc_verbs_iface_ops = {
             .ep_invalidate         = (uct_ep_invalidate_func_t)ucs_empty_function_return_unsupported,
             .ep_connect_to_ep_v2   = uct_rc_verbs_ep_connect_to_ep_v2,
             .iface_is_reachable_v2 = uct_ib_iface_is_reachable_v2,
-            .ep_is_connected       = (uct_ep_is_connected_func_t)ucs_empty_function_return_zero_int
+            .ep_is_connected       = uct_rc_verbs_ep_is_connected
         },
         .create_cq      = uct_ib_verbs_create_cq,
         .destroy_cq     = uct_ib_verbs_destroy_cq,

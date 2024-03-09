@@ -157,6 +157,9 @@ struct uct_ib_iface_config {
     /* Force global routing */
     int                     is_global;
 
+    /* Use FLID based routing */
+    int                     flid_enabled;
+
     /* IB SL to use (default: AUTO) */
     unsigned long           sl;
 
@@ -189,6 +192,9 @@ struct uct_ib_iface_config {
 
     /* QP counter set ID */
     unsigned long           counter_set_id;
+
+    /* IB reverse SL (default: AUTO - same value as sl) */
+    unsigned long           reverse_sl;
 };
 
 
@@ -292,10 +298,12 @@ struct uct_ib_iface {
         uint8_t               max_inl_cqe[UCT_IB_DIR_LAST];
         uint8_t               port_num;
         uint8_t               sl;
+        uint8_t               reverse_sl;
         uint8_t               traffic_class;
         uint8_t               hop_limit;
         uint8_t               qp_type;
         uint8_t               force_global_addr;
+        uint8_t               flid_enabled;
         enum ibv_mtu          path_mtu;
         uint8_t               counter_set_id;
     } config;
@@ -474,6 +482,9 @@ const char *uct_ib_address_str(const uct_ib_address_t *ib_addr, char *buf,
 ucs_status_t uct_ib_iface_get_device_address(uct_iface_h tl_iface,
                                              uct_device_addr_t *dev_addr);
 
+int uct_ib_iface_is_same_device(const uct_ib_address_t *ib_addr, uint16_t dlid,
+                                const union ibv_gid *dgid);
+
 int uct_ib_iface_is_reachable_v2(const uct_iface_h tl_iface,
                                  const uct_iface_is_reachable_params_t *params);
 
@@ -574,6 +585,12 @@ void uct_ib_iface_fill_attr(uct_ib_iface_t *iface,
                             uct_ib_qp_attr_t *attr);
 
 uint8_t uct_ib_iface_config_select_sl(const uct_ib_iface_config_t *ib_config);
+
+void uct_ib_iface_set_reverse_sl(uct_ib_iface_t *ib_iface,
+                                 const uct_ib_iface_config_t *ib_config);
+
+uint16_t uct_ib_iface_resolve_remote_flid(uct_ib_iface_t *iface,
+                                          const union ibv_gid *gid);
 
 #define UCT_IB_IFACE_FMT \
     "%s:%d/%s"

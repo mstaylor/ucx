@@ -62,6 +62,9 @@
 /* Maximal value for connection sequence number */
 #define UCT_TCP_CM_CONN_SN_MAX               UINT64_MAX
 
+/* A string to hold the pair of local and remote addresses */
+#define UCT_TCP_CM_SOCKADDR_STR_LEN          ((UCS_SOCKADDR_STRING_LEN * 2) + 32)
+
 /* The seconds the connection needs to remain idle before TCP starts sending
  * keepalive probes */
 #define UCT_TCP_EP_DEFAULT_KEEPALIVE_IDLE    10
@@ -469,6 +472,7 @@ typedef struct uct_tcp_md {
     struct {
         int         af_prio_count;
         sa_family_t af_prio_list[2];
+        uint8_t     bridge_enable;
     } config;
 } uct_tcp_md_t;
 
@@ -479,6 +483,7 @@ typedef struct uct_tcp_md {
 typedef struct uct_tcp_md_config {
     uct_md_config_t                   super;
     UCS_CONFIG_STRING_ARRAY_FIELD(af) af_prio;
+    int                               bridge_enable;
 } uct_tcp_md_config_t;
 
 

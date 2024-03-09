@@ -17,14 +17,9 @@
 
 UCS_PTR_MAP_IMPL(ep, 1);
 
-
 KHASH_IMPL(ucp_worker_rkey_config, ucp_rkey_config_key_t,
            ucp_worker_cfg_index_t, 1, ucp_rkey_config_hash_func,
            ucp_rkey_config_is_equal);
-
-/* EP configurations storage */
-UCS_ARRAY_IMPL(ep_config_arr, unsigned, ucp_ep_config_t,
-               static UCS_F_ALWAYS_INLINE);
 
 /**
  * Resolve remote key configuration key to a remote key configuration index.
@@ -118,8 +113,9 @@ ucp_worker_iface(ucp_worker_h worker, ucp_rsc_index_t rsc_index)
     }
 
     tl_bitmap = worker->context->tl_bitmap;
-    ucs_assert(UCS_BITMAP_GET(tl_bitmap, rsc_index));
-    return worker->ifaces[UCS_BITMAP_POPCOUNT_UPTO_INDEX(tl_bitmap, rsc_index)];
+    ucs_assert(UCS_STATIC_BITMAP_GET(tl_bitmap, rsc_index));
+    return worker->ifaces[UCS_STATIC_BITMAP_POPCOUNT_UPTO_INDEX(tl_bitmap,
+                                                                rsc_index)];
 }
 
 /**
