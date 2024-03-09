@@ -716,6 +716,7 @@ ucp_address_pack_iface_attr_v1(const ucp_worker_iface_t *wiface, void *ptr,
     packed->lat_ovh   = ucp_wireup_iface_lat_distance_v1(wiface);
     packed->bandwidth = ucp_wireup_iface_bw_distance(wiface);
     packed->overhead  = iface_attr->overhead;
+    ucs_warn("ucp_address_pack_iface_attr_v1");
     /* Pack prio, capability and atomic flags */
     packed->prio_cap_flags = (uint8_t)iface_attr->priority |
                              ucp_address_pack_flags(iface_attr->cap.flags,
@@ -765,6 +766,8 @@ ucp_address_pack_iface_attr_v2(const ucp_worker_iface_t *wiface, void *ptr,
     uint64_t addr_iface_flags;
     double latency_nsec, overhead_nsec, latency, bandwidth;
     size_t seg_size;
+
+    ucs_warn("ucp_address_pack_iface_attr_v2");
 
     latency   = ucp_wireup_iface_lat_distance_v2(wiface);
     bandwidth = ucp_wireup_iface_bw_distance(wiface);
