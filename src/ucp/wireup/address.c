@@ -1783,6 +1783,7 @@ ucs_status_t ucp_address_unpack(ucp_worker_t *worker, const void *buffer,
             last_ep_addr          = !(*(uint8_t*)flags_ptr &
                                       UCP_ADDRESS_FLAG_HAS_EP_ADDR);
             while (!last_ep_addr) {
+                ucs_warn("number of endpoints is %i", address->num_ep_addrs);
                 if (address->num_ep_addrs >= UCP_MAX_LANES) {
                     ucp_address_error(
                             unpack_flags,
