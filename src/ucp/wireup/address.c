@@ -977,12 +977,12 @@ ucp_address_unpack_iface_attr(ucp_worker_t *worker,
                                                           ptr);
     }
 
-    if (iface_attr->bandwidth <= 0) {
+    /*if (iface_attr->bandwidth <= 0) {
         ucp_address_error(unpack_flags,
                           "failed to unpack address, invalid bandwidth %.2f",
                           iface_attr->bandwidth);
         return UCS_ERR_INVALID_ADDR;
-    }
+    }*/
 
     /* Unpack iface 32-bit atomic operations */
     if (iface_attr->flags & UCP_ADDR_IFACE_FLAG_ATOMIC32) {
