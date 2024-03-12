@@ -905,7 +905,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     const char *sysfs_path;
     char path_buffer[PATH_MAX];
     ucs_sys_device_t sys_dev;
-    int deviceFound = -1;
+
 
     n = scandir(UCT_TCP_IFACE_NETDEV_DIR, &entries, NULL, alphasort);
     if (n == -1) {
@@ -933,14 +933,10 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
             if (ucs_netif_is_active((*entry)->d_name,
                                     tcp_md->config.af_prio_list[i])) {
                 is_active = 1;
-                deviceFound = 1;
                 break;
             }
         }
 
-        if (deviceFound > 0) {//only use one device
-            continue;
-        }
 
         if (!is_active ) {
             continue;
