@@ -903,6 +903,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         ucs_warn("creating fake interface for faas support - arch doesn't support scanning devices");
         is_active = 1;
         num_devices = 0;
+        devices = NULL;
 
         tmp = ucs_realloc(devices, sizeof(*devices) * (num_devices + 1),
                           "tcp devices");
