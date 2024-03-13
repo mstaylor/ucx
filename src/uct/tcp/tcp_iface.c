@@ -19,7 +19,7 @@
 #include <dirent.h>
 #include <float.h>
 
-#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net"
+#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/netd"
 
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
@@ -898,7 +898,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     if (dir == NULL) {
         ucs_error("opendir(%s) failed: %m", UCT_TCP_IFACE_NETDEV_DIR);
         status = UCS_ERR_IO_ERROR;
-        //goto out;
+        goto out;
     }
 
 
