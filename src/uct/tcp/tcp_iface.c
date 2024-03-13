@@ -19,7 +19,7 @@
 #include <dirent.h>
 #include <float.h>
 
-#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/netd"
+#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net"
 
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
@@ -892,6 +892,8 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     char path_buffer[PATH_MAX];
     ucs_sys_device_t sys_dev;
 
+    ucs_warn("querying devices..");
+
     dir = opendir(UCT_TCP_IFACE_NETDEV_DIR);
     if (dir == NULL) {
         ucs_error("opendir(%s) failed: %m", UCT_TCP_IFACE_NETDEV_DIR);
@@ -899,28 +901,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         //goto out;
     }
 
-    if (status == UCS_ERR_IO_ERROR) {
-        ucs_warn("creating fake interface for faas support - arch doesn't support scanning devices");
-        is_active = 1;
-        num_devices = 0;
-        devices = NULL;
 
-        tmp = ucs_realloc(devices, sizeof(*devices) * (num_devices + 1),
-                          "tcp devices");
-        if (tmp == NULL) {
-            ucs_free(devices);
-            status = UCS_ERR_NO_MEMORY;
-            goto out_closedir;
-        }
-        devices = tmp;
-
-        ucs_snprintf_zero(devices[num_devices].name,
-                          sizeof(devices[num_devices].name),
-                          "%s", "eth0");
-        devices[num_devices].type = UCT_DEVICE_TYPE_NET;
-        devices[num_devices].sys_device = UCS_SYS_DEVICE_ID_UNKNOWN;
-        ++num_devices;
-    } else {
 
         devices = NULL;
     num_devices = 0;
@@ -984,7 +965,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     *num_devices_p = num_devices;
     *devices_p = devices;
     status = UCS_OK;
-}
+
 
 out_closedir:
     closedir(dir);
