@@ -184,12 +184,15 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
 
             if (overrideAddress != NULL && strlen(overrideAddress) > 0) {
 
+                ucs_warn("using override address");
+
                 set_sock_addr(overrideAddress, &connect_addr, af);
 
                 addr = (struct sockaddr*)&connect_addr;
 
                 status = ucs_sockaddr_sizeof(addr, &addrlen);
                 if (status != UCS_OK) {
+                    ucs_warn("could not ucs_sockaddr_sizeof for override address");
                     goto out_free_ifaddr;
                 }
 
@@ -200,6 +203,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
             } else {
                 status = ucs_sockaddr_sizeof(ifa->ifa_addr, &addrlen);
                 if (status != UCS_OK) {
+                    ucs_warn("could not ucs_sockaddr_sizeof for non-override address");
                     goto out_free_ifaddr;
                 }
 
