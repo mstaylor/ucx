@@ -66,6 +66,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "How many connection establishment attempts should be done if dropped "
    "connection was detected due to lack of system resources",
    ucs_offsetof(uct_tcp_iface_config_t, max_conn_retries), UCS_CONFIG_TYPE_UINT},
+  {"IGNORE_IFNAME", "n",
+   "ignore ifname",
+   ucs_offsetof(uct_tcp_iface_config_t, ignore_ifname), UCS_CONFIG_TYPE_BOOL},
    {UCT_TCP_CONFIG_REMOTE_ADDRESS_OVERRIDE, "",
    "Override the remote address IP ",
    ucs_offsetof(uct_tcp_iface_config_t, override_ip_address), UCS_CONFIG_TYPE_STRING},
@@ -695,6 +698,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.max_poll          = config->max_poll;
     self->config.max_conn_retries  = config->max_conn_retries;
     self->config.override_ip_address = config->override_ip_address;
+    self->config.ignore_ifname     = config->ignore_ifname;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
     self->sockopt.sndbuf           = config->sockopt.sndbuf;
@@ -751,14 +755,15 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         goto err_cleanup_tx_mpool;
     }
 
-    ucs_warn("sending ifname %s", self->if_name);
+
     for (i = 0; i < tcp_md->config.af_prio_count; i++) {
         ucs_warn("creating address via ucs_netif_get_addr2");
         status = ucs_netif_get_addr2(self->if_name,
                                     tcp_md->config.af_prio_list[i],
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
-                                            self->config.override_ip_address);
+                                            self->config.override_ip_address,
+                                            self->config.ignore_ifname);
         if (status == UCS_OK) {
             break;
         }
