@@ -19,7 +19,7 @@
 #include <dirent.h>
 #include <float.h>
 
-#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/netd"
+#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net"
 
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
@@ -898,7 +898,15 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     if (dir == NULL) {
         ucs_error("opendir(%s) failed: %m", UCT_TCP_IFACE_NETDEV_DIR);
         status = UCS_ERR_IO_ERROR;
-        goto out;
+        //goto out;
+    }
+
+    if (status == UCS_ERR_IO_ERROR) {
+        ucs_warn("creating fake device");
+        return uct_single_device_resource(md, "fake interface",
+                                          UCT_DEVICE_TYPE_NET,
+                                          UCS_SYS_DEVICE_ID_UNKNOWN, devices_p,
+                                          num_devices_p);
     }
 
 
