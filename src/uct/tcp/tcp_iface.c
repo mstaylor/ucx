@@ -751,7 +751,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         goto err_cleanup_tx_mpool;
     }
 
-
+    ucs_warn("sending ifname %s", self->if_name);
     for (i = 0; i < tcp_md->config.af_prio_count; i++) {
         ucs_warn("creating address via ucs_netif_get_addr2");
         status = ucs_netif_get_addr2(self->if_name,
