@@ -914,9 +914,9 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
                                           num_devices_p);
     }
 
+    dir = opendir(UCT_TCP_IFACE_NETDEV_DIR);
 
-
-        devices = NULL;
+    devices = NULL;
     num_devices = 0;
     for (;;) {
         errno = 0;
