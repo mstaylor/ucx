@@ -904,6 +904,9 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         ucs_error("opendir(%s) failed: %m", UCT_TCP_IFACE_NETDEV_DIR);
         status = UCS_ERR_IO_ERROR;
         //goto out;
+    } else {
+        ucs_warn("device file found...");
+        status = UCS_OK;
     }
 
     if (status == UCS_ERR_IO_ERROR) {
@@ -914,7 +917,6 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
                                           num_devices_p);
     }
 
-    dir = opendir(UCT_TCP_IFACE_NETDEV_DIR);
 
     devices = NULL;
     num_devices = 0;
