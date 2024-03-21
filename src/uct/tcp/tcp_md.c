@@ -82,8 +82,10 @@ uct_tcp_md_open(uct_component_t *component, const char *md_name,
 
     for (i = 0; i < tcp_md->config.af_prio_count; i++) {
         if (!strcasecmp(md_config->af_prio.af[i], "inet")) {
+            ucs_warn("md config set to inet");
             tcp_md->config.af_prio_list[i] = AF_INET;
         } else if (!strcasecmp(md_config->af_prio.af[i], "inet6")) {
+            ucs_warn("md config set to inet6");
             tcp_md->config.af_prio_list[i] = AF_INET6;
         } else {
             ucs_error("invalid address family: %s", md_config->af_prio.af[i]);
