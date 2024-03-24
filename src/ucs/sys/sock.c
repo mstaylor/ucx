@@ -200,6 +200,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                 if (saddr != NULL) {
                     memcpy(saddr, addr, addrlen);
                 }
+                return status;
 
             } else {
                 status = ucs_sockaddr_sizeof(ifa->ifa_addr, &addrlen);

@@ -772,6 +772,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                             self->config.override_ip_address,
                                             self->config.ignore_ifname);
         if (status == UCS_OK) {
+            ucs_warn("UCS_OK so breaking in address iteration");
             break;
         }
     }
