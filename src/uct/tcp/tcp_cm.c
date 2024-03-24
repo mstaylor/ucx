@@ -651,7 +651,7 @@ static void uct_tcp_cm_handle_conn_ack(uct_tcp_ep_t *ep,
 {
     uct_tcp_cm_trace_conn_pkt(ep, UCS_LOG_LEVEL_TRACE,
                               "%s received from", cm_event);
-
+    ucs_warn("closing stale fd");
     ucs_close_fd(&ep->stale_fd);
     if (ep->conn_state != new_conn_state) {
         uct_tcp_cm_change_conn_state(ep, new_conn_state);
@@ -748,6 +748,7 @@ err:
 
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
+    char dest_str[UCS_SOCKADDR_STRING_LEN];
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
     ucs_status_t status;
@@ -760,6 +761,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     }
 
     uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTING);
+
+    ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
+                     UCS_SOCKADDR_STRING_LEN);
+    ucs_warn("uct_tcp_cm_conn_start - peer address: %s", dest_str);
+
 
     status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
     if (UCS_STATUS_IS_ERR(status)) {
