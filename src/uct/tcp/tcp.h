@@ -382,6 +382,7 @@ typedef struct uct_tcp_iface {
                                                       * waiting for PUT Zcopy operation ACKs
                                                       * (0/1 for each EP) */
     ucs_range_spec_t              port_range;        /** Range of ports to use for bind() */
+    long                           world_size;
 
     struct {
         size_t                    tx_seg_size;       /* TX AM buffer size */

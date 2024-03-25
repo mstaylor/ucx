@@ -800,6 +800,10 @@ ucs_status_t uct_tcp_ep_create(const uct_ep_params_t *params, uct_ep_h *ep_p)
         ep_dest_addr = &dest_addr;
     }
 
+    if (params->user_data != NULL) {
+        iface->world_size = (long) params->user_data;
+    }
+
     status = uct_tcp_ep_init(iface, -1, (struct sockaddr*)ep_dest_addr, &ep);
     if (status != UCS_OK) {
         return status;
