@@ -615,6 +615,7 @@ ucp_ep_adjust_params(ucp_ep_h ep, const ucp_ep_params_t *params)
     }
 
     if (params->field_mask & UCP_EP_PARAM_FIELD_USER_DATA) {
+        ucs_warn("params included userdata...");
         /* user_data overrides err_handler.arg */
         ep->ext->user_data = params->user_data;
     }

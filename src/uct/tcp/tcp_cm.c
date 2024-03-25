@@ -765,7 +765,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
                      UCS_SOCKADDR_STRING_LEN);
     ucs_warn("uct_tcp_cm_conn_start - peer address: %s", dest_str);
-    ucs_warn("world size %i", iface->world_size);
+    //ucs_warn("world size %i", iface->world_size);
 
 
     status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);

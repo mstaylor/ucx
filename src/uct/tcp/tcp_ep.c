@@ -801,8 +801,8 @@ ucs_status_t uct_tcp_ep_create(const uct_ep_params_t *params, uct_ep_h *ep_p)
     }
 
     if (params->user_data != NULL) {
-        ucs_warn("user_data not null - casting user_data to long and updating to reflect world size");
-        iface->world_size = (int)(intptr_t)params->user_data;
+        ucs_warn("user_data not null");
+        //iface->world_size = (int)(intptr_t)params->user_data;
     }
 
     status = uct_tcp_ep_init(iface, -1, (struct sockaddr*)ep_dest_addr, &ep);
