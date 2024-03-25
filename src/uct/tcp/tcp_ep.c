@@ -801,6 +801,7 @@ ucs_status_t uct_tcp_ep_create(const uct_ep_params_t *params, uct_ep_h *ep_p)
     }
 
     if (params->user_data != NULL) {
+        ucs_warn("user_data not null - casting user_data to long and updating to reflect world size");
         iface->world_size = (long) params->user_data;
     }
 
