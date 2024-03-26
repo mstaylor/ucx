@@ -653,8 +653,8 @@ static void uct_tcp_cm_handle_conn_ack(uct_tcp_ep_t *ep,
 {
     uct_tcp_cm_trace_conn_pkt(ep, UCS_LOG_LEVEL_TRACE,
                               "%s received from", cm_event);
-    ucs_warn("closing stale fd");
-    ucs_close_fd(&ep->stale_fd);
+    ucs_warn("closing stale fd %i", ep->stale_fd);
+    //ucs_close_fd(&ep->stale_fd);
     if (ep->conn_state != new_conn_state) {
         uct_tcp_cm_change_conn_state(ep, new_conn_state);
     }
