@@ -749,6 +749,7 @@ err:
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     char dest_str[UCS_SOCKADDR_STRING_LEN];
+    char src_str[UCS_SOCKADDR_STRING_LEN];
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
     ucs_status_t status;
@@ -764,7 +765,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr, dest_str,
                      UCS_SOCKADDR_STRING_LEN);
-    ucs_warn("uct_tcp_cm_conn_start - peer address: %s", dest_str);
+    ucs_warn("uct_tcp_cm_conn_start - peer address: %s source address: %s", dest_str,
+             ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
+                              src_str, sizeof(src_str)));
     //ucs_warn("world size %i", iface->world_size);
 
 
