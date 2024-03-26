@@ -412,7 +412,10 @@ typedef struct uct_tcp_iface {
                                                       * It cannot exceed 255. */
         double                    max_bw;            /* Upper bound to TCP iface bandwidth */
         char *                    override_ip_address; /** Override Ip Address **/
-        int                       ignore_ifname;
+        int                       ignore_ifname; /** Ignore Ifname from getifaddrs (nat traversal) **/
+        uint8_t                       world_size; /** world size to pass to nat traversal to create barrie
+                                                *  all processes have made outbound connection attempts
+                                                **/
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -447,6 +450,7 @@ typedef struct uct_tcp_iface_config {
     int                            conn_nb;
     unsigned                       max_poll;
     unsigned                       max_conn_retries;
+    unsigned                       world_size;
     int                            sockopt_nodelay;
     int                            ignore_ifname;
     uct_tcp_send_recv_buf_config_t sockopt;

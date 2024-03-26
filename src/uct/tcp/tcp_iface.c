@@ -66,6 +66,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "How many connection establishment attempts should be done if dropped "
    "connection was detected due to lack of system resources",
    ucs_offsetof(uct_tcp_iface_config_t, max_conn_retries), UCS_CONFIG_TYPE_UINT},
+  {"WORLD_SIZE", "1",
+   "Number of processes (nat traversal only)",
+   ucs_offsetof(uct_tcp_iface_config_t, world_size), UCS_CONFIG_TYPE_UINT},
   {"IGNORE_IFNAME", "n",
    "ignore ifname",
    ucs_offsetof(uct_tcp_iface_config_t, ignore_ifname), UCS_CONFIG_TYPE_BOOL},
@@ -595,7 +598,7 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
         goto err_close_sock;
     }
 
-    ucs_debug("tcp_iface %p: listening for connections (fd=%d) on %s netif %s",
+    ucs_warn("tcp_iface %p: listening for connections (fd=%d) on %s netif %s",
               iface, iface->listen_fd,
               ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                               ip_port_str, sizeof(ip_port_str)),
@@ -704,6 +707,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.conn_nb           = config->conn_nb;
     self->config.max_poll          = config->max_poll;
     self->config.max_conn_retries  = config->max_conn_retries;
+    self->config.world_size        = config->world_size;
     self->config.override_ip_address = config->override_ip_address;
     self->config.ignore_ifname     = config->ignore_ifname;
     self->config.syn_cnt           = config->syn_cnt;

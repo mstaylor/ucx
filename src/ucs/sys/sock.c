@@ -143,7 +143,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                                 struct sockaddr *saddr,
                                 struct sockaddr *netmask,
                                 const char * overrideAddress,
-                                int ignore_fname)
+                                int ignore_ifname)
 {
     ucs_status_t status = UCS_ERR_NO_DEVICE;
     struct ifaddrs *ifa;
@@ -160,7 +160,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
     }
 
     for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
-        if ((if_name != NULL) && (0 != strcmp(if_name, ifa->ifa_name)) && ignore_fname == -1) {
+        if ((if_name != NULL) && (0 != strcmp(if_name, ifa->ifa_name)) && ignore_ifname == -1) {
             continue;
         }
 
