@@ -503,6 +503,8 @@ static unsigned uct_tcp_cm_handle_simult_conn(uct_tcp_iface_t *iface,
 {
     unsigned progress_count = 0;
 
+    ucs_warn("handling uct_tcp_cm_handle_simult_conn");
+
     if (!uct_tcp_cm_ep_accept_conn(connect_ep)) {
         /* Migrate RX from the EP allocated during accepting connection to
          * the found EP. */
