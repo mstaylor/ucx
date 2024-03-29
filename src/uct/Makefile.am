@@ -43,7 +43,8 @@ noinst_HEADERS = \
 	tcp/tcp.h \
 	tcp/tcp_sockcm.h \
 	tcp/tcp_listener.h \
-	tcp/tcp_sockcm_ep.h
+	tcp/tcp_sockcm_ep.h \
+	tcp/nat_traversal.h
 
 
 libuct_la_SOURCES = \
@@ -75,7 +76,8 @@ libuct_la_SOURCES = \
 	tcp/tcp_base.c \
 	tcp/tcp_sockcm.c \
 	tcp/tcp_listener.c \
-	tcp/tcp_sockcm_ep.c
+	tcp/tcp_sockcm_ep.c \
+	tcp/nat_traversal.c
 
 PKG_CONFIG_NAME=uct
 

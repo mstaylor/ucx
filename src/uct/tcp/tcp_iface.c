@@ -923,7 +923,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
 
     if (status == UCS_ERR_IO_ERROR) {
         ucs_warn("creating fake device");
-        return uct_single_device_resource(md, "lo",
+        return uct_single_device_resource(md, "virtual_device",
                                           UCT_DEVICE_TYPE_NET,
                                           UCS_SYS_DEVICE_ID_UNKNOWN, devices_p,
                                           num_devices_p);
