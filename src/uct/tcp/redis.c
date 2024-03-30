@@ -26,7 +26,7 @@ struct redisAsyncContext * redisAsyncLogin(const char * hostName, int port) {
     struct timeval tv = {0};
     redisOptions options = {0};
     redisAsyncContext *c = NULL;
-    REDIS_OPTIONS_SET_TCP(&options, "127.0.0.1", 6379);
+    REDIS_OPTIONS_SET_TCP(&options, hostName, port);
 
     tv.tv_sec = 1;
     options.connect_timeout = &tv;
