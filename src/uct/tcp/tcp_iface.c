@@ -18,6 +18,8 @@
 #include <netinet/tcp.h>
 #include <dirent.h>
 #include <float.h>
+#include "redis.h"
+#include "nat_traversal.h"
 
 #define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net/tmp"
 
@@ -75,6 +77,21 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    {UCT_TCP_CONFIG_REMOTE_ADDRESS_OVERRIDE, "",
    "Override the remote address IP ",
    ucs_offsetof(uct_tcp_iface_config_t, override_ip_address), UCS_CONFIG_TYPE_STRING},
+{"ENABLE_NAT_TRAVERSAL", "n",
+   "enable the use of tcp hole punching ",
+   ucs_offsetof(uct_tcp_iface_config_t, enable_nat_traversal), UCS_CONFIG_TYPE_BOOL},
+    {"REDIS_IP", "",
+     "Redis IP ",
+     ucs_offsetof(uct_tcp_iface_config_t, redis_ip_address), UCS_CONFIG_TYPE_STRING},
+    {"REDIS_PORT", "0",
+     "Redis Port\n",
+     ucs_offsetof(uct_tcp_iface_config_t, redis_port), UCS_CONFIG_TYPE_INT},
+    {"RENDEZVOUS_IP", "",
+     "Rendezvous IP ",
+     ucs_offsetof(uct_tcp_iface_config_t, rendezvous_ip_address), UCS_CONFIG_TYPE_STRING},
+    {"RENDEZVOUS_PORT", "10000",
+     "Rendezvous Port\n",
+     ucs_offsetof(uct_tcp_iface_config_t, rendezvous_port), UCS_CONFIG_TYPE_INT},
 
   {"NODELAY", "y",
    "Set TCP_NODELAY socket option to disable Nagle algorithm. Setting this\n"
@@ -517,41 +534,80 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     struct sockaddr_storage bind_addr = iface->config.ifaddr;
     unsigned port_range_start         = iface->port_range.first;
     unsigned port_range_end           = iface->port_range.last;
+    PeerConnectionData peerConnectionData;
 
     ucs_status_t status;
     size_t addr_len;
-    int port, retry;
+    int port, retry = -1;
+    char ip_port_str[UCS_SOCKADDR_STRING_LEN];
 
-    /* retry is 1 for a range of ports or when port value is zero.
+    if (iface->config.enable_nat_traversal) {
+      //if nat traversal is enabled, use the private IP address returned
+      //to bind
+      status = connectandBindLocal(&iface->config.rendezvous_fd, &peerConnectionData, &iface->config.ifaddr,
+                          "cylon", iface->config.rendezvous_ip_address,
+                                   iface->config.rendezvous_port, 60000);
+      if (status != UCS_OK) {
+        ucs_warn("connectandbindlocal failed");
+        return status;
+      }
+
+      if (ip_to_string(&peerConnectionData.ip.s_addr, iface->config.public_ip_address,
+                       sizeof(iface->config.public_ip_address)) == NULL) {
+        ucs_warn("ip_to_string failed");
+        return UCS_ERR_IO_ERROR;
+      }
+
+      ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
+                       ip_port_str, sizeof(ip_port_str));
+      ucs_warn("private ip %s: mapped to public address %s via rendezvous ", ip_port_str,
+               iface->config.public_ip_address);
+
+
+      status = ucs_sockaddr_sizeof((struct sockaddr *)&bind_addr, &addr_len);
+      if (status != UCS_OK) {
+        ucs_warn("ucs_sockaddr_sizeof failed ");
+        return status;
+      }
+
+      status = ucs_socket_server_init(
+          (struct sockaddr *)&bind_addr, addr_len, ucs_socket_max_conn(),
+          retry, iface->config.enable_nat_traversal, &iface->listen_fd);
+
+      return status;
+    } else {
+
+      /* retry is 1 for a range of ports or when port value is zero.
      * retry is 0 for a single value port that is not zero */
-    retry = (port_range_start == 0) || (port_range_start < port_range_end);
+      retry = (port_range_start == 0) || (port_range_start < port_range_end);
 
-    do {
+      do {
         if (port_range_end != 0) {
-            status = ucs_rand_range(port_range_start, port_range_end, &port);
-            if (status != UCS_OK) {
-                break;
-            }
-        } else {
-            port = 0;   /* let the operating system choose the port */
-        }
-
-        status = ucs_sockaddr_set_port((struct sockaddr*)&bind_addr, port);
-        if (status != UCS_OK) {
+          status = ucs_rand_range(port_range_start, port_range_end, &port);
+          if (status != UCS_OK) {
             break;
+          }
+        } else {
+          port = 0; /* let the operating system choose the port */
         }
 
-        status = ucs_sockaddr_sizeof((struct sockaddr*)&bind_addr, &addr_len);
+        status = ucs_sockaddr_set_port((struct sockaddr *)&bind_addr, port);
         if (status != UCS_OK) {
-            return status;
+          break;
         }
 
-        status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
-                                        ucs_socket_max_conn(), retry, 0,
-                                        &iface->listen_fd);
-    } while (retry && (status == UCS_ERR_BUSY));
+        status = ucs_sockaddr_sizeof((struct sockaddr *)&bind_addr, &addr_len);
+        if (status != UCS_OK) {
+          return status;
+        }
 
-    return status;
+        status = ucs_socket_server_init(
+            (struct sockaddr *)&bind_addr, addr_len, ucs_socket_max_conn(),
+            retry, 0, &iface->listen_fd);
+      } while (retry && (status == UCS_ERR_BUSY));
+
+      return status;
+    }
 }
 
 static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
@@ -595,6 +651,7 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
                                          uct_tcp_iface_connect_handler, iface,
                                          iface->super.worker->async);
     if (status != UCS_OK) {
+      ucs_warn("ucs_async_set_event_handler failed");
         goto err_close_sock;
     }
 
@@ -603,6 +660,13 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
               ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                               ip_port_str, sizeof(ip_port_str)),
               iface->if_name);
+    if (iface->config.enable_nat_traversal) {
+      //create key in redis
+      setRedisValueAsync(iface->config.redis_ip_address, iface->config.redis_port,
+                         ip_port_str, iface->config.public_ip_address);
+      ucs_warn("wrote redis key:value %s:%s", ip_port_str, iface->config.public_ip_address);
+    }
+
     return UCS_OK;
 
 err_close_sock:
@@ -707,9 +771,15 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.conn_nb           = config->conn_nb;
     self->config.max_poll          = config->max_poll;
     self->config.max_conn_retries  = config->max_conn_retries;
-    self->config.world_size        = config->world_size;
+    ucs_strncpy_zero(self->config.redis_ip_address, config->redis_ip_address,
+                     sizeof(self->config.redis_ip_address));
+    self->config.redis_port = config->redis_port;
+    self->config.rendezvous_port = config->rendezvous_port;
+    ucs_strncpy_zero(self->config.rendezvous_ip_address, config->rendezvous_ip_address,
+                     sizeof(self->config.rendezvous_ip_address));
     self->config.override_ip_address = config->override_ip_address;
     self->config.ignore_ifname     = config->ignore_ifname;
+    self->config.enable_nat_traversal = config->enable_nat_traversal;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
     self->sockopt.sndbuf           = config->sockopt.sndbuf;

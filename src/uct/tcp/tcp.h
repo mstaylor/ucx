@@ -383,7 +383,6 @@ typedef struct uct_tcp_iface {
                                                       * (0/1 for each EP) */
     ucs_range_spec_t              port_range;        /** Range of ports to use for bind() */
 
-
     struct {
         size_t                    tx_seg_size;       /* TX AM buffer size */
         size_t                    rx_seg_size;       /* RX AM buffer size */
@@ -413,9 +412,13 @@ typedef struct uct_tcp_iface {
         double                    max_bw;            /* Upper bound to TCP iface bandwidth */
         char *                    override_ip_address; /** Override Ip Address **/
         int                       ignore_ifname; /** Ignore Ifname from getifaddrs (nat traversal) **/
-        uint8_t                       world_size; /** world size to pass to nat traversal to create barrie
-                                                *  all processes have made outbound connection attempts
-                                                **/
+        int                       enable_nat_traversal;
+        char                      redis_ip_address[INET6_ADDRSTRLEN];
+        int                       redis_port;
+        char                      rendezvous_ip_address[INET6_ADDRSTRLEN];
+        char                      public_ip_address[INET6_ADDRSTRLEN];
+        int                       rendezvous_port;
+        int                       rendezvous_fd;
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -453,6 +456,7 @@ typedef struct uct_tcp_iface_config {
     unsigned                       world_size;
     int                            sockopt_nodelay;
     int                            ignore_ifname;
+    int                            enable_nat_traversal;
     uct_tcp_send_recv_buf_config_t sockopt;
     unsigned                       syn_cnt;
     uct_iface_mpool_config_t       tx_mpool;
@@ -465,6 +469,11 @@ typedef struct uct_tcp_iface_config {
         ucs_time_t                 intvl;
     } keepalive;
     char *                         override_ip_address;
+    char *                         redis_ip_address;
+    int                            redis_port;
+    char *                         rendezvous_ip_address;
+    int                            rendezvous_port;
+    int                            rendezvous_fd;
 } uct_tcp_iface_config_t;
 
 
