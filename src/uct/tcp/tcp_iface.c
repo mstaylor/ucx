@@ -561,7 +561,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
       ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                        ip_port_str, sizeof(ip_port_str));
       ucs_warn("private ip %s: mapped to public address %s:%i via rendezvous ", ip_port_str,
-               iface->config.public_ip_address, peerConnectionData.port);
+               iface->config.public_ip_address, ntohs(peerConnectionData.port));
 
 
       status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
@@ -612,8 +612,8 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
 static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
 {
-    struct sockaddr_storage bind_addr = iface->config.ifaddr;
-    socklen_t socklen                 = sizeof(bind_addr);
+    //struct sockaddr_storage bind_addr = iface->config.ifaddr;
+    socklen_t socklen                 = sizeof(iface->config.ifaddr);
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     ucs_status_t status;
     uint16_t port;
@@ -627,14 +627,14 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
     }
 
     /* Get the port which was selected for the socket */
-    ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
+    ret = getsockname(iface->listen_fd, (struct sockaddr*)&iface->config.ifaddr, &socklen);
     if (ret < 0) {
         ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
         status = UCS_ERR_IO_ERROR;
         goto err_close_sock;
     }
 
-    status = ucs_sockaddr_get_port((struct sockaddr*)&bind_addr, &port);
+    status = ucs_sockaddr_get_port((struct sockaddr*)&iface->config.ifaddr, &port);
     if (status != UCS_OK) {
         goto err_close_sock;
     }
@@ -674,7 +674,7 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
       //create key in redis
       setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                          ip_port_str, redisValue);
-      ucs_warn("wrote redis key:value %s:%s", ip_port_str, iface->config.public_ip_address);
+      ucs_warn("wrote redis key:value %s:%s", ip_port_str, redisValue);
     }
 
     return UCS_OK;
