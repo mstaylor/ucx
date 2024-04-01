@@ -18,7 +18,7 @@ void connectCallback(const redisAsyncContext *c, int status) {
 void setCallback(redisAsyncContext *c, void *r, void *privdata) {
     redisReply *reply = r;
     if (reply == NULL) return;
-    printf("SET: %s\n", reply->str);
+    ucs_warn("SET: %s", reply->str);
 }
 
 

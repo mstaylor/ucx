@@ -575,7 +575,7 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
     int so_reuse_optval = 1;
     int so_reuse_portval = 1;
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
-    ucs_log_level_t bind_log_level;
+ //   ucs_log_level_t bind_log_level;
     ucs_status_t status;
     int ret, fd;
 
