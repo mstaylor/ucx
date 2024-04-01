@@ -531,7 +531,7 @@ static uct_iface_ops_t uct_tcp_iface_ops = {
 
 static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 {
-    struct sockaddr_storage bind_addr = iface->config.ifaddr;
+    //struct sockaddr_storage bind_addr = iface->config.ifaddr;
     unsigned port_range_start         = iface->port_range.first;
     unsigned port_range_end           = iface->port_range.last;
     PeerConnectionData peerConnectionData;
@@ -564,14 +564,14 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
                iface->config.public_ip_address);
 
 
-      status = ucs_sockaddr_sizeof((struct sockaddr *)&bind_addr, &addr_len);
+      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
       if (status != UCS_OK) {
         ucs_warn("ucs_sockaddr_sizeof failed ");
         return status;
       }
 
       status = ucs_socket_server_init(
-          (struct sockaddr *)&bind_addr, addr_len, ucs_socket_max_conn(),
+          (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
           retry, iface->config.enable_nat_traversal, &iface->listen_fd);
 
       return status;
@@ -591,18 +591,18 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
           port = 0; /* let the operating system choose the port */
         }
 
-        status = ucs_sockaddr_set_port((struct sockaddr *)&bind_addr, port);
+        status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr, port);
         if (status != UCS_OK) {
           break;
         }
 
-        status = ucs_sockaddr_sizeof((struct sockaddr *)&bind_addr, &addr_len);
+        status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
         if (status != UCS_OK) {
           return status;
         }
 
         status = ucs_socket_server_init(
-            (struct sockaddr *)&bind_addr, addr_len, ucs_socket_max_conn(),
+            (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
             retry, 0, &iface->listen_fd);
       } while (retry && (status == UCS_ERR_BUSY));
 
