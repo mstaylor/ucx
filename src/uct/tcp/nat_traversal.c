@@ -51,6 +51,8 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
   //leave fd open so don't close until established connection with peer
   struct sockaddr_in *sa_in;
   struct timeval timeout;
+  struct sockaddr_in local_addr;
+  socklen_t local_addr_len = sizeof(local_addr);
 
   struct sockaddr_in server_data;
   PeerConnectionData public_info;
@@ -94,6 +96,14 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
     return UCS_ERR_IO_ERROR;
 
   }
+
+  if (getsockname(*fd, (struct sockaddr *)&local_addr, &local_addr_len) == -1) {
+    ucs_warn("Error getting local address");
+
+  }
+
+  // Print local port
+  ucs_warn("Local port: %d sent to rendezvous", ntohs(local_addr.sin_port));
 
   if(send(*fd, pairing_name, strlen(pairing_name), MSG_DONTWAIT) == -1) {
     ucs_error("Failed to send data to rendezvous server: ");
