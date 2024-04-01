@@ -60,7 +60,7 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
   int enable_flag = 1;
 
 
-  memset(saddr, 0, sizeof(*saddr));
+  //memset(saddr, 0, sizeof(*saddr));
   sa_in = (struct sockaddr_in*)saddr;
 
   timeout.tv_sec = timeout_ms / 1000;
