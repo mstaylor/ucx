@@ -619,7 +619,7 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
             bind_log_level = UCS_LOG_LEVEL_ERROR;
         }
         status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
-        ucs_log(bind_log_level, "bind(fd=%d addr=%s) failed: %m",
+        ucs_warn("bind(fd=%d addr=%s) failed: %m",
                 fd, ucs_sockaddr_str(saddr, ip_port_str, sizeof(ip_port_str)));
         goto err_close_socket;
     }
