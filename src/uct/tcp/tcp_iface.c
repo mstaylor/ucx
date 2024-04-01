@@ -617,6 +617,8 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     ucs_status_t status;
     uint16_t port;
+    uint16_t natPubPort;
+    char redisValue[200];
     int ret;
 
     status = uct_tcp_iface_server_init(iface);
@@ -661,6 +663,14 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
                               ip_port_str, sizeof(ip_port_str)),
               iface->if_name);
     if (iface->config.enable_nat_traversal) {
+
+      status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &natPubPort);
+      if (status != UCS_OK) {
+        ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped");
+        return status;
+      }
+      sprintf(redisValue, "%s:%i", iface->config.public_ip_address, natPubPort);
+
       //create key in redis
       setRedisValueAsync(iface->config.redis_ip_address, iface->config.redis_port,
                          ip_port_str, iface->config.public_ip_address);
