@@ -560,8 +560,8 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
       ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                        ip_port_str, sizeof(ip_port_str));
-      ucs_warn("private ip %s: mapped to public address %s via rendezvous ", ip_port_str,
-               iface->config.public_ip_address);
+      ucs_warn("private ip %s: mapped to public address %s:%i via rendezvous ", ip_port_str,
+               iface->config.public_ip_address, peerConnectionData.port);
 
 
       status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
