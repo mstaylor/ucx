@@ -63,6 +63,11 @@ redisContext * redisLogin(const char *hostname, int port) {
 }
 
 void setRedisValueAsync(const char *hostname, int port, const char *key, const char *value) {
+
+  if (evthread_use_pthreads() != 0) {
+    ucs_warn("Couldn't enable pthreads support!");
+    return;
+  }
     struct event_base *base = event_base_new();
     redisAsyncContext * asyncContext = redisAsyncLogin(hostname, port);
 

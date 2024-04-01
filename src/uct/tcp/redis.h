@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <event.h>
 #include "hiredis/adapters/libevent.h"
+#include <event2/thread.h>
 
 #include "tcp.h"
 
