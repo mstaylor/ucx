@@ -575,7 +575,7 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
     int so_reuse_optval = 1;
     int so_reuse_portval = 1;
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
- //   ucs_log_level_t bind_log_level;
+    //ucs_log_level_t bind_log_level;
     ucs_status_t status;
     int ret, fd;
 
@@ -607,19 +607,19 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
         if (status != UCS_OK) {
           goto err_close_socket;
         } else {
-          ucs_warn("fd %i configured to reuse port", fd);
+          ucs_warn("fd %i configured to reuse address", fd);
         }
     }
 
     ret = bind(fd, saddr, socklen);
     if (ret < 0) {
-        if ((errno == EADDRINUSE) && silent_err_in_use) {
+        /*if ((errno == EADDRINUSE) && silent_err_in_use) {
             bind_log_level = UCS_LOG_LEVEL_DEBUG;
         } else {
             bind_log_level = UCS_LOG_LEVEL_ERROR;
-        }
+        }*/
         status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
-        ucs_warn("bind(fd=%d addr=%s) failed: %m",
+        ucs_warn(/*bind_log_level,*/ "bind(fd=%d addr=%s) failed: %m",
                 fd, ucs_sockaddr_str(saddr, ip_port_str, sizeof(ip_port_str)));
         goto err_close_socket;
     }
