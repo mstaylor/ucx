@@ -7,40 +7,8 @@
 
 
 
-void connectCallback(const redisAsyncContext *c, int status) {
-    if (status != REDIS_OK) {
-        ucs_warn("Async Connect Error: %s", c->errstr);
-        return;
-    }
-    ucs_warn("Redis Async Connected...");
-}
-
-void setCallback(redisAsyncContext *c, void *r, void *privdata) {
-    redisReply *reply = r;
-    if (reply == NULL) return;
-    ucs_warn("SET: %s", reply->str);
-}
 
 
-struct redisAsyncContext * redisAsyncLogin(const char * hostName, int port) {
-    struct timeval tv = {0};
-    redisOptions options = {0};
-    redisAsyncContext *c = NULL;
-    REDIS_OPTIONS_SET_TCP(&options, hostName, port);
-
-    tv.tv_sec = 1;
-    options.connect_timeout = &tv;
-
-
-    c = redisAsyncConnectWithOptions(&options);
-    if (c->err) {
-        /* Let *c leak for now... */
-        ucs_warn("Error: %s", c->errstr);
-        return NULL;
-    }
-
-    return c;
-}
 
 redisContext * redisLogin(const char *hostname, int port) {
     redisContext *c;
@@ -62,25 +30,7 @@ redisContext * redisLogin(const char *hostname, int port) {
 
 }
 
-void setRedisValueAsync(const char *hostname, int port, const char *key, const char *value) {
 
-  if (evthread_use_pthreads() != 0) {
-    ucs_warn("Couldn't enable pthreads support!");
-    return;
-  }
-    struct event_base *base = event_base_new();
-    redisAsyncContext * asyncContext = redisAsyncLogin(hostname, port);
-
-    if (base != NULL && asyncContext != NULL) {
-        redisLibeventAttach(asyncContext,base);
-        redisAsyncSetConnectCallback(asyncContext,connectCallback);
-
-        redisAsyncCommand(asyncContext, setCallback, NULL, "SET %s %s", key, value);
-
-        event_base_dispatch(base);
-
-    }
-}
 
 
 void setRedisValue(const char *hostname, int port, const char *key, const char *value) {

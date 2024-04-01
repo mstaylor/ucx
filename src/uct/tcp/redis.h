@@ -15,11 +15,11 @@
 #include "tcp.h"
 
 redisContext * redisLogin(const char *hostname, int port);
-redisAsyncContext * redisAsyncLogin(const char * hostName, int port);
+
 
 void setRedisValue(const char *hostname, int port, const char *key, const char *value);
 
-void setRedisValueAsync(const char *hostname, int port, const char *key, const char *value);
+
 
 char * getValueFromRedis(const char *hostname, int port, const char *key);
 

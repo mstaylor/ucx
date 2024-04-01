@@ -672,7 +672,7 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
       sprintf(redisValue, "%s:%i", iface->config.public_ip_address, natPubPort);
 
       //create key in redis
-      setRedisValueAsync(iface->config.redis_ip_address, iface->config.redis_port,
+      setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                          ip_port_str, redisValue);
       ucs_warn("wrote redis key:value %s:%s", ip_port_str, iface->config.public_ip_address);
     }
