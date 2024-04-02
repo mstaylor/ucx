@@ -104,7 +104,7 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
 
   // Print local port
   ucs_warn("Local ip/port: %s:%d sent to rendezvous",
-           ip_to_string(&public_info.ip.s_addr, ipadd,sizeof(ipadd)),
+           ip_to_string((in_addr_t *)&local_addr.sin_addr.s_addr, ipadd,sizeof(ipadd)),
                                ntohs(local_addr.sin_port));
 
   if(send(*fd, pairing_name, strlen(pairing_name), MSG_DONTWAIT) == -1) {
