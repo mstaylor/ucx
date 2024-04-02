@@ -455,11 +455,13 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
 
             if (errno == EINPROGRESS) {
                 status = UCS_INPROGRESS;
+                ucs_warn("connection in progress...");
                 break;
             }
 
             if (errno == EISCONN) {
-                status = UCS_ERR_ALREADY_EXISTS;
+                //status = UCS_ERR_ALREADY_EXISTS;
+                ucs_warn("connection returned EISCONN");
                 break;
             }
 
@@ -474,7 +476,7 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
         }
     } while ((ret < 0) && (errno == EINTR));
 
-    ucs_debug("connect(fd=%d, src_addr=%s dest_addr=%s): %s", fd,
+    ucs_warn("connect(fd=%d, src_addr=%s dest_addr=%s): %s", fd,
               ucs_socket_getname_str(fd, src_str, UCS_SOCKADDR_STRING_LEN),
               ucs_sockaddr_str(dest_addr, dest_str, UCS_SOCKADDR_STRING_LEN),
               strerror(conn_errno));
