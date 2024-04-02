@@ -103,7 +103,9 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
   }
 
   // Print local port
-  ucs_warn("Local port: %d sent to rendezvous", ntohs(local_addr.sin_port));
+  ucs_warn("Local ip/port: %s:%d sent to rendezvous",
+           ip_to_string(&public_info.ip.s_addr, ipadd,sizeof(ipadd)),
+                               ntohs(local_addr.sin_port));
 
   if(send(*fd, pairing_name, strlen(pairing_name), MSG_DONTWAIT) == -1) {
     ucs_error("Failed to send data to rendezvous server: ");
@@ -120,7 +122,7 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
     return UCS_ERR_IO_ERROR;
   }
 
-  ucs_warn("client data: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)),
+  ucs_warn("client data returned from rendezvous: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)),
            ntohs(public_info.port));
 
   sa_in->sin_family = AF_INET;
