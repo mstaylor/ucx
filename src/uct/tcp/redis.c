@@ -6,10 +6,6 @@
 #include "redis.h"
 
 
-
-
-
-
 redisContext * redisLogin(const char *hostname, int port) {
     redisContext *c;
     ucs_warn("Logging into redis host: %s port: %i", hostname, port);

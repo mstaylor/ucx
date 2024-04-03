@@ -6,11 +6,7 @@
 #define UCX_REDIS_H
 
 #include "hiredis/hiredis.h"
-#include "hiredis/async.h"
-#include <signal.h>
-#include <event.h>
-#include "hiredis/adapters/libevent.h"
-#include <event2/thread.h>
+
 
 #include "tcp.h"
 
