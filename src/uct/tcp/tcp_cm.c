@@ -762,7 +762,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in local_port_addr;
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
-
+    int flags;
     struct sockaddr* addr = NULL;
     size_t addrlen;
 
@@ -853,14 +853,47 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
       }
 
-      status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
-      if (UCS_STATUS_IS_ERR(status)) {
-        return status;
-      } else if (status == UCS_INPROGRESS) {
-        ucs_assert(iface->config.conn_nb);
-        uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
-        return UCS_OK;
+      free(remote_address);
+
+      if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+        ucs_warn("Setting O_NONBLOCK failed: ");
       }
+      while(true) {
+        status = connect(ep->fd, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
+        if (status != 0) {
+          if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
+            //ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
+            continue;
+          } else if (errno == EISCONN) {
+
+            ucs_warn("Succesfully connected to peer, EISCONN");
+            status = UCS_OK;
+            break;
+          } else {
+            ucs_warn("sleep on connect");
+            msleep(100);
+            //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+          }
+        } else {
+          ucs_warn("Succesfully connected to peer");
+          status = UCS_OK;
+          break;
+        }
+      }
+
+      flags = fcntl(ep->fd,  F_GETFL, 0);
+      flags &= ~(O_NONBLOCK);
+      fcntl(ep->fd, F_SETFL, flags);
+
+      //status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
+      //if (UCS_STATUS_IS_ERR(status)) {
+      //  return status;
+      //} else if (status == UCS_INPROGRESS) {
+      //  ucs_assert(iface->config.conn_nb);
+      //  uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
+      //  return UCS_OK;
+      //}
 
       ucs_assert(status == UCS_OK);
 
