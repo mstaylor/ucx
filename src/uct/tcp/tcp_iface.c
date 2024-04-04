@@ -21,7 +21,7 @@
 #include "redis.h"
 #include "nat_traversal.h"
 
-#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net/tmp"
+#define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net"
 
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
