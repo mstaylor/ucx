@@ -2394,11 +2394,13 @@ ucs_status_t ucp_worker_create(ucp_context_h context,
     ucp_worker_h worker;
     ucs_status_t status;
 
+    ucs_warn("ucp_worker_create1");
     worker = ucs_calloc(1, sizeof(*worker), "ucp worker");
     if (worker == NULL) {
         return UCS_ERR_NO_MEMORY;
     }
 
+    ucs_warn("ucp_worker_create2");
     worker->context              = context;
     worker->uuid                 = ucs_generate_uuid((uintptr_t)worker);
     worker->flush_ops_count      = 0;
@@ -2422,6 +2424,7 @@ ucs_status_t ucp_worker_create(ucp_context_h context,
     worker->counters.ep_closures          = 0;
     worker->counters.ep_failures          = 0;
 
+    ucs_warn("ucp_worker_create3");
     /* Copy user flags, and mask-out unsupported flags for compatibility */
     worker->flags = UCP_PARAM_VALUE(WORKER, params, flags, FLAGS, 0) &
                     UCS_MASK(UCP_WORKER_INTERNAL_FLAGS_SHIFT);
@@ -2429,6 +2432,7 @@ ucs_status_t ucp_worker_create(ucp_context_h context,
                       UCS_BIT(UCP_WORKER_INTERNAL_FLAGS_SHIFT));
 
     /* Set multi-thread support mode */
+    ucs_warn("ucp_worker_create4");
     thread_mode = UCP_PARAM_VALUE(WORKER, params, thread_mode, THREAD_MODE,
                                   UCS_THREAD_MODE_SINGLE);
     switch (thread_mode) {
@@ -2455,6 +2459,7 @@ ucs_status_t ucp_worker_create(ucp_context_h context,
         goto err_free;
     }
 
+    ucs_warn("ucp_worker_create5");
     /* Initialize endpoint allocator */
     ucs_strided_alloc_init(&worker->ep_alloc, sizeof(ucp_ep_t), 1);
 
@@ -2502,6 +2507,8 @@ ucs_status_t ucp_worker_create(ucp_context_h context,
         goto err_free_stats;
     }
 
+    ucs_warn("ucp_worker_create6");
+
     status = ucs_async_context_init(&worker->async,
                                     context->config.ext.use_mt_mutex ?
                                     UCS_ASYNC_MODE_THREAD_MUTEX :
@@ -2510,11 +2517,15 @@ ucs_status_t ucp_worker_create(ucp_context_h context,
         goto err_free_tm_offload_stats;
     }
 
+    ucs_warn("ucp_worker_create7");
+
     /* Create the underlying UCT worker */
     status = uct_worker_create(&worker->async, uct_thread_mode, &worker->uct);
     if (status != UCS_OK) {
         goto err_destroy_async;
     }
+
+    ucs_warn("ucp_worker_create8");
 
     /* Create UCS event set which combines events from all transports */
     status = ucp_worker_wakeup_init(worker, params);
@@ -2528,28 +2539,34 @@ ucs_status_t ucp_worker_create(ucp_context_h context,
         UCS_CPU_ZERO(&worker->cpu_mask);
     }
 
+    ucs_warn("ucp_worker_create9");
+
     /* Initialize connection matching structure */
     ucs_conn_match_init(&worker->conn_match_ctx, sizeof(uint64_t),
                         UCP_EP_MATCH_CONN_SN_MAX, &ucp_ep_match_ops);
 
+    ucs_warn("ucp_worker_create10");
     /* Open all resources as interfaces on this worker */
     status = ucp_worker_add_resource_ifaces(worker);
     if (status != UCS_OK) {
         goto err_conn_match_cleanup;
     }
 
+    ucs_warn("ucp_worker_create11");
     /* Open all resources as connection managers on this worker */
     status = ucp_worker_add_resource_cms(worker);
     if (status != UCS_OK) {
         goto err_close_ifaces;
     }
 
+    ucs_warn("ucp_worker_create12");
     /* Create loopback endpoints to copy across memory types */
     status = ucp_worker_mem_type_eps_create(worker);
     if (status != UCS_OK) {
         goto err_close_cms;
     }
 
+    ucs_warn("ucp_worker_create13");
     /* Initialize memory pools, should be done after resources are added */
     status = ucp_worker_init_mpools(worker);
     if (status != UCS_OK) {
