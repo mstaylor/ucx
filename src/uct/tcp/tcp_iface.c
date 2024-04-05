@@ -981,7 +981,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
                                    unsigned *num_devices_p) {
     uct_tcp_md_t *tcp_md = ucs_derived_of(md, uct_tcp_md_t);
     const unsigned sys_device_priority = 10;
-    uct_tl_device_resource_t *devices = NULL, *tmp = NULL;
+    uct_tl_device_resource_t *devices, *tmp;
     struct dirent *entry;
     unsigned num_devices = 0;
     int is_active, i;
@@ -1003,6 +1003,9 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         status = UCS_OK;
     }
 
+    devices     = NULL;
+    num_devices = 0;
+
     if (status == UCS_ERR_IO_ERROR) {
         //ucs_warn("creating fake device");
         ucs_warn("processing fake interface for aws lambda support");
@@ -1023,24 +1026,22 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         devices[num_devices].type = UCT_DEVICE_TYPE_NET;
         devices[num_devices].sys_device = UCS_SYS_DEVICE_ID_UNKNOWN;
         ++num_devices;
-
         ucs_warn("successfully created fake eth0 device");
-    }
+    } else {
 
-
-    devices = NULL;
-    num_devices = 0;
-    for (;;) {
+      devices = NULL;
+      num_devices = 0;
+      for (;;) {
         errno = 0;
         entry = readdir(dir);
         if (entry == NULL) {
-            if (errno != 0) {
-                ucs_error("readdir(%s) failed: %m", UCT_TCP_IFACE_NETDEV_DIR);
-                ucs_free(devices);
-                status = UCS_ERR_IO_ERROR;
-                goto out_closedir;
-            }
-            break; /* no more items */
+          if (errno != 0) {
+            ucs_error("readdir(%s) failed: %m", UCT_TCP_IFACE_NETDEV_DIR);
+            ucs_free(devices);
+            status = UCS_ERR_IO_ERROR;
+            goto out_closedir;
+          }
+          break; /* no more items */
         }
 
         /* According to the sysfs(5) manual page, all of entries
@@ -1050,28 +1051,28 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
          * directory. Let's avoid checking files that are not a
          * symbolic link, e.g. "." and ".." entries */
         if (entry->d_type != DT_LNK) {
-            continue;
+          continue;
         }
 
         is_active = 0;
         for (i = 0; i < tcp_md->config.af_prio_count; i++) {
-            if (ucs_netif_is_active(entry->d_name,
-                                    tcp_md->config.af_prio_list[i])) {
-                is_active = 1;
-                break;
-            }
+          if (ucs_netif_is_active(entry->d_name,
+                                  tcp_md->config.af_prio_list[i])) {
+            is_active = 1;
+            break;
+          }
         }
 
         if (!is_active) {
-            continue;
+          continue;
         }
 
         tmp = ucs_realloc(devices, sizeof(*devices) * (num_devices + 1),
                           "tcp devices");
         if (tmp == NULL) {
-            ucs_free(devices);
-            status = UCS_ERR_NO_MEMORY;
-            goto out_closedir;
+          ucs_free(devices);
+          status = UCS_ERR_NO_MEMORY;
+          goto out_closedir;
         }
         devices = tmp;
 
@@ -1080,11 +1081,12 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
                                          sys_device_priority);
 
         ucs_snprintf_zero(devices[num_devices].name,
-                          sizeof(devices[num_devices].name),
-                          "%s", entry->d_name);
+                          sizeof(devices[num_devices].name), "%s",
+                          entry->d_name);
         devices[num_devices].type = UCT_DEVICE_TYPE_NET;
         devices[num_devices].sys_device = sys_dev;
         ++num_devices;
+      }
     }
 
     *num_devices_p = num_devices;
