@@ -1023,6 +1023,8 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         devices[num_devices].type = UCT_DEVICE_TYPE_NET;
         devices[num_devices].sys_device = UCS_SYS_DEVICE_ID_UNKNOWN;
         ++num_devices;
+
+        ucs_warn("successfully created fake eth0 device");
     }
 
 
