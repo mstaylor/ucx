@@ -79,6 +79,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    "How many connection establishment attempts should be done if dropped "
    "connection was detected due to lack of system resources",
    ucs_offsetof(uct_tcp_iface_config_t, max_conn_retries), UCS_CONFIG_TYPE_UINT},
+    {"IGNORE_IFNAME", "n",
+     "ignore ifname",
+     ucs_offsetof(uct_tcp_iface_config_t, ignore_ifname), UCS_CONFIG_TYPE_BOOL},
    {UCT_TCP_CONFIG_PRIVATE_REMOTE_ADDRESS_OVERRIDE, "",
    "Override the private remote address IP ",
    ucs_offsetof(uct_tcp_iface_config_t, override_private_ip_address), UCS_CONFIG_TYPE_STRING},
@@ -853,7 +856,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         sizeof(self->config.mappedTCPunchAddr));
     self->config.mappedTcPunchPort = config->mappedTcPunchPort;
     self->config.enable_tcpunch = config->enable_tcpunch;
-
+    self->config.ignore_ifname     = config->ignore_ifname;
     self->config.connect_timeout = config->connect_timeout;
     self->config.syn_cnt           = config->syn_cnt;
     self->sockopt.nodelay          = config->sockopt_nodelay;
@@ -924,7 +927,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                              tcp_md->config.af_prio_list[i],
                              (struct sockaddr*)&self->config.ifaddr,
                              (struct sockaddr*)&self->config.netmask,
-                             self->config.override_private_ip_address, 0);
+                             self->config.override_private_ip_address, self->config.ignore_ifname);
             if (status == UCS_OK) {
                 break;
         }

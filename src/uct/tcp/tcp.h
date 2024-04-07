@@ -425,6 +425,7 @@ typedef struct uct_tcp_iface {
         int                       connect_timeout;
         char                      mappedTCPunchAddr[INET6_ADDRSTRLEN];
         int                       mappedTcPunchPort;
+        int                       ignore_ifname;
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -481,6 +482,7 @@ typedef struct uct_tcp_iface_config {
     int                            connect_timeout;
     char  *                        mappedTCPunchAddr;
     int                             mappedTcPunchPort;
+    int                             ignore_ifname;
 
 } uct_tcp_iface_config_t;
 
