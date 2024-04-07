@@ -924,7 +924,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                              tcp_md->config.af_prio_list[i],
                              (struct sockaddr*)&self->config.ifaddr,
                              (struct sockaddr*)&self->config.netmask,
-                             self->config.override_private_ip_address);
+                             self->config.override_private_ip_address, 0);
             if (status == UCS_OK) {
                 break;
         }
