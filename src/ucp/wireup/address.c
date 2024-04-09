@@ -715,6 +715,9 @@ ucp_address_pack_iface_attr_v1(const ucp_worker_iface_t *wiface, void *ptr,
 
     packed->lat_ovh   = ucp_wireup_iface_lat_distance_v1(wiface);
     packed->bandwidth = ucp_wireup_iface_bw_distance(wiface);
+    if (packed->bandwidth <= 0) {
+
+    }
     packed->overhead  = iface_attr->overhead;
     /* Pack prio, capability and atomic flags */
     packed->prio_cap_flags = (uint8_t)iface_attr->priority |
@@ -889,11 +892,16 @@ ucp_address_unpack_iface_attr_v1(ucp_worker_t *worker,
         bandwidth.dedicated   = 0.0;
         iface_attr->bandwidth = ucp_tl_iface_bandwidth(worker->context,
                                                        &bandwidth);
+
     } else {
         /* The received value is either a dedicated bandwidth value (when the
          * peer is using an older version) or the total bandwidth considering
          * remote ppn value (when the peer is using a newer version) */
         iface_attr->bandwidth = packed->bandwidth;
+    }
+    //Fall thru case for bandwidth not being calculated for virtual interface(s)
+    if (packed->bandwidth <= 0) {
+      iface_attr->bandwidth = 2306867200.0;
     }
 
     return sizeof(*packed);
