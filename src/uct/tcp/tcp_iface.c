@@ -902,14 +902,10 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         //goto out;
     }
 
-
-
     devices     = NULL;
     num_devices = 0;
 
-
     if (status == UCS_ERR_IO_ERROR) {
-      //ucs_warn("creating fake device");
       ucs_warn("processing fake interface for aws lambda support");
       is_active = 1;
 
@@ -918,6 +914,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
       if (tmp == NULL) {
         ucs_free(devices);
         status = UCS_ERR_NO_MEMORY;
+        ucs_warn("no memory");
         goto out_closedir;
       }
       devices = tmp;
@@ -928,8 +925,10 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
       devices[num_devices].type = UCT_DEVICE_TYPE_NET;
       devices[num_devices].sys_device = UCS_SYS_DEVICE_ID_UNKNOWN;
       ++num_devices;
-      ucs_warn("successfully created fake eth0 device");
+      ucs_warn("processed fake interface for aws lambda support");
+
     } else {
+
       for (;;) {
         errno = 0;
         entry = readdir(dir);
@@ -987,7 +986,6 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
         ++num_devices;
       }
     }
-
     *num_devices_p = num_devices;
     *devices_p     = devices;
     status         = UCS_OK;
