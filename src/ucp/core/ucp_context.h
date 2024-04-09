@@ -590,9 +590,6 @@ ucp_tl_iface_bandwidth(ucp_context_h context, const uct_ppn_bandwidth_t *bandwid
 {
     double bndwidth =  bandwidth->dedicated +
            (bandwidth->shared / context->config.est_num_ppn);
-    if (bndwidth <= 0) {
-      bndwidth = 2306867200.00;
-    }
 
     return bndwidth;
 }

@@ -981,10 +981,12 @@ ucp_address_unpack_iface_attr(ucp_worker_t *worker,
     }
 
     if (iface_attr->bandwidth <= 0) {
-        ucp_address_error(unpack_flags,
+      ucs_warn("invalid bandwidth so overriding bandwidth %f", iface_attr->bandwidth);
+      iface_attr->bandwidth = 2306867200.00;
+        /*ucp_address_error(unpack_flags,
                           "failed to unpack address, invalid bandwidth %.2f",
                           iface_attr->bandwidth);
-        return UCS_ERR_INVALID_ADDR;
+        return UCS_ERR_INVALID_ADDR;*/
     }
 
     /* Unpack iface 32-bit atomic operations */
