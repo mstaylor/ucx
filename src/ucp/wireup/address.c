@@ -710,8 +710,11 @@ static unsigned
 ucp_address_pack_iface_attr_v1(const ucp_worker_iface_t *wiface, void *ptr,
                                unsigned atomic_flags)
 {
+
     const uct_iface_attr_t *iface_attr      = &wiface->attr;
     ucp_address_packed_iface_attr_t *packed = ptr;
+
+    ucs_warn("using ucp_address_pack_iface_attr_v1");
 
     packed->lat_ovh   = ucp_wireup_iface_lat_distance_v1(wiface);
     packed->bandwidth = ucp_wireup_iface_bw_distance(wiface);
@@ -759,13 +762,14 @@ static unsigned
 ucp_address_pack_iface_attr_v2(const ucp_worker_iface_t *wiface, void *ptr,
                                unsigned atomic_flags)
 {
+
     const uct_iface_attr_t *iface_attr         = &wiface->attr;
     ucp_address_v2_packed_iface_attr_t *packed = ptr;
 
     uint64_t addr_iface_flags;
     double latency_nsec, overhead_nsec, latency, bandwidth;
     size_t seg_size;
-
+    ucs_warn("using ucp_address_pack_iface_attr_v2");
     latency   = ucp_wireup_iface_lat_distance_v2(wiface);
     bandwidth = ucp_wireup_iface_bw_distance(wiface);
 

@@ -282,6 +282,7 @@ static ucs_status_t uct_tcp_iface_query(uct_iface_h tl_iface,
     calculated_bw          = ucs_min(pci_bw, network_bw);
 
     /* Bandwidth is bounded by TCP stack computation time */
+    ucs_warn("max bandwidth %f", iface->config.max_bw);
     attr->bandwidth.shared = ucs_min(calculated_bw, iface->config.max_bw);
 
     attr->ep_addr_len      = sizeof(uct_tcp_ep_addr_t);
