@@ -69,6 +69,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    {UCT_TCP_CONFIG_REMOTE_ADDRESS_OVERRIDE, "",
    "Override the remote address IP ",
    ucs_offsetof(uct_tcp_iface_config_t, override_ip_address), UCS_CONFIG_TYPE_STRING},
+    {"IGNORE_IFNAME", "n",
+     "ignore ifname",
+     ucs_offsetof(uct_tcp_iface_config_t, ignore_ifname), UCS_CONFIG_TYPE_BOOL},
 
   {"NODELAY", "y",
    "Set TCP_NODELAY socket option to disable Nagle algorithm. Setting this\n"
@@ -703,6 +706,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.keepalive.intvl   = config->keepalive.intvl;
     self->port_range.first         = config->port_range.first;
     self->port_range.last          = config->port_range.last;
+    self->config.ignore_ifname     = config->ignore_ifname;
 
     if (config->keepalive.idle != UCS_MEMUNITS_AUTO) {
         /* TCP iface configuration sets the keepalive interval */
@@ -756,7 +760,8 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                     tcp_md->config.af_prio_list[i],
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
-                                            self->config.override_ip_address);
+                                     self->config.override_ip_address,
+                                   self->config.ignore_ifname);
         if (status == UCS_OK) {
             break;
         }

@@ -107,7 +107,8 @@ ucs_status_t ucs_netif_get_addr(const char *if_name, sa_family_t af,
 ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                                 struct sockaddr *saddr,
                                 struct sockaddr *netmask,
-                                        const char * overrideAddress);
+                                const char * overrideAddress,
+                                 int ignore_fname);
 
 
 /**
