@@ -72,6 +72,23 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
     {"IGNORE_IFNAME", "n",
      "ignore ifname",
      ucs_offsetof(uct_tcp_iface_config_t, ignore_ifname), UCS_CONFIG_TYPE_BOOL},
+    {"ENABLE_NAT_TRAVERSAL", "n",
+     "enable the use of tcp hole punching ",
+     ucs_offsetof(uct_tcp_iface_config_t, enable_nat_traversal), UCS_CONFIG_TYPE_BOOL},
+    {"REDIS_IP", "",
+     "Redis IP ",
+     ucs_offsetof(uct_tcp_iface_config_t, redis_ip_address), UCS_CONFIG_TYPE_STRING},
+    {"REDIS_PORT", "0",
+     "Redis Port\n",
+     ucs_offsetof(uct_tcp_iface_config_t, redis_port), UCS_CONFIG_TYPE_INT},
+    {"RENDEZVOUS_IP", "",
+     "Rendezvous IP ",
+     ucs_offsetof(uct_tcp_iface_config_t, rendezvous_ip_address), UCS_CONFIG_TYPE_STRING},
+    {"RENDEZVOUS_PORT", "10000",
+     "Rendezvous Port\n",
+     ucs_offsetof(uct_tcp_iface_config_t, rendezvous_port), UCS_CONFIG_TYPE_INT},
+
+
 
   {"NODELAY", "y",
    "Set TCP_NODELAY socket option to disable Nagle algorithm. Setting this\n"
@@ -707,6 +724,13 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->port_range.first         = config->port_range.first;
     self->port_range.last          = config->port_range.last;
     self->config.ignore_ifname     = config->ignore_ifname;
+    ucs_strncpy_zero(self->config.redis_ip_address, config->redis_ip_address,
+                     sizeof(self->config.redis_ip_address));
+    self->config.redis_port = config->redis_port;
+    self->config.rendezvous_port = config->rendezvous_port;
+    ucs_strncpy_zero(self->config.rendezvous_ip_address, config->rendezvous_ip_address,
+                     sizeof(self->config.rendezvous_ip_address));
+    self->config.enable_nat_traversal = config->enable_nat_traversal;
 
     if (config->keepalive.idle != UCS_MEMUNITS_AUTO) {
         /* TCP iface configuration sets the keepalive interval */
@@ -756,6 +780,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     }
 
     for (i = 0; i < tcp_md->config.af_prio_count; i++) {
+      ucs_warn("creating address via ucs_netif_get_addr2");
         status = ucs_netif_get_addr2(self->if_name,
                                     tcp_md->config.af_prio_list[i],
                                     (struct sockaddr*)&self->config.ifaddr,
@@ -763,11 +788,13 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                      self->config.override_ip_address,
                                    self->config.ignore_ifname);
         if (status == UCS_OK) {
+          ucs_warn("UCS_OK so breaking in address iteration");
             break;
         }
     }
 
     if (status != UCS_OK) {
+      ucs_warn("creating address via ucs_netif_get_addr2 FAILED");
         goto err_cleanup_rx_mpool;
     }
 

@@ -412,6 +412,12 @@ typedef struct uct_tcp_iface {
         double                    max_bw;            /* Upper bound to TCP iface bandwidth */
         char *                    override_ip_address; /** Override Ip Address **/
         int                       ignore_ifname; /** Ignore Ifname from getifaddrs (nat traversal) **/
+        int                       enable_nat_traversal;
+        char                      redis_ip_address[INET6_ADDRSTRLEN];
+        int                       redis_port;
+        char                      rendezvous_ip_address[INET6_ADDRSTRLEN];
+        int                       rendezvous_port;
+        int                       rendezvous_fd;
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -459,7 +465,14 @@ typedef struct uct_tcp_iface_config {
         ucs_time_t                 intvl;
     } keepalive;
     char *                         override_ip_address;
-    int                       ignore_ifname; /** Ignore Ifname from getifaddrs (nat traversal) **/
+    int                            ignore_ifname; /** Ignore Ifname from getifaddrs (nat traversal) **/
+    int                            enable_nat_traversal;
+    char *                         redis_ip_address;
+    int                            redis_port;
+    char *                         rendezvous_ip_address;
+    int                            rendezvous_port;
+    int                            rendezvous_fd;
+
 } uct_tcp_iface_config_t;
 
 
