@@ -710,11 +710,8 @@ static unsigned
 ucp_address_pack_iface_attr_v1(const ucp_worker_iface_t *wiface, void *ptr,
                                unsigned atomic_flags)
 {
-
     const uct_iface_attr_t *iface_attr      = &wiface->attr;
     ucp_address_packed_iface_attr_t *packed = ptr;
-
-
 
     packed->lat_ovh   = ucp_wireup_iface_lat_distance_v1(wiface);
     packed->bandwidth = ucp_wireup_iface_bw_distance(wiface);
@@ -762,7 +759,6 @@ static unsigned
 ucp_address_pack_iface_attr_v2(const ucp_worker_iface_t *wiface, void *ptr,
                                unsigned atomic_flags)
 {
-
     const uct_iface_attr_t *iface_attr         = &wiface->attr;
     ucp_address_v2_packed_iface_attr_t *packed = ptr;
 
@@ -981,12 +977,10 @@ ucp_address_unpack_iface_attr(ucp_worker_t *worker,
     }
 
     if (iface_attr->bandwidth <= 0) {
-      ucs_warn("invalid bandwidth so overriding bandwidth %f", iface_attr->bandwidth);
-      iface_attr->bandwidth = 2306867200.00;
-        /*ucp_address_error(unpack_flags,
+        ucp_address_error(unpack_flags,
                           "failed to unpack address, invalid bandwidth %.2f",
                           iface_attr->bandwidth);
-        return UCS_ERR_INVALID_ADDR;*/
+        return UCS_ERR_INVALID_ADDR;
     }
 
     /* Unpack iface 32-bit atomic operations */

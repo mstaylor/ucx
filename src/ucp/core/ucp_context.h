@@ -588,10 +588,8 @@ ucp_tl_iface_latency(ucp_context_h context, const ucs_linear_func_t *latency)
 static UCS_F_ALWAYS_INLINE double
 ucp_tl_iface_bandwidth(ucp_context_h context, const uct_ppn_bandwidth_t *bandwidth)
 {
-    double bndwidth =  bandwidth->dedicated +
+    return bandwidth->dedicated +
            (bandwidth->shared / context->config.est_num_ppn);
-
-    return bndwidth;
 }
 
 static UCS_F_ALWAYS_INLINE const uct_component_attr_t*
