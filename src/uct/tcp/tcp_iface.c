@@ -533,6 +533,9 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     PeerConnectionData peerConnectionData;
 
+    ucs_warn("pass rendezvous ip %s %i", iface->config.rendezvous_ip_address,
+             iface->config.rendezvous_port);
+
     if (iface->config.enable_nat_traversal) {
       //if nat traversal is enabled, use the private IP address returned
       //to bind
@@ -789,6 +792,8 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     ucs_strncpy_zero(self->config.rendezvous_ip_address, config->rendezvous_ip_address,
                      sizeof(self->config.rendezvous_ip_address));
     self->config.enable_nat_traversal = config->enable_nat_traversal;
+
+    ucs_warn("rendezvous ip set to: %s", self->config.redis_ip_address);
 
     if (config->keepalive.idle != UCS_MEMUNITS_AUTO) {
         /* TCP iface configuration sets the keepalive interval */
