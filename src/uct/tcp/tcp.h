@@ -418,6 +418,7 @@ typedef struct uct_tcp_iface {
         char                      rendezvous_ip_address[INET6_ADDRSTRLEN];
         int                       rendezvous_port;
         int                       rendezvous_fd;
+        char                      public_ip_address[INET6_ADDRSTRLEN];
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive

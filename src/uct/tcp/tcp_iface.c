@@ -18,6 +18,8 @@
 #include <netinet/tcp.h>
 #include <dirent.h>
 #include <float.h>
+#include "redis.h"
+#include "nat_traversal.h"
 
 #define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net"
 
@@ -527,36 +529,75 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
     ucs_status_t status;
     size_t addr_len;
-    int port, retry;
+    int port, retry = -1;
+    char ip_port_str[UCS_SOCKADDR_STRING_LEN];
+    PeerConnectionData peerConnectionData;
 
-    /* retry is 1 for a range of ports or when port value is zero.
+    if (iface->config.enable_nat_traversal) {
+      //if nat traversal is enabled, use the private IP address returned
+      //to bind
+      status = connectandBindLocal(&iface->config.rendezvous_fd, &peerConnectionData, &iface->config.ifaddr,
+                                   "cylon", iface->config.rendezvous_ip_address,
+                                   iface->config.rendezvous_port, 60000);
+      if (status != UCS_OK) {
+        ucs_warn("connectandbindlocal failed");
+        return status;
+      }
+
+      if (ip_to_string(&peerConnectionData.ip.s_addr, iface->config.public_ip_address,
+                       sizeof(iface->config.public_ip_address)) == NULL) {
+        ucs_warn("ip_to_string failed");
+        return UCS_ERR_IO_ERROR;
+      }
+
+      ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
+                       ip_port_str, sizeof(ip_port_str));
+      ucs_warn("private ip %s: mapped to public address %s:%i via rendezvous ", ip_port_str,
+               iface->config.public_ip_address, ntohs(peerConnectionData.port));
+
+
+      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
+      if (status != UCS_OK) {
+        ucs_warn("ucs_sockaddr_sizeof failed ");
+        return status;
+      }
+
+      status = ucs_socket_server_init(
+          (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
+          retry, iface->config.enable_nat_traversal, &iface->listen_fd);
+
+      return status;
+    } else {
+
+      /* retry is 1 for a range of ports or when port value is zero.
      * retry is 0 for a single value port that is not zero */
-    retry = (port_range_start == 0) || (port_range_start < port_range_end);
+      retry = (port_range_start == 0) || (port_range_start < port_range_end);
 
-    do {
+      do {
         if (port_range_end != 0) {
-            status = ucs_rand_range(port_range_start, port_range_end, &port);
-            if (status != UCS_OK) {
-                break;
-            }
-        } else {
-            port = 0;   /* let the operating system choose the port */
-        }
-
-        status = ucs_sockaddr_set_port((struct sockaddr*)&bind_addr, port);
-        if (status != UCS_OK) {
+          status = ucs_rand_range(port_range_start, port_range_end, &port);
+          if (status != UCS_OK) {
             break;
+          }
+        } else {
+          port = 0; /* let the operating system choose the port */
         }
 
-        status = ucs_sockaddr_sizeof((struct sockaddr*)&bind_addr, &addr_len);
+        status = ucs_sockaddr_set_port((struct sockaddr *)&bind_addr, port);
         if (status != UCS_OK) {
-            return status;
+          break;
         }
 
-        status = ucs_socket_server_init((struct sockaddr*)&bind_addr, addr_len,
+        status = ucs_sockaddr_sizeof((struct sockaddr *)&bind_addr, &addr_len);
+        if (status != UCS_OK) {
+          return status;
+        }
+
+        status = ucs_socket_server_init((struct sockaddr *)&bind_addr, addr_len,
                                         ucs_socket_max_conn(), retry, 0,
                                         &iface->listen_fd);
-    } while (retry && (status == UCS_ERR_BUSY));
+      } while (retry && (status == UCS_ERR_BUSY));
+    }
 
     return status;
 }
@@ -568,6 +609,8 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     ucs_status_t status;
     uint16_t port;
+    uint16_t natPubPort;
+    char redisValue[200];
     int ret;
 
     status = uct_tcp_iface_server_init(iface);
@@ -605,11 +648,26 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
         goto err_close_sock;
     }
 
-    ucs_debug("tcp_iface %p: listening for connections (fd=%d) on %s netif %s",
+    ucs_warn("tcp_iface %p: listening for connections (fd=%d) on %s netif %s",
               iface, iface->listen_fd,
               ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                               ip_port_str, sizeof(ip_port_str)),
               iface->if_name);
+
+    if (iface->config.enable_nat_traversal) {
+
+      status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &natPubPort);
+      if (status != UCS_OK) {
+        ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped");
+        return status;
+      }
+      sprintf(redisValue, "%s:%i", iface->config.public_ip_address, natPubPort);
+
+      //create key in redis
+      setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                    ip_port_str, redisValue);
+      ucs_warn("wrote redis key:value %s:%s", ip_port_str, redisValue);
+    }
     return UCS_OK;
 
 err_close_sock:
