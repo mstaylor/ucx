@@ -126,7 +126,7 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
            ntohs(public_info.port));
 
   sa_in->sin_family = AF_INET;
-  //sa_in->sin_addr.s_addr = INADDR_ANY;
+  sa_in->sin_addr.s_addr = local_addr.sin_addr.s_addr;
   sa_in->sin_port = public_info.port;
 
   data->ip = public_info.ip;
