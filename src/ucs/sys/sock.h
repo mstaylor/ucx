@@ -110,6 +110,8 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                                 const char * overrideAddress,
                                  int ignore_fname);
 
+void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family, int port );
+
 
 /**
  * Get number of active 802.3ad ports for a bond device. If the device is not

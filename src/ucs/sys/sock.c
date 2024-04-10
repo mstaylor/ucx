@@ -103,39 +103,43 @@ out:
 /**
  * Set an address for the server to listen on - INADDR_ANY on a well known port.
  */
-static void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family )
+void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family, int port )
 {
-    struct sockaddr_in *sa_in;
-    struct sockaddr_in6 *sa_in6;
+  struct sockaddr_in *sa_in;
+  struct sockaddr_in6 *sa_in6;
 
-    /* The server will listen on INADDR_ANY */
-    memset(saddr, 0, sizeof(*saddr));
+  /* The server will listen on INADDR_ANY */
+  memset(saddr, 0, sizeof(*saddr));
 
-    switch (ai_family) {
-    case AF_INET:
-        sa_in = (struct sockaddr_in*)saddr;
-        if (address_str != NULL) {
-            inet_pton(AF_INET, address_str, &sa_in->sin_addr);
-        } else {
-            sa_in->sin_addr.s_addr = INADDR_ANY;
-        }
-        sa_in->sin_family = AF_INET;
-        sa_in->sin_port   = htons(INADDR_ANY);
-        break;
-    case AF_INET6:
-        sa_in6 = (struct sockaddr_in6*)saddr;
-        if (address_str != NULL) {
-            inet_pton(AF_INET6, address_str, &sa_in6->sin6_addr);
-        } else {
-            sa_in6->sin6_addr = in6addr_any;
-        }
-        sa_in6->sin6_family = AF_INET6;
-        //sa_in6->sin6_port   = htons(server_port);
-        break;
-    default:
-        fprintf(stderr, "Invalid address family");
-        break;
+  switch (ai_family) {
+  case AF_INET:
+    sa_in = (struct sockaddr_in*)saddr;
+    if (address_str != NULL) {
+      inet_pton(AF_INET, address_str, &sa_in->sin_addr);
+    } else {
+      sa_in->sin_addr.s_addr = INADDR_ANY;
     }
+    sa_in->sin_family = AF_INET;
+    if (port != 0) {
+      sa_in->sin_port = htons(port);
+    } else {
+      sa_in->sin_port = htons(INADDR_ANY);
+    }
+    break;
+  case AF_INET6:
+    sa_in6 = (struct sockaddr_in6*)saddr;
+    if (address_str != NULL) {
+      inet_pton(AF_INET6, address_str, &sa_in6->sin6_addr);
+    } else {
+      sa_in6->sin6_addr = in6addr_any;
+    }
+    sa_in6->sin6_family = AF_INET6;
+    //sa_in6->sin6_port   = htons(server_port);
+    break;
+  default:
+    fprintf(stderr, "Invalid address family");
+    break;
+  }
 }
 
 
@@ -187,7 +191,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
 
               ucs_warn("configuring with override address %s for ifname %s", overrideAddress, if_name);
 
-                set_sock_addr(overrideAddress, &connect_addr, af);
+                set_sock_addr(overrideAddress, &connect_addr, af, 0);
 
                 addr = (struct sockaddr*)&connect_addr;
 
