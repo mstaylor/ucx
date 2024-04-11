@@ -446,6 +446,7 @@ uct_tcp_iface_connect_handler(int listen_fd, ucs_event_set_types_t events,
         addrlen = sizeof(peer_addr);
         status  = ucs_socket_accept(iface->listen_fd, (struct sockaddr*)&peer_addr,
                                     &addrlen, &fd);
+        ucs_warn("socket accept status - fd: %i status: %i", iface->listen_fd, status);
         if (status != UCS_OK) {
             if (status != UCS_ERR_NO_PROGRESS) {
                 ucs_close_fd(&iface->listen_fd);

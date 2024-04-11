@@ -487,6 +487,7 @@ ucs_status_t ucs_socket_accept(int fd, struct sockaddr *addr, socklen_t *length_
     UCS_STRING_BUFFER_ONSTACK(strb, 128);
 
     *accept_fd = accept(fd, addr, length_ptr);
+    ucs_warn("accept errno - socket %i errNo %i", fd, errno);
     if (*accept_fd < 0) {
         status = ucs_socket_check_errno(errno);
         if (status == UCS_ERR_NO_PROGRESS) {

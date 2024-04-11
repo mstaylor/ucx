@@ -139,7 +139,7 @@ static void uct_tcp_cm_trace_conn_pkt(const uct_tcp_ep_t *ep,
         }
     }
 
-    ucs_log(log_level, "tcp_ep %p: %s [%s]:%"PRIu64, ep,
+    ucs_warn("tcp_ep %p: %s [%s]:%"PRIu64, ep,
             ucs_string_buffer_cstr(&strb),
             ucs_sockaddr_str((const struct sockaddr*)&ep->peer_addr,
                              str_addr, UCS_SOCKADDR_STRING_LEN),
@@ -760,7 +760,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in local_port_addr;
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
-    int flags;
+
     struct sockaddr* addr = NULL;
     size_t addrlen;
 
@@ -770,7 +770,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
-        ucs_error("tcp_ep %p: reached maximum number of connection retries "
+        ucs_warn("tcp_ep %p: reached maximum number of connection retries "
                   "(%u)", ep, iface->config.max_conn_retries);
         return UCS_ERR_TIMED_OUT;
     }
@@ -853,10 +853,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       free(remote_address);
 
-      if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+      /*if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
-      }
-      while(true) {
+      }*/
+      /*while(true) {
         status = connect(ep->fd, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
         if (status != 0) {
           if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -878,20 +878,20 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
           status = UCS_OK;
           break;
         }
-      }
+      }*/
 
-      flags = fcntl(ep->fd,  F_GETFL, 0);
+      /*flags = fcntl(ep->fd,  F_GETFL, 0);
       flags &= ~(O_NONBLOCK);
       fcntl(ep->fd, F_SETFL, flags);
-
-      //status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
-      //if (UCS_STATUS_IS_ERR(status)) {
-      //  return status;
-      //} else if (status == UCS_INPROGRESS) {
-      //  ucs_assert(iface->config.conn_nb);
-      //  uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
-      //  return UCS_OK;
-      //}
+*/
+      status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
+      if (UCS_STATUS_IS_ERR(status)) {
+        return status;
+      } else if (status == UCS_INPROGRESS) {
+        ucs_assert(iface->config.conn_nb);
+        uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
+        return UCS_OK;
+      }
 
       ucs_assert(status == UCS_OK);
 

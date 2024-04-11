@@ -501,7 +501,7 @@ void uct_tcp_ep_set_failed(uct_tcp_ep_t *ep, ucs_status_t status)
     uct_tcp_ep_mod_events(ep, 0, ep->events);
 
     if (ep->flags & UCT_TCP_EP_FLAG_CTX_TYPE_TX) {
-        ucs_debug("tcp_ep %p: calling error handler (flags: %x)", ep,
+        ucs_warn("tcp_ep %p: calling error handler (flags: %x)", ep,
                   ep->flags);
         uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CLOSED);
         uct_iface_handle_ep_err(ep->super.super.iface, &ep->super.super,
@@ -623,7 +623,8 @@ out:
     return status;
 
 err:
-    if (ep->conn_retries > 1) {
+    ucs_warn("connection retry: %i", ep->conn_retries);
+    if (ep->conn_retries > 5) {
         /* if this is not the first connection establishment retry (i.e. it
          * is not called from uct_ep_create()/uct_ep_connect_to_ep()), set
          * EP as failed */
