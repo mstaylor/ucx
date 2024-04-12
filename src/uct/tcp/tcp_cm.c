@@ -761,6 +761,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
     int retries = 0;
+    uint16_t port = 0;
 
     struct sockaddr* addr = NULL;
     size_t addrlen;
@@ -783,6 +784,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     ucs_warn("uct_tcp_cm_conn_start - peer address: %s source address: %s", dest_str,
              ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                               src_str, sizeof(src_str)));
+
+    status = ucs_sockaddr_get_port((struct sockaddr*)&iface->config.ifaddr, &port);
+    if (status != UCS_OK) {
+      ucs_warn("unable to retrieve port for source address");
+      return status;
+    }
 
 
     if (iface->config.enable_nat_traversal) { //use public address from redis as peer address
@@ -828,9 +835,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_warn("could NOT configure to reuse socket address");
       }
 
+
+
       local_port_addr.sin_family = AF_INET;
       local_port_addr.sin_addr.s_addr = INADDR_ANY;
-      local_port_addr.sin_port = publicPort;
+      local_port_addr.sin_port = port;
 
       if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
         ucs_warn("Binding to same port failed: ");
