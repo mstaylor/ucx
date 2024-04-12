@@ -760,6 +760,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in local_port_addr;
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
+    int retries = 0;
 
     struct sockaddr* addr = NULL;
     size_t addrlen;
@@ -884,7 +885,20 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       flags &= ~(O_NONBLOCK);
       fcntl(ep->fd, F_SETFL, flags);
 */
-      status = ucs_socket_connect(ep->fd, (const struct sockaddr*)&ep->peer_addr);
+      status =
+          ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+      while (retries < 3 && status != UCS_OK) {
+        retries++;
+        ucs_warn("retrying connection - current retry: %i", retries);
+        if (status == UCS_ERR_UNREACHABLE) {
+          status =
+              ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+        } else {
+          break;
+        }
+
+      }
+
       if (UCS_STATUS_IS_ERR(status)) {
         return status;
       } else if (status == UCS_INPROGRESS) {
