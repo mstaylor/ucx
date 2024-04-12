@@ -40,7 +40,7 @@ uct_tcp_listener_conn_req_handler(int fd, ucs_event_set_types_t events,
 
     ucs_assert(conn_fd != -1);
 
-    ucs_trace("server accepted a connection request (fd=%d) from client %s",
+    ucs_warn("server accepted a connection request (fd=%d) from client %s",
               conn_fd, ucs_sockaddr_str((struct sockaddr*)&client_addr,
                                         ip_port_str, UCS_SOCKADDR_STRING_LEN));
 
