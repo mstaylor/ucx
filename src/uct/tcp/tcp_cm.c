@@ -902,6 +902,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             ucs_warn("connection failed: %s", strerror(so_error));
 
           } else {
+            ucs_warn("connection success!");
             status = UCS_OK;
             break;
           }
