@@ -761,7 +761,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in local_port_addr;
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
-    int retries = 0;
+
     uint16_t port = 0;
 
 
@@ -870,17 +870,17 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-      while (retries < 5) {
-        ucs_warn("retrying connection - current retry: %i", retries);
+      /*while (retries < 5) {
+        ucs_warn("retrying connection - current retry: %i", retries);*/
 
         status =
             ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
 
-        if (status == UCS_OK) {
+      /*  if (status == UCS_OK) {
           break;
         }
         retries++;
-      }
+      }*/
 
 
       if (UCS_STATUS_IS_ERR(status)) {
