@@ -763,13 +763,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_storage connect_addr;
     int retries = 0;
     uint16_t port = 0;
-    struct pollfd fds;
-    int flags;
-    int poll_return;
+
 
     struct sockaddr* addr = NULL;
     size_t addrlen;
-    int timeout_ms = 30000;  // 30 seconds timeout
+
 
 
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
@@ -869,62 +867,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       free(remote_address);
 
-      flags = fcntl(ep->fd, F_GETFL);
-      if (flags == -1) {
-        ucs_warn("fcntl get error");
-      }
-
-      flags |= O_NONBLOCK;
-      if (fcntl(ep->fd, F_SETFL, flags) < 0) {
-        ucs_warn("fcntl set error");
-      }
-      fds.fd = ep->fd;
-      fds.events = POLLOUT;  // Waiting for write-ability
 
 
 
-
-
-      while (retries < 25) {
+      while (retries < 5) {
         ucs_warn("retrying connection - current retry: %i", retries);
-
 
         status =
             ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
-
-        poll_return = poll(&fds, 1, timeout_ms);
-        if (poll_return == 0) {
-          ucs_warn("Connection timed out.");
-          close(ep->fd);
-          retries++;
-          continue;
-        } else if (poll_return < 0) {
-          ucs_warn("ret < 0");
-          close(ep->fd);
-          retries++;
-          continue;
-        } else {
-          if (fds.revents & POLLOUT) {
-            int error;
-            socklen_t len = sizeof(error);
-            if (getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
-              ucs_warn("getSockOpt after poll failed");
-              close(ep->fd);
-              retries++;
-              continue;
-            }
-            if (error != 0) {
-              ucs_warn( "Connection failed: %s", strerror(error));
-              close(ep->fd);
-              retries++;
-              continue;
-            } else {
-              ucs_warn("connect success!");
-              status = UCS_OK;
-              break;
-            }
-          }
-        }
 
         if (status == UCS_OK) {
           break;
@@ -932,10 +882,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         retries++;
       }
 
-      flags = fcntl(ep->fd, F_GETFL, 0);
-      if (fcntl(ep->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
-        ucs_warn("setting back to blocking failed");
-      }
 
       if (UCS_STATUS_IS_ERR(status)) {
         return status;
