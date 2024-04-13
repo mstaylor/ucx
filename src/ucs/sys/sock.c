@@ -437,19 +437,12 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
     size_t dest_addr_size;
     int conn_errno;
     int ret;
-    struct timeval timeout;
-    timeout.tv_sec = 20000 / 1000;
-    timeout.tv_usec = (20000 % 1000) * 1000;
 
     status = ucs_sockaddr_sizeof(dest_addr, &dest_addr_size);
     if (status != UCS_OK) {
         return status;
     }
 
-    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof timeout) < 0) {
-      ucs_warn("unable to configure socket timeout");
-      return UCS_ERR_IO_ERROR;
-    }
 
     do {
         ret = connect(fd, dest_addr, dest_addr_size);

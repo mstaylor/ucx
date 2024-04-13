@@ -762,13 +762,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_storage connect_addr;
     int retries = 0;
     uint16_t port = 0;
+    int flags = 0;
+    struct timeval tv;
+    fd_set writefds;
+    int select_result;
 
     struct sockaddr* addr = NULL;
     size_t addrlen;
 
+
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
-    ucs_status_t status;
+    ucs_status_t status = UCS_OK;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -863,50 +868,50 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       free(remote_address);
 
-      /*if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
-        ucs_warn("Setting O_NONBLOCK failed: ");
-      }*/
-      /*while(true) {
-        status = connect(ep->fd, (const struct sockaddr *) &ep->peer_addr, sizeof(struct sockaddr));
-        if (status != 0) {
-          if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
-            //ucs_warn("EALREADY, EAGAIN OR EINPROGRESS");
-            continue;
-          } else if (errno == EISCONN) {
-
-            ucs_warn("Succesfully connected to peer, EISCONN");
-            status = UCS_OK;
-            break;
-          } else {
-            ucs_warn("sleep on connect");
-            msleep(100);
-            //std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            continue;
-          }
-        } else {
-          ucs_warn("Succesfully connected to peer");
-          status = UCS_OK;
-          break;
-        }
-      }*/
-
-      /*flags = fcntl(ep->fd,  F_GETFL, 0);
-      flags &= ~(O_NONBLOCK);
-      fcntl(ep->fd, F_SETFL, flags);
-*/
-      status =
-          ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
-      while (retries < 3 && status != UCS_OK) {
-        retries++;
-        ucs_warn("retrying connection - current retry: %i", retries);
-        if (status == UCS_ERR_UNREACHABLE) {
-          status =
-              ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
-        } else {
-          break;
-        }
+      flags = fcntl(ep->fd, F_GETFL, 0);
+      if (flags == -1) {
+        ucs_warn("unable to set flags on peer socket");
 
       }
+      flags |= O_NONBLOCK;
+      if (fcntl(ep->fd, F_SETFL, flags) != 0) {
+        ucs_warn("unable to set flags to non-blocking");
+      }
+
+      tv.tv_sec = 20;  // 20 seconds timeout
+      tv.tv_usec = 0;
+
+      FD_ZERO(&writefds);
+      FD_SET(ep->fd, &writefds);
+      while (retries < 3) {
+        ucs_warn("retrying connection - current retry: %i", retries);
+
+        status =
+            ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+
+        select_result = select(ep->fd + 1, NULL, &writefds, NULL, &tv);
+        if (select_result <= 0) {
+
+        } else {
+          int so_error;
+          socklen_t len = sizeof so_error;
+
+          getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+
+          if (so_error != 0) {
+            ucs_warn("connection failed: %s", strerror(so_error));
+
+          } else {
+            status = UCS_OK;
+            break;
+          }
+        }
+        retries++;
+      }
+
+      flags = fcntl(ep->fd, F_GETFL, 0);
+      flags &= ~O_NONBLOCK;
+      fcntl(ep->fd, F_SETFL, flags);
 
       if (UCS_STATUS_IS_ERR(status)) {
         return status;
