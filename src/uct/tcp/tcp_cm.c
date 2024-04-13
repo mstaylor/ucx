@@ -11,6 +11,7 @@
 #include "tcp/tcp.h"
 #include "tcp/nat_traversal.h"
 #include "tcp/redis.h"
+#include <poll.h>
 
 #include <ucs/async/async.h>
 
@@ -762,13 +763,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_storage connect_addr;
     int retries = 0;
     uint16_t port = 0;
-    int flags = 0;
-    struct timeval tv;
-    fd_set writefds;
-    int select_result;
+    struct pollfd fds;
+    int flags;
+    int poll_return;
 
     struct sockaddr* addr = NULL;
     size_t addrlen;
+    int timeout_ms = 30000;  // 30 seconds timeout
 
 
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
@@ -868,51 +869,69 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       free(remote_address);
 
-      flags = fcntl(ep->fd, F_GETFL, 0);
+      flags = fcntl(ep->fd, F_GETFL);
       if (flags == -1) {
-        ucs_warn("unable to set flags on peer socket");
-
+        ucs_warn("fcntl get error");
       }
+
       flags |= O_NONBLOCK;
-      if (fcntl(ep->fd, F_SETFL, flags) != 0) {
-        ucs_warn("unable to set flags to non-blocking");
+      if (fcntl(ep->fd, F_SETFL, flags) < 0) {
+        ucs_warn("fcntl set error");
       }
+      fds.fd = ep->fd;
+      fds.events = POLLOUT;  // Waiting for write-ability
 
-      tv.tv_sec = 20;  // 20 seconds timeout
-      tv.tv_usec = 0;
 
-      FD_ZERO(&writefds);
-      FD_SET(ep->fd, &writefds);
+
+
+
       while (retries < 3) {
         ucs_warn("retrying connection - current retry: %i", retries);
+
 
         status =
             ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
 
-        select_result = select(ep->fd + 1, NULL, &writefds, NULL, &tv);
-        if (select_result <= 0) {
-
+        poll_return = poll(&fds, 1, timeout_ms);
+        if (poll_return == 0) {
+          ucs_warn("Connection timed out.");
+          retries++;
+          continue;
+        } else if (poll_return < 0) {
+          ucs_warn("ret < 0");
+          retries++;
+          continue;
         } else {
-          int so_error;
-          socklen_t len = sizeof so_error;
-
-          getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
-
-          if (so_error != 0) {
-            ucs_warn("connection failed: %s", strerror(so_error));
-
-          } else {
-            ucs_warn("connection success!");
-            status = UCS_OK;
-            break;
+          if (fds.revents & POLLOUT) {
+            int error;
+            socklen_t len = sizeof(error);
+            if (getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+              ucs_warn("getSockOpt after poll failed");
+              retries++;
+              continue;
+            }
+            if (error != 0) {
+              ucs_warn( "Connection failed: %s", strerror(error));
+              retries++;
+              continue;
+            } else {
+              ucs_warn("connect success!");
+              status = UCS_OK;
+              break;
+            }
           }
+        }
+
+        if (status == UCS_OK) {
+          break;
         }
         retries++;
       }
 
       flags = fcntl(ep->fd, F_GETFL, 0);
-      flags &= ~O_NONBLOCK;
-      fcntl(ep->fd, F_SETFL, flags);
+      if (fcntl(ep->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
+        ucs_warn("setting back to blocking failed");
+      }
 
       if (UCS_STATUS_IS_ERR(status)) {
         return status;
