@@ -885,7 +885,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-      while (retries < 3) {
+      while (retries < 25) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
 
