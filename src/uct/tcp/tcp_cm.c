@@ -895,10 +895,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         poll_return = poll(&fds, 1, timeout_ms);
         if (poll_return == 0) {
           ucs_warn("Connection timed out.");
+          close(ep->fd);
           retries++;
           continue;
         } else if (poll_return < 0) {
           ucs_warn("ret < 0");
+          close(ep->fd);
           retries++;
           continue;
         } else {
@@ -907,11 +909,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             socklen_t len = sizeof(error);
             if (getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
               ucs_warn("getSockOpt after poll failed");
+              close(ep->fd);
               retries++;
               continue;
             }
             if (error != 0) {
               ucs_warn( "Connection failed: %s", strerror(error));
+              close(ep->fd);
               retries++;
               continue;
             } else {
