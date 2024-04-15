@@ -458,7 +458,7 @@ ucs_status_t ucs_socket_connect(int fd, const struct sockaddr *dest_addr)
 
             if (errno == EISCONN) {
                 status = UCS_ERR_ALREADY_EXISTS;
-                ucs_warn("endpoint already connected");
+                ucs_warn("endpoint already connected - perhaps switch endpoints");
                 break;
             }
 

@@ -886,7 +886,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
 
-      timeout.tv_sec = 10;
+      timeout.tv_sec = 30;
       timeout.tv_usec = 0;
       while (retries < 25) {
         ucs_warn("retrying connection - current retry: %i", retries);
@@ -897,6 +897,50 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         if (status == UCS_OK) {
           break;
         }
+
+        close(ep->fd);
+
+        if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+          ucs_warn("Setting O_NONBLOCK failed: ");
+        }
+
+        status = ucs_socket_create(((struct sockaddr*)ep->peer_addr)->sa_family, SOCK_STREAM, &ep->fd);
+        if (status != UCS_OK) {
+          ucs_warn("could not create socket");
+        }
+
+        ucs_warn("configuring to reuse socket port");
+        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                                   &enable_flag, sizeof(int));
+        if (status != UCS_OK) {
+          ucs_warn("could NOT configure to reuse socket port");
+
+        }
+
+        ucs_warn("configuring to reuse socket address");
+        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+                                   &enable_flag, sizeof(int));
+        if (status != UCS_OK) {
+          ucs_warn("could NOT configure to reuse socket address");
+        }
+
+
+        ucs_warn("configuring to set connect timeout");
+        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
+                                   &timeout,
+                                   sizeof timeout);
+        if (status != UCS_OK) {
+          ucs_warn("could NOT configure to set connect timeout");
+        }
+
+        local_port_addr.sin_family = AF_INET;
+        local_port_addr.sin_addr.s_addr = INADDR_ANY;
+        local_port_addr.sin_port = port;
+
+        if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
+          ucs_warn("Binding to same port failed: ");
+        }
+
         retries++;
       }
 
