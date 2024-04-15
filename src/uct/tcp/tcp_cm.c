@@ -846,6 +846,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_warn("could NOT configure to reuse socket address");
       }
 
+      timeout.tv_sec = 30;
+      timeout.tv_usec = 0;
 
       ucs_warn("configuring to set connect timeout");
       status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
@@ -886,8 +888,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
 
-      timeout.tv_sec = 30;
-      timeout.tv_usec = 0;
+
       while (retries < 25) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
