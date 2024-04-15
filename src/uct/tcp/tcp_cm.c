@@ -761,12 +761,19 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in local_port_addr;
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
-
+    int retries = 0;
     uint16_t port = 0;
 
 
+
     struct sockaddr* addr = NULL;
+
     size_t addrlen;
+
+    int flags;
+    struct timeval timeout;
+
+
 
 
 
@@ -840,6 +847,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
 
+      ucs_warn("configuring to set connect timeout");
+      status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
+                                 &timeout,
+                                 sizeof timeout);
+      if (status != UCS_OK) {
+        ucs_warn("could NOT configure to set connect timeout");
+      }
 
       local_port_addr.sin_family = AF_INET;
       local_port_addr.sin_addr.s_addr = INADDR_ANY;
@@ -867,21 +881,28 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       free(remote_address);
 
+      if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+        ucs_warn("Setting O_NONBLOCK failed: ");
+      }
 
 
-
-      /*while (retries < 5) {
-        ucs_warn("retrying connection - current retry: %i", retries);*/
+      timeout.tv_sec = 10;
+      timeout.tv_usec = 0;
+      while (retries < 25) {
+        ucs_warn("retrying connection - current retry: %i", retries);
 
         status =
             ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
 
-      /*  if (status == UCS_OK) {
+        if (status == UCS_OK) {
           break;
         }
         retries++;
-      }*/
+      }
 
+      flags = fcntl(ep->fd,  F_GETFL, 0);
+      flags &= ~(O_NONBLOCK);
+      fcntl(ep->fd, F_SETFL, flags);
 
       if (UCS_STATUS_IS_ERR(status)) {
         return status;
