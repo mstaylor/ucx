@@ -753,6 +753,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char src_str[UCS_SOCKADDR_STRING_LEN];
+    char src_str2[UCS_SOCKADDR_STRING_LEN];
     char* remote_address = NULL;
     char * token = NULL;
     int token_index = 0;
@@ -861,9 +862,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       local_port_addr.sin_addr.s_addr = INADDR_ANY;
       local_port_addr.sin_port = port;
 
+
+
       if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
         ucs_warn("Binding to same port failed: ");
       }
+
+      ucs_warn("endpoint peer socket info(fd=%d, src_addr=%s )", ep->fd,
+               ucs_socket_getname_str(ep->fd, src_str2, UCS_SOCKADDR_STRING_LEN));
 
       /**
        * Update the peer address to the remote address returned by redis
@@ -901,9 +907,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         close(ep->fd);
 
-        if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
-          ucs_warn("Setting O_NONBLOCK failed: ");
-        }
+
 
         status = ucs_socket_create(((struct sockaddr*)ep->peer_addr)->sa_family, SOCK_STREAM, &ep->fd);
         if (status != UCS_OK) {
@@ -940,6 +944,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
           ucs_warn("Binding to same port failed: ");
+        }
+
+        if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+          ucs_warn("Setting O_NONBLOCK failed: ");
         }
 
         retries++;
