@@ -980,7 +980,7 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     struct dirent *entry;
     unsigned num_devices;
     int is_active, i;
-    ucs_status_t status;
+    ucs_status_t status = UCS_OK;
     DIR *dir;
     const char *sysfs_path;
     char path_buffer[PATH_MAX];
