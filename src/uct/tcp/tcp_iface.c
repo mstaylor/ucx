@@ -25,6 +25,8 @@
 
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
+int local_bind_port = -1;
+
 static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {"", "MAX_NUM_EPS=256", NULL,
    ucs_offsetof(uct_tcp_iface_config_t, super),
@@ -484,6 +486,21 @@ ucs_status_t uct_tcp_iface_set_sockopt(uct_tcp_iface_t *iface, int fd,
         return status;
     }
 
+    /*ucs_warn("configuring to reuse socket port");
+    status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                               &enable_flag, sizeof(int));
+    if (status != UCS_OK) {
+      ucs_warn("could NOT configure to reuse socket port");
+
+    }
+
+    ucs_warn("configuring to reuse socket address");
+    status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+                               &enable_flag, sizeof(int));
+    if (status != UCS_OK) {
+      ucs_warn("could NOT configure to reuse socket address");
+    }*/
+
     status = ucs_socket_set_buffer_size(fd, iface->sockopt.sndbuf,
                                         iface->sockopt.rcvbuf);
     if (status != UCS_OK) {
@@ -534,15 +551,32 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     PeerConnectionData peerConnectionData;
 
-    ucs_warn("pass rendezvous ip %s %i", iface->config.rendezvous_ip_address,
-             iface->config.rendezvous_port);
+
 
     if (iface->config.enable_nat_traversal) {
+
+      ucs_warn("nat traversal enabled - pass rendezvous ip %s %i", iface->config.rendezvous_ip_address,
+               iface->config.rendezvous_port);
+
+      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
+      if (status != UCS_OK) {
+        ucs_warn("ucs_sockaddr_sizeof failed ");
+        return status;
+      }
+
+      status = ucs_socket_server_init(
+          (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
+          retry, iface->config.enable_nat_traversal, &iface->listen_fd);
+
+      if (status != UCS_OK) {
+        ucs_warn("ucs_socket_server_init failed ");
+        return status;
+      }
       //if nat traversal is enabled, use the private IP address returned
       //to bind
-      status = connectandBindLocal(&iface->config.rendezvous_fd, &peerConnectionData, &iface->config.ifaddr,
+      status = connectandBindLocal(&iface->listen_fd, &peerConnectionData,
                                    "cylon", iface->config.rendezvous_ip_address,
-                                   iface->config.rendezvous_port, 60000);
+                                   iface->config.rendezvous_port);
       if (status != UCS_OK) {
         ucs_warn("connectandbindlocal failed");
         return status;
@@ -560,15 +594,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
                iface->config.public_ip_address, ntohs(peerConnectionData.port));
 
 
-      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
-      if (status != UCS_OK) {
-        ucs_warn("ucs_sockaddr_sizeof failed ");
-        return status;
-      }
 
-      status = ucs_socket_server_init(
-          (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
-          retry, iface->config.enable_nat_traversal, &iface->listen_fd);
 
       return status;
     } else {
@@ -641,6 +667,8 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
         goto err_close_sock;
     }
 
+
+
     /* Register event handler for incoming connections */
     status = ucs_async_set_event_handler(iface->super.worker->async->mode,
                                          iface->listen_fd,
@@ -659,7 +687,7 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
               iface->if_name);
 
     if (iface->config.enable_nat_traversal) {
-
+      local_bind_port = port;
       status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &natPubPort);
       if (status != UCS_OK) {
         ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped");
@@ -850,7 +878,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
                                      self->config.override_ip_address,
-                                   self->config.ignore_ifname);
+                                   self->config.ignore_ifname, local_bind_port);
         if (status == UCS_OK) {
           ucs_warn("UCS_OK so breaking in address iteration");
             break;

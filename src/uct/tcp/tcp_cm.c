@@ -806,7 +806,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     if (iface->config.enable_nat_traversal) { //use public address from redis as peer address
 
-      ucs_warn("connection retries: %i", ep->conn_retries);
+      ucs_warn("nat traversal enabled - connection retries: %i", ep->conn_retries);
       remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
       while(remote_address == NULL) {
         msleep(50);
@@ -847,7 +847,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_warn("could NOT configure to reuse socket address");
       }
 
-      timeout.tv_sec = 30;
+      timeout.tv_sec = 6;
       timeout.tv_usec = 0;
 
       ucs_warn("configuring to set connect timeout");
@@ -868,8 +868,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_warn("Binding to same port failed: ");
       }
 
-      ucs_warn("endpoint peer socket info(fd=%d, src_addr=%s )", ep->fd,
-               ucs_socket_getname_str(ep->fd, src_str2, UCS_SOCKADDR_STRING_LEN));
+      ucs_warn("endpoint peer socket info(fd=%d, src_addr=%s local port=%i )", ep->fd,
+               ucs_socket_getname_str(ep->fd, src_str2, UCS_SOCKADDR_STRING_LEN), port);
 
       /**
        * Update the peer address to the remote address returned by redis
@@ -907,8 +907,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         close(ep->fd);
 
-
-
         status = ucs_socket_create(((struct sockaddr*)ep->peer_addr)->sa_family, SOCK_STREAM, &ep->fd);
         if (status != UCS_OK) {
           ucs_warn("could not create socket");
@@ -945,6 +943,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
           ucs_warn("Binding to same port failed: ");
         }
+
+        ucs_warn("endpoint peer socket info(fd=%d, src_addr=%s local port=%i )", ep->fd,
+                 ucs_socket_getname_str(ep->fd, src_str2, UCS_SOCKADDR_STRING_LEN), port);
 
         if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
           ucs_warn("Setting O_NONBLOCK failed: ");
