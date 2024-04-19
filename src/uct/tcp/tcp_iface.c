@@ -554,27 +554,9 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
 
     if (iface->config.enable_nat_traversal) {
-
-      ucs_warn("nat traversal enabled - pass rendezvous ip %s %i", iface->config.rendezvous_ip_address,
-               iface->config.rendezvous_port);
-
-      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
-      if (status != UCS_OK) {
-        ucs_warn("ucs_sockaddr_sizeof failed ");
-        return status;
-      }
-
-      status = ucs_socket_server_init(
-          (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
-          retry, iface->config.enable_nat_traversal, &iface->listen_fd);
-
-      if (status != UCS_OK) {
-        ucs_warn("ucs_socket_server_init failed ");
-        return status;
-      }
       //if nat traversal is enabled, use the private IP address returned
       //to bind
-      status = connectandBindLocal(&iface->listen_fd, &peerConnectionData,
+      status = connectandBindLocal(&iface->config.rendezvous_fd, &peerConnectionData, &iface->config.ifaddr,
                                    "cylon", iface->config.rendezvous_ip_address,
                                    iface->config.rendezvous_port);
       if (status != UCS_OK) {
@@ -594,7 +576,15 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
                iface->config.public_ip_address, ntohs(peerConnectionData.port));
 
 
+      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
+      if (status != UCS_OK) {
+        ucs_warn("ucs_sockaddr_sizeof failed ");
+        return status;
+      }
 
+      status = ucs_socket_server_init(
+          (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
+          retry, iface->config.enable_nat_traversal, &iface->listen_fd);
 
       return status;
     } else {

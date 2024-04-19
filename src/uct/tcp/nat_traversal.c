@@ -44,13 +44,13 @@ int msleep(long msec)
     return res;
 }
 
-ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, /*struct sockaddr_storage *saddr,*/
+ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sockaddr_storage *saddr,
                                  const char * pairing_name, const char* server_address, int port) {
 
   //call rendezvous and get public IP address
   //leave fd open so don't close until established connection with peer
-  //struct sockaddr_in *sa_in;
-  //struct timeval timeout;
+  struct sockaddr_in *sa_in;
+  struct timeval timeout;
   struct sockaddr_in local_addr;
   socklen_t local_addr_len = sizeof(local_addr);
 
@@ -59,24 +59,24 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, /*struct so
   ssize_t bytes;
   char ipadd[UCS_SOCKADDR_STRING_LEN];
 
-  //int enable_flag = 1;
+  int enable_flag = 1;
 
 
   //memset(saddr, 0, sizeof(*saddr));
-  //sa_in = (struct sockaddr_in*)saddr;
+  sa_in = (struct sockaddr_in*)saddr;
 
   //timeout.tv_sec = timeout_ms / 1000;
   //timeout.tv_usec = (timeout_ms % 1000) * 1000;
 
-  /**fd = socket(AF_INET, SOCK_STREAM, 0);
+  *fd = socket(AF_INET, SOCK_STREAM, 0);
   if (*fd == -1) {
     ucs_error("Could not create socket for rendezvous server: ");
     return UCS_ERR_IO_ERROR;
-  }*/
+  }
 
   // Enable binding multiple sockets to the same local endpoint, see https://bford.info/pub/net/p2pnat/ for details
 
-  /*if (setsockopt(*fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
+  if (setsockopt(*fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
       setsockopt(*fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
     ucs_error("Setting REUSE options failed: ");
     return UCS_ERR_IO_ERROR;
@@ -85,7 +85,7 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, /*struct so
       setsockopt(*fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
     ucs_error("Setting timeout failed: ");
     return UCS_ERR_IO_ERROR;
-  }*/
+  }
 
   server_data.sin_family = AF_INET;
   server_data.sin_addr.s_addr = inet_addr(server_address);
@@ -125,9 +125,9 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, /*struct so
   ucs_warn("client data returned from rendezvous: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)),
            ntohs(public_info.port));
 
-  //sa_in->sin_family = AF_INET;
-  //sa_in->sin_addr.s_addr = INADDR_ANY;
-  //sa_in->sin_port = public_info.port;
+  sa_in->sin_family = AF_INET;
+  sa_in->sin_addr.s_addr = INADDR_ANY;
+  sa_in->sin_port = public_info.port;
 
   data->ip = public_info.ip;
   data->port = public_info.port;
