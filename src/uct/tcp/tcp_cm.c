@@ -773,6 +773,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     int flags;
     struct timeval timeout;
+    size_t addr_len;
 
 
 
@@ -863,10 +864,25 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       local_port_addr.sin_port = port;
 
 
-
-      if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
-        ucs_warn("Binding to same port failed: ");
+      status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr, &addr_len);
+      if (status != UCS_OK) {
+        ucs_warn("ucs_sockaddr_sizeof failed ");
+        return status;
       }
+
+
+      status = ucs_socket_server_init((struct sockaddr *)&local_port_addr, addr_len,
+                                      ucs_socket_max_conn(), 1, 0,
+                                      &ep->fd);
+
+      if (status != UCS_OK) {
+        ucs_warn("ucs_socket_server_init failed ");
+        return status;
+      }
+
+      /*if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
+        ucs_warn("Binding to same port failed: ");
+      }*/
 
       ucs_warn("endpoint peer socket info(fd=%d, src_addr=%s local port=%i )", ep->fd,
                ucs_socket_getname_str(ep->fd, src_str2, UCS_SOCKADDR_STRING_LEN), port);
@@ -940,8 +956,23 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         local_port_addr.sin_addr.s_addr = INADDR_ANY;
         local_port_addr.sin_port = port;
 
-        if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
+        /*if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
           ucs_warn("Binding to same port failed: ");
+        }*/
+
+        status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr, &addr_len);
+        if (status != UCS_OK) {
+          ucs_warn("ucs_sockaddr_sizeof failed ");
+          return status;
+        }
+
+        status = ucs_socket_server_init((struct sockaddr *)&local_port_addr, addr_len,
+                                        ucs_socket_max_conn(), 1, 0,
+                                        &ep->fd);
+
+        if (status != UCS_OK) {
+          ucs_warn("ucs_socket_server_init failed ");
+          return status;
         }
 
         ucs_warn("endpoint peer socket info(fd=%d, src_addr=%s local port=%i )", ep->fd,
