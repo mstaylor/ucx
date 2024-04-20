@@ -551,9 +551,6 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     PeerConnectionData peerConnectionData;
 
-
-
-
       /* retry is 1 for a range of ports or when port value is zero.
      * retry is 0 for a single value port that is not zero */
     if (local_bind_port == -1 || !iface->config.enable_nat_traversal) {
@@ -580,13 +577,16 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
           return status;
         }
 
-        status = ucs_socket_server_init((struct sockaddr *)&iface->config.ifaddr, addr_len,
-                                        ucs_socket_max_conn(), retry, 0,
-                                        &iface->listen_fd);
+        if (!iface->config.enable_nat_traversal) {
+
+          status = ucs_socket_server_init(
+              (struct sockaddr *)&iface->config.ifaddr, addr_len,
+              ucs_socket_max_conn(), retry, 0, &iface->listen_fd);
+        }
       } while (retry && (status == UCS_ERR_BUSY));
     }
 
-    if (iface->config.enable_nat_traversal) {
+    if (iface->config.enable_nat_traversal && local_bind_port != -1) {
       if (port == -1) { //port not set above...
         status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr,
                                        local_bind_port);
@@ -595,11 +595,21 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
         }
       }
 
+
+      status = ucs_socket_server_init(
+          (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
+          retry, iface->config.enable_nat_traversal, &iface->listen_fd);
+
+      if (status != UCS_OK) {
+        ucs_warn("ucs_socket_server_init failed");
+        return status;
+      }
+
       //if nat traversal is enabled, use the private IP address returned
       //to bind
       status = connectandBindLocal(&iface->config.rendezvous_fd, &peerConnectionData, &iface->config.ifaddr,
                                    "cylon", iface->config.rendezvous_ip_address,
-                                   iface->config.rendezvous_port);
+                                   iface->config.rendezvous_port, 60000);
       if (status != UCS_OK) {
         ucs_warn("connectandbindlocal failed");
         return status;
@@ -620,12 +630,8 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
       status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
       if (status != UCS_OK) {
         ucs_warn("ucs_sockaddr_sizeof failed ");
-        return status;
-      }
 
-      status = ucs_socket_server_init(
-          (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
-          retry, iface->config.enable_nat_traversal, &iface->listen_fd);
+      }
 
       return status;
     }

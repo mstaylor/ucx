@@ -763,6 +763,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
     int retries = 0;
+    int result = 0;
     uint16_t port = 0;
 
 
@@ -774,6 +775,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int flags;
     struct timeval timeout;
     size_t addr_len;
+    size_t peer_addr_len;
+
+    fd_set set;
+
+    int so_error;
+    socklen_t len = sizeof(so_error);
 
 
 
@@ -914,11 +921,37 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       while (retries < 25) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
-        status =
-            ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+        status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr, &peer_addr_len);
+        if (status != UCS_OK) {
+          ucs_warn("ucs_sockaddr_sizeof failed ");
+          return status;
+        }
 
-        if (status == UCS_OK) {
+        result = connect(ep->fd, (const struct sockaddr *)&ep->peer_addr, peer_addr_len);
+
+        if (result == 0) {
+          status = UCS_OK;
           break;
+        }
+
+        FD_ZERO(&set);
+        FD_SET(ep->fd, &set);
+        timeout.tv_sec = 10;
+        timeout.tv_usec = 0;
+
+        result = select(ep->fd + 1, NULL, &set, NULL, &timeout);
+        if (result <= 0) {
+          // select() failed or connection timed out
+          ucs_warn("select failed on peer socket %i", ep->fd);
+        } else {
+          getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+          if (so_error == 0) {
+            ucs_warn("Connected on attempt %d", retries + 1);
+            status = UCS_OK;
+            break;
+          } else {
+            ucs_warn("Connection failed: %s and continuing", strerror(so_error));
+          }
         }
 
         close(ep->fd);
@@ -989,13 +1022,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       flags &= ~(O_NONBLOCK);
       fcntl(ep->fd, F_SETFL, flags);
 
-      if (UCS_STATUS_IS_ERR(status)) {
+      /*if (UCS_STATUS_IS_ERR(status)) {
         return status;
       } else if (status == UCS_INPROGRESS) {
         ucs_assert(iface->config.conn_nb);
         uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
         return UCS_OK;
-      }
+      }*/
 
       ucs_assert(status == UCS_OK);
 
