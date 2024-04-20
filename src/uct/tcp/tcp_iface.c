@@ -541,7 +541,7 @@ static uct_iface_ops_t uct_tcp_iface_ops = {
 
 static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 {
-    struct sockaddr_storage bind_addr = iface->config.ifaddr;
+    //struct sockaddr_storage bind_addr = iface->config.ifaddr;
     unsigned port_range_start         = iface->port_range.first;
     unsigned port_range_end           = iface->port_range.last;
 
@@ -553,7 +553,48 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
 
 
+
+      /* retry is 1 for a range of ports or when port value is zero.
+     * retry is 0 for a single value port that is not zero */
+    if (local_bind_port == -1 || !iface->config.enable_nat_traversal) {
+      retry = (port_range_start == 0) || (port_range_start < port_range_end);
+
+      do {
+        if (port_range_end != 0) {
+          status = ucs_rand_range(port_range_start, port_range_end, &port);
+          if (status != UCS_OK) {
+            break;
+          }
+        } else {
+          port = 0; /* let the operating system choose the port */
+        }
+
+        status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr, port);
+        if (status != UCS_OK) {
+          break;
+        }
+
+        local_bind_port = port;
+        status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
+        if (status != UCS_OK) {
+          return status;
+        }
+
+        status = ucs_socket_server_init((struct sockaddr *)&iface->config.ifaddr, addr_len,
+                                        ucs_socket_max_conn(), retry, 0,
+                                        &iface->listen_fd);
+      } while (retry && (status == UCS_ERR_BUSY));
+    }
+
     if (iface->config.enable_nat_traversal) {
+      if (port == -1) { //port not set above...
+        status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr,
+                                       local_bind_port);
+        if (status != UCS_OK) {
+          return status;
+        }
+      }
+
       //if nat traversal is enabled, use the private IP address returned
       //to bind
       status = connectandBindLocal(&iface->config.rendezvous_fd, &peerConnectionData, &iface->config.ifaddr,
@@ -587,36 +628,6 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
           retry, iface->config.enable_nat_traversal, &iface->listen_fd);
 
       return status;
-    } else {
-
-      /* retry is 1 for a range of ports or when port value is zero.
-     * retry is 0 for a single value port that is not zero */
-      retry = (port_range_start == 0) || (port_range_start < port_range_end);
-
-      do {
-        if (port_range_end != 0) {
-          status = ucs_rand_range(port_range_start, port_range_end, &port);
-          if (status != UCS_OK) {
-            break;
-          }
-        } else {
-          port = 0; /* let the operating system choose the port */
-        }
-
-        status = ucs_sockaddr_set_port((struct sockaddr *)&bind_addr, port);
-        if (status != UCS_OK) {
-          break;
-        }
-
-        status = ucs_sockaddr_sizeof((struct sockaddr *)&bind_addr, &addr_len);
-        if (status != UCS_OK) {
-          return status;
-        }
-
-        status = ucs_socket_server_init((struct sockaddr *)&bind_addr, addr_len,
-                                        ucs_socket_max_conn(), retry, 0,
-                                        &iface->listen_fd);
-      } while (retry && (status == UCS_ERR_BUSY));
     }
 
     return status;
@@ -677,7 +688,7 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
               iface->if_name);
 
     if (iface->config.enable_nat_traversal) {
-      local_bind_port = port;
+
       status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &natPubPort);
       if (status != UCS_OK) {
         ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped");
