@@ -51,8 +51,8 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
   // leave fd open so don't close until established connection with peer
   struct sockaddr_in *sa_in;
   struct timeval timeout;
-  // struct sockaddr_in local_addr;
-  // socklen_t local_addr_len = sizeof(local_addr);
+  struct sockaddr_in local_addr;
+  socklen_t local_addr_len = sizeof(local_addr);
 
   struct sockaddr_in server_data;
   PeerConnectionData public_info;
@@ -62,6 +62,10 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
   int enable_flag = 1;
 
   sa_in = (struct sockaddr_in *)saddr;
+
+  local_addr.sin_family = AF_INET;
+  local_addr.sin_addr.s_addr = INADDR_ANY;
+  local_addr.sin_port = sa_in->sin_port;
 
   timeout.tv_sec = timeout_ms / 1000;
   timeout.tv_usec = (timeout_ms % 1000) * 1000;
@@ -82,14 +86,17 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
     return UCS_ERR_IO_ERROR;
   }
   if (setsockopt(*fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout,
-                 sizeof timeout) < 0 ||
-      setsockopt(*fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) <
-          0) {
+                 sizeof timeout) < 0) {
     ucs_error("Setting timeout failed: ");
     return UCS_ERR_IO_ERROR;
   }
 
-  if (bind(*fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+  if (getsockname(*fd, (struct sockaddr*)&local_addr, &local_addr_len) < 0) {
+    ucs_error("getsockname failed: ");
+    return UCS_ERR_IO_ERROR;
+  }
+
+  if (bind(*fd, (struct sockaddr*)&local_addr, local_addr_len) < 0) {
     ucs_error("error binding to rendezvous socket");
     return UCS_ERR_IO_ERROR;
   }

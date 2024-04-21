@@ -587,6 +587,8 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     }
 
     if (iface->config.enable_nat_traversal && local_bind_port != -1) {
+
+      ucs_warn("local_bind_port set to %i", local_bind_port);
       if (port == -1) { //port not set above...
         status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr,
                                        local_bind_port);
@@ -656,14 +658,14 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
     }
 
     /* Get the port which was selected for the socket */
-    ret = getsockname(iface->listen_fd, (struct sockaddr*)&bind_addr, &socklen);
+    ret = getsockname(iface->listen_fd, (struct sockaddr*)&iface->config.ifaddr, &socklen);
     if (ret < 0) {
         ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
         status = UCS_ERR_IO_ERROR;
         goto err_close_sock;
     }
 
-    status = ucs_sockaddr_get_port((struct sockaddr*)&bind_addr, &port);
+    status = ucs_sockaddr_get_port((struct sockaddr*)&iface->config.ifaddr, &port);
     if (status != UCS_OK) {
         goto err_close_sock;
     }
