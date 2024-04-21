@@ -97,7 +97,7 @@ ucs_status_t connectandBindLocal(int *fd, PeerConnectionData * data, struct sock
   }
 
   if (bind(*fd, (struct sockaddr*)&local_addr, local_addr_len) < 0) {
-    ucs_error("error binding to rendezvous socket");
+    ucs_error("error binding to rendezvous socket %s", strerror(errno));
     return UCS_ERR_IO_ERROR;
   }
 
