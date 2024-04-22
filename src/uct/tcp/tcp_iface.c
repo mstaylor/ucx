@@ -547,6 +547,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
     ucs_status_t status;
     size_t addr_len;
+    uint16_t mapped_port;
     int port, retry = -1;
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     PeerConnectionData peerConnectionData;
@@ -571,7 +572,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
           break;
         }
 
-        local_bind_port = port;
+
         status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
         if (status != UCS_OK) {
           return status;
@@ -586,14 +587,16 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
       } while (retry && (status == UCS_ERR_BUSY));
     }
 
-    if (iface->config.enable_nat_traversal && local_bind_port != -1) {
+    if (iface->config.enable_nat_traversal) {
 
-      ucs_warn("local_bind_port set to %i", local_bind_port);
-      if (port == -1) { //port not set above...
-        status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr,
-                                       local_bind_port);
-        if (status != UCS_OK) {
-          return status;
+      if (local_bind_port != -1) {
+
+        if (port == -1  && local_bind_port != -1) { // port not set above...
+          status = ucs_sockaddr_set_port(
+              (struct sockaddr *)&iface->config.ifaddr, local_bind_port);
+          if (status != UCS_OK) {
+            return status;
+          }
         }
       }
 
@@ -606,6 +609,17 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
         ucs_warn("ucs_socket_server_init failed");
         return status;
       }
+
+
+
+      status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &mapped_port);
+      if (status != UCS_OK) {
+        ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped port");
+        return status;
+      }
+
+      local_bind_port = mapped_port;
+
 
       //if nat traversal is enabled, use the private IP address returned
       //to bind
