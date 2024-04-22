@@ -544,11 +544,12 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     //struct sockaddr_storage bind_addr = iface->config.ifaddr;
     unsigned port_range_start         = iface->port_range.first;
     unsigned port_range_end           = iface->port_range.last;
-
+    int ret;
     ucs_status_t status;
     size_t addr_len;
     uint16_t mapped_port;
     int port, retry = -1;
+    socklen_t socklen;
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     PeerConnectionData peerConnectionData;
 
@@ -578,26 +579,44 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
           return status;
         }
 
-        if (!iface->config.enable_nat_traversal) {
+        //if (!iface->config.enable_nat_traversal) {
 
           status = ucs_socket_server_init(
               (struct sockaddr *)&iface->config.ifaddr, addr_len,
               ucs_socket_max_conn(), retry, 0, &iface->listen_fd);
-        }
+        //}
       } while (retry && (status == UCS_ERR_BUSY));
     }
 
     if (iface->config.enable_nat_traversal) {
 
-      if (local_bind_port != -1) {
+      if (local_bind_port == -1) {
+        socklen = sizeof(iface->config.ifaddr);
+        ret = getsockname(iface->listen_fd, (struct sockaddr*)&iface->config.ifaddr, &socklen);
+        if (ret < 0) {
+          ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
+          status = UCS_ERR_IO_ERROR;
+          return status;
+        }
 
-        if (port == -1  && local_bind_port != -1) { // port not set above...
+        status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &mapped_port);
+        if (status != UCS_OK) {
+          ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped port");
+          return status;
+        }
+
+        local_bind_port = mapped_port;
+
+        ucs_warn("local_bind_port set to %i", mapped_port);
+      }
+
+      if (local_bind_port != -1) {
           status = ucs_sockaddr_set_port(
               (struct sockaddr *)&iface->config.ifaddr, local_bind_port);
           if (status != UCS_OK) {
             return status;
           }
-        }
+
       }
 
 
@@ -610,15 +629,6 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
         return status;
       }
 
-
-
-      status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &mapped_port);
-      if (status != UCS_OK) {
-        ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped port");
-        return status;
-      }
-
-      local_bind_port = mapped_port;
 
       ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                        ip_port_str, sizeof(ip_port_str));
