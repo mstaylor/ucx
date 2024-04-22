@@ -620,6 +620,10 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
       local_bind_port = mapped_port;
 
+      ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
+                       ip_port_str, sizeof(ip_port_str));
+      ucs_warn("private ip %s:   local_bind_port %i", ip_port_str, local_bind_port);
+
 
       //if nat traversal is enabled, use the private IP address returned
       //to bind
@@ -637,10 +641,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
         return UCS_ERR_IO_ERROR;
       }
 
-      ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
-                       ip_port_str, sizeof(ip_port_str));
-      ucs_warn("private ip %s: mapped to public address %s:%i via rendezvous ", ip_port_str,
-               iface->config.public_ip_address, ntohs(peerConnectionData.port));
+
 
 
       status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);

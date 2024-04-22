@@ -54,6 +54,7 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, int *address_fd, PeerConnec
   struct sockaddr_in local_addr;
   socklen_t local_addr_len = sizeof(local_addr);
 
+
   struct sockaddr_in server_data;
   PeerConnectionData public_info;
   ssize_t bytes;
@@ -62,11 +63,9 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, int *address_fd, PeerConnec
   int enable_flag = 1;
   int fd;
 
+  memset(&local_addr, 0, local_addr_len);
   sa_in = (struct sockaddr_in *)saddr;
 
-  local_addr.sin_family = AF_INET;
-  local_addr.sin_addr.s_addr = INADDR_ANY;
-  local_addr.sin_port = sa_in->sin_port;
 
  /* timeout.tv_sec = timeout_ms / 1000;
   timeout.tv_usec = (timeout_ms % 1000) * 1000;*/
