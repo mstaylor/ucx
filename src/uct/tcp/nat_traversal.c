@@ -85,21 +85,32 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, int *address_fd, PeerConnec
     ucs_error("Setting REUSE options failed: ");
     return UCS_ERR_IO_ERROR;
   }
+
+  local_addr.sin_family = AF_INET;
+  local_addr.sin_addr.s_addr = INADDR_ANY;
+  local_addr.sin_port = sa_in->sin_port;
   /*if (setsockopt(*fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout,
                  sizeof timeout) < 0) {
     ucs_error("Setting timeout failed: ");
     return UCS_ERR_IO_ERROR;
   }*/
 
-  if (getsockname(*address_fd, (struct sockaddr*)&local_addr, &local_addr_len) < 0) {
+  /*if (getsockname(*address_fd, (struct sockaddr*)&local_addr, &local_addr_len) < 0) {
     ucs_error("getsockname failed: ");
     return UCS_ERR_IO_ERROR;
-  }
+  }*/
+
+
 
   if (bind(fd, (struct sockaddr*)&local_addr, local_addr_len) < 0) {
     ucs_error("error binding to rendezvous socket %s", strerror(errno));
     return UCS_ERR_IO_ERROR;
   }
+
+  ucs_warn("Local ip/port: %s:%d bound for upcoming rendezvous request",
+           ip_to_string((in_addr_t *)&local_addr.sin_addr.s_addr, ipadd,sizeof(ipadd)),
+           ntohs(local_addr.sin_port));
+
 
   server_data.sin_family = AF_INET;
   server_data.sin_addr.s_addr = inet_addr(server_address);
