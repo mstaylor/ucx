@@ -107,7 +107,7 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, int *address_fd, PeerConnec
   server_data.sin_port = htons(port);
 
   if (connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
-    ucs_error("Connection with the rendezvous server failed: ");
+    ucs_error("Connection with the rendezvous server failed: %s", strerror(errno));
     return UCS_ERR_IO_ERROR;
 
   }
