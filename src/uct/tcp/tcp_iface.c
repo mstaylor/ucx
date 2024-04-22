@@ -608,27 +608,25 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
         local_bind_port = mapped_port;
 
         ucs_warn("local_bind_port set to %i", mapped_port);
-      }
+      } else {
 
-      if (local_bind_port != -1) {
+        if (local_bind_port != -1) {
           status = ucs_sockaddr_set_port(
               (struct sockaddr *)&iface->config.ifaddr, local_bind_port);
           if (status != UCS_OK) {
             return status;
           }
+        }
 
+        status = ucs_socket_server_init(
+            (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
+            retry, iface->config.enable_nat_traversal, &iface->listen_fd);
+
+        if (status != UCS_OK) {
+          ucs_warn("ucs_socket_server_init failed");
+          return status;
+        }
       }
-
-
-      status = ucs_socket_server_init(
-          (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
-          retry, iface->config.enable_nat_traversal, &iface->listen_fd);
-
-      if (status != UCS_OK) {
-        ucs_warn("ucs_socket_server_init failed");
-        return status;
-      }
-
 
       ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                        ip_port_str, sizeof(ip_port_str));
