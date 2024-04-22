@@ -609,9 +609,9 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
       //if nat traversal is enabled, use the private IP address returned
       //to bind
-      status = connectandBindLocal(&iface->config.rendezvous_fd, &peerConnectionData, &iface->config.ifaddr,
+      status = connectandBindLocal(&iface->config.rendezvous_fd, &iface->listen_fd,&peerConnectionData, &iface->config.ifaddr,
                                    "cylon", iface->config.rendezvous_ip_address,
-                                   iface->config.rendezvous_port, 60000);
+                                   iface->config.rendezvous_port);
       if (status != UCS_OK) {
         ucs_warn("connectandbindlocal failed");
         return status;
