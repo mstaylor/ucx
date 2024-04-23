@@ -933,6 +933,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
           return status;
         }
 
+        ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr,
+                         src_str2, peer_addr_len);
+
+        ucs_warn("connecting to peer address socket ip: %s", src_str2);
+
         result = connect(ep->fd, (const struct sockaddr *)&ep->peer_addr, peer_addr_len);
 
         if (result == 0) {
