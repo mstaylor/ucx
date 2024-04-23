@@ -574,11 +574,11 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
         return status;
       }
 
-      //if (!iface->config.enable_nat_traversal) {
+
 
       status = ucs_socket_server_init(
           (struct sockaddr *)&iface->config.ifaddr, addr_len,
-          ucs_socket_max_conn(), retry, 0, &iface->listen_fd);
+          ucs_socket_max_conn(), retry, 1, &iface->listen_fd);
 
       if (status != UCS_OK) {
         ucs_warn("ucs_socket_server_init failed");
