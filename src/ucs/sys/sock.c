@@ -589,12 +589,14 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
     fd     = -1; /* Suppress compiler warning */
     status = ucs_socket_create(saddr->sa_family, SOCK_STREAM, &fd);
     if (status != UCS_OK) {
+      ucs_warn("could not create socket");
         goto err;
     }
 
     /* Set the fd to non-blocking mode (so that accept() won't be blocking) */
     status = ucs_sys_fcntl_modfl(fd, O_NONBLOCK, 0);
     if (status != UCS_OK) {
+      ucs_warn("could not set to blocking");
         goto err_close_socket;
     }
 

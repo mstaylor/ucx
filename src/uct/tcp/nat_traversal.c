@@ -135,14 +135,6 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, PeerConnectionData * data, 
 
   }
 
-  /*if (getsockname(*fd, (struct sockaddr *)&local_addr, &local_addr_len) == -1) {
-    ucs_warn("Error getting local address");
-
-  }*/
-
-  // Print local port
-  //sa_in->sin_addr.s_addr
-
 
   if(send(fd, pairing_name, strlen(pairing_name), MSG_DONTWAIT) == -1) {
     ucs_error("Failed to send data to rendezvous server: ");
@@ -162,8 +154,8 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, PeerConnectionData * data, 
   ucs_warn("client data returned from rendezvous: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)),
            ntohs(public_info.port));
 
-  if (public_info.port != mapped_port) {
-    ucs_warn("public port %i does not match private port %i", public_info.port, sa_in->sin_port);
+  if (ntohs(public_info.port) != mapped_port) {
+    ucs_warn("public port %i does not match private port %i", ntohs(public_info.port), sa_in->sin_port);
   }
 
   sa_in->sin_family = local_addr.sin_family;
