@@ -924,7 +924,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-      while (retries < 25) {
+      while (retries < 50) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
         status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr, &peer_addr_len);
@@ -947,7 +947,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         FD_ZERO(&set);
         FD_SET(ep->fd, &set);
-        timeout.tv_sec = 10;
+        timeout.tv_sec = 6;
         timeout.tv_usec = 0;
 
         result = select(ep->fd + 1, NULL, &set, NULL, &timeout);
