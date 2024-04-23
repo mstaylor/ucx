@@ -922,7 +922,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_warn("Setting O_NONBLOCK failed: ");
       }
 
-
+      close(iface->config.rendezvous_fd);
 
       while (retries < 50) {
         ucs_warn("retrying connection - current retry: %i", retries);
