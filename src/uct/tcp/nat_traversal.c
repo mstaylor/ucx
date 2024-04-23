@@ -52,6 +52,7 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, PeerConnectionData * data, 
   struct sockaddr_in *sa_in;
   //struct timeval timeout;
   struct sockaddr_in local_addr;
+  uint16_t mapped_port;
   socklen_t local_addr_len = sizeof(local_addr);
 
 
@@ -61,7 +62,8 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, PeerConnectionData * data, 
   char ipadd[UCS_SOCKADDR_STRING_LEN];
 
   int enable_flag = 1;
-  int fd;
+  int fd, ret;
+  ucs_status_t status;
 
   memset(&local_addr, 0, local_addr_len);
   sa_in = (struct sockaddr_in *)saddr;
@@ -107,9 +109,20 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, PeerConnectionData * data, 
     return UCS_ERR_IO_ERROR;
   }
 
-  ucs_warn("Local ip/port: %s:%d bound for upcoming rendezvous request",
-           ip_to_string((in_addr_t *)&local_addr.sin_addr.s_addr, ipadd,sizeof(ipadd)),
-           ntohs(local_addr.sin_port));
+  /* Get the port which was selected for the socket */
+  ret = getsockname(fd, (struct sockaddr*)&local_addr, &local_addr_len);
+  if (ret < 0) {
+    ucs_error("getsockname(fd=%d) failed: %m", fd);
+  }
+
+  status = ucs_sockaddr_get_port((struct sockaddr*)&local_addr, &mapped_port);
+  if (status != UCS_OK) {
+    ucs_error("ucs_sockaddr_get_port failed");
+  }
+
+  ucs_warn("local address used to bind for rendezvous %s",
+           ucs_sockaddr_str((struct sockaddr*)&local_addr,
+                            ipadd, sizeof(ipadd)));
 
 
   server_data.sin_family = AF_INET;
@@ -149,7 +162,7 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, PeerConnectionData * data, 
   ucs_warn("client data returned from rendezvous: %s:%i", ip_to_string(&public_info.ip.s_addr, ipadd, sizeof(ipadd)),
            ntohs(public_info.port));
 
-  if (public_info.port != sa_in->sin_port) {
+  if (public_info.port != mapped_port) {
     ucs_warn("public port %i does not match private port %i", public_info.port, sa_in->sin_port);
   }
 
