@@ -561,6 +561,8 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
         return status;
       }
 
+      close(iface->config.rendezvous_fd);
+
       if (ip_to_string(&peerConnectionData.ip.s_addr, iface->config.public_ip_address,
                        sizeof(iface->config.public_ip_address)) == NULL) {
         ucs_warn("ip_to_string failed");
