@@ -22,7 +22,7 @@ int msleep(long msec);
 
 const char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size);
 
-ucs_status_t connectandBindLocal(int *fd1, int *fd2, PeerConnectionData * data, struct sockaddr_storage *saddr,
+ucs_status_t connectandBindLocal(int *fd1, PeerConnectionData * data, struct sockaddr_storage *saddr,
                                  const char * pairing_name, const char* server_address, int port);
 
 

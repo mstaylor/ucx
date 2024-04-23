@@ -25,7 +25,7 @@
 
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
-int local_bind_port = -1;
+
 
 static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {"", "MAX_NUM_EPS=256", NULL,
@@ -541,21 +541,57 @@ static uct_iface_ops_t uct_tcp_iface_ops = {
 
 static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 {
-    //struct sockaddr_storage bind_addr = iface->config.ifaddr;
+
     unsigned port_range_start         = iface->port_range.first;
     unsigned port_range_end           = iface->port_range.last;
-    int ret;
     ucs_status_t status;
     size_t addr_len;
-    uint16_t mapped_port;
     int port, retry = -1;
-    socklen_t socklen;
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     PeerConnectionData peerConnectionData;
 
       /* retry is 1 for a range of ports or when port value is zero.
      * retry is 0 for a single value port that is not zero */
-    if (local_bind_port == -1 || !iface->config.enable_nat_traversal) {
+    if (iface->config.enable_nat_traversal) {
+      status = connectandBindLocal(&iface->config.rendezvous_fd, &peerConnectionData, &iface->config.ifaddr,
+                                  "cylon", iface->config.rendezvous_ip_address,
+                                  iface->config.rendezvous_port);
+      if (status != UCS_OK) {
+        ucs_warn("connectandbindlocal failed");
+        return status;
+      }
+
+      if (ip_to_string(&peerConnectionData.ip.s_addr, iface->config.public_ip_address,
+                       sizeof(iface->config.public_ip_address)) == NULL) {
+        ucs_warn("ip_to_string failed");
+        return UCS_ERR_IO_ERROR;
+      }
+
+      ucs_warn("rendezvous server reported public_ip_address as %s", iface->config.public_ip_address);
+
+      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
+      if (status != UCS_OK) {
+        return status;
+      }
+
+      //if (!iface->config.enable_nat_traversal) {
+
+      status = ucs_socket_server_init(
+          (struct sockaddr *)&iface->config.ifaddr, addr_len,
+          ucs_socket_max_conn(), retry, 0, &iface->listen_fd);
+
+      if (status != UCS_OK) {
+        ucs_warn("ucs_socket_server_init failed");
+        return status;
+      }
+
+      ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
+                       ip_port_str, sizeof(ip_port_str));
+      ucs_warn("private ip bound %s: ", ip_port_str);
+    }
+
+
+    if (!iface->config.enable_nat_traversal) {
       retry = (port_range_start == 0) || (port_range_start < port_range_end);
 
       do {
@@ -579,88 +615,12 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
           return status;
         }
 
-        //if (!iface->config.enable_nat_traversal) {
-
           status = ucs_socket_server_init(
               (struct sockaddr *)&iface->config.ifaddr, addr_len,
               ucs_socket_max_conn(), retry, 0, &iface->listen_fd);
-        //}
+
       } while (retry && (status == UCS_ERR_BUSY));
     }
-
-    if (iface->config.enable_nat_traversal) {
-
-      if (local_bind_port == -1) {
-        socklen = sizeof(iface->config.ifaddr);
-        ret = getsockname(iface->listen_fd, (struct sockaddr*)&iface->config.ifaddr, &socklen);
-        if (ret < 0) {
-          ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
-          status = UCS_ERR_IO_ERROR;
-          return status;
-        }
-
-        status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &mapped_port);
-        if (status != UCS_OK) {
-          ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped port");
-          return status;
-        }
-
-        local_bind_port = mapped_port;
-
-        ucs_warn("local_bind_port set to %i", mapped_port);
-      } else {
-
-        if (local_bind_port != -1) {
-          status = ucs_sockaddr_set_port(
-              (struct sockaddr *)&iface->config.ifaddr, local_bind_port);
-          if (status != UCS_OK) {
-            return status;
-          }
-        }
-
-        status = ucs_socket_server_init(
-            (struct sockaddr *)&iface->config.ifaddr, addr_len, ucs_socket_max_conn(),
-            retry, iface->config.enable_nat_traversal, &iface->listen_fd);
-
-        if (status != UCS_OK) {
-          ucs_warn("ucs_socket_server_init failed");
-          return status;
-        }
-      }
-
-      ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
-                       ip_port_str, sizeof(ip_port_str));
-      ucs_warn("private ip %s:   local_bind_port %i", ip_port_str, local_bind_port);
-
-
-      //if nat traversal is enabled, use the private IP address returned
-      //to bind
-      status = connectandBindLocal(&iface->config.rendezvous_fd, &iface->listen_fd,&peerConnectionData, &iface->config.ifaddr,
-                                   "cylon", iface->config.rendezvous_ip_address,
-                                   iface->config.rendezvous_port);
-      if (status != UCS_OK) {
-        ucs_warn("connectandbindlocal failed");
-        return status;
-      }
-
-      if (ip_to_string(&peerConnectionData.ip.s_addr, iface->config.public_ip_address,
-                       sizeof(iface->config.public_ip_address)) == NULL) {
-        ucs_warn("ip_to_string failed");
-        return UCS_ERR_IO_ERROR;
-      }
-
-
-
-
-      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
-      if (status != UCS_OK) {
-        ucs_warn("ucs_sockaddr_sizeof failed ");
-
-      }
-
-      return status;
-    }
-
     return status;
 }
 
@@ -910,7 +870,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
                                      self->config.override_ip_address,
-                                   self->config.ignore_ifname, local_bind_port);
+                                   self->config.ignore_ifname);
         if (status == UCS_OK) {
           ucs_warn("UCS_OK so breaking in address iteration");
             break;

@@ -44,7 +44,7 @@ int msleep(long msec)
     return res;
 }
 
-ucs_status_t connectandBindLocal(int *rendezvous_fd, int *address_fd, PeerConnectionData * data, struct sockaddr_storage *saddr,
+ucs_status_t connectandBindLocal(int *rendezvous_fd, PeerConnectionData * data, struct sockaddr_storage *saddr,
                                  const char * pairing_name, const char* server_address, int port) {
 
   // call rendezvous and get public IP address
@@ -88,7 +88,7 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, int *address_fd, PeerConnec
 
   local_addr.sin_family = AF_INET;
   local_addr.sin_addr.s_addr = INADDR_ANY;
-  local_addr.sin_port = sa_in->sin_port;
+  local_addr.sin_port = 0;
   /*if (setsockopt(*fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout,
                  sizeof timeout) < 0) {
     ucs_error("Setting timeout failed: ");
@@ -129,9 +129,7 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, int *address_fd, PeerConnec
 
   // Print local port
   //sa_in->sin_addr.s_addr
-  ucs_warn("Local ip/port: %s:%d sent to rendezvous",
-           ip_to_string((in_addr_t *)&sa_in->sin_addr.s_addr, ipadd,sizeof(ipadd)),
-                               ntohs(sa_in->sin_port));
+
 
   if(send(fd, pairing_name, strlen(pairing_name), MSG_DONTWAIT) == -1) {
     ucs_error("Failed to send data to rendezvous server: ");
@@ -155,9 +153,10 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, int *address_fd, PeerConnec
     ucs_warn("public port %i does not match private port %i", public_info.port, sa_in->sin_port);
   }
 
-  /*sa_in->sin_family = AF_INET;
-  sa_in->sin_addr.s_addr = INADDR_ANY;
-  sa_in->sin_port = public_info.port;*/
+  sa_in->sin_family = local_addr.sin_family;
+  sa_in->sin_addr = local_addr.sin_addr;
+  sa_in->sin_port = local_addr.sin_port;
+
 
   data->ip = public_info.ip;
   data->port = public_info.port;
