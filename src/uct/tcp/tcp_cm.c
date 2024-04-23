@@ -934,7 +934,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         }
 
         ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr,
-                         src_str2, peer_addr_len);
+                         src_str2, sizeof(src_str2));
 
         ucs_warn("connecting to peer address socket ip: %s", src_str2);
 
