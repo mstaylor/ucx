@@ -760,6 +760,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char publicAddress[UCS_SOCKADDR_STRING_LEN];
     int publicPort = 0;
     struct sockaddr_in local_port_addr;
+    socklen_t local_addr_len = sizeof(local_port_addr);
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
     int retries = 0;
@@ -866,9 +867,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_warn("could NOT configure to set connect timeout");
       }
 
-      local_port_addr.sin_family = AF_INET;
+      if (getsockname(iface->listen_fd, (struct sockaddr*)&local_port_addr, &local_addr_len)< 0 ) {
+        ucs_warn("getsockname failed");
+      }
+
+
+
+     /* local_port_addr.sin_family = AF_INET;
       local_port_addr.sin_addr.s_addr = INADDR_ANY;
-      local_port_addr.sin_port = port;
+      local_port_addr.sin_port = port;*/
 
 
       status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr, &addr_len);
@@ -879,7 +886,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
       status = ucs_socket_server_init((struct sockaddr *)&local_port_addr, addr_len,
-                                      ucs_socket_max_conn(), 1, 0,
+                                      ucs_socket_max_conn(), 1, 1,
                                       &ep->fd);
 
       if (status != UCS_OK) {
@@ -887,12 +894,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return status;
       }
 
-      /*if (bind(ep->fd, (const struct sockaddr *)&local_port_addr, sizeof(local_port_addr))) {
-        ucs_warn("Binding to same port failed: ");
-      }*/
+      ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
+                       src_str2, sizeof(src_str2));
 
-      ucs_warn("endpoint peer socket info(fd=%d, src_addr=%s local port=%i )", ep->fd,
-               ucs_socket_getname_str(ep->fd, src_str2, UCS_SOCKADDR_STRING_LEN), port);
+      ucs_warn("endpoint socket ip: %s", src_str2);
+
 
       /**
        * Update the peer address to the remote address returned by redis
