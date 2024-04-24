@@ -788,7 +788,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     struct sockaddr_in *sa_in;
     //struct timeval timeout;
-    struct sockaddr_in local_addr;
+
     uint16_t mapped_port;
     //socklen_t local_addr_len = sizeof(local_addr);
 
@@ -869,7 +869,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
       ucs_warn("local address used to bind for rendezvous %s",
-               ucs_sockaddr_str((struct sockaddr*)&local_addr,
+               ucs_sockaddr_str((struct sockaddr*)&local_port_addr,
                                 ipadd, sizeof(ipadd)));
 
       server_data.sin_family = AF_INET;
@@ -906,11 +906,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
       //2. write redis value
-      sprintf(redisValue, "%s:%i", iface->config.public_ip_address, ntohs(public_info.port));
 
       //create key in redis
       setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                    ipadd, redisValue);
+                    ipadd, ipadd);
       ucs_warn("wrote redis key:value %s:%s", ipadd, redisValue);
 
 
