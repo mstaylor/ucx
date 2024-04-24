@@ -796,7 +796,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in server_data;
     PeerConnectionData public_info;
     ssize_t bytes;
-    char ipadd[UCS_SOCKADDR_STRING_LEN];
+    char source_ipadd[UCS_SOCKADDR_STRING_LEN];
+    char public_ipadd[UCS_SOCKADDR_STRING_LEN];
 
     //int enable_flag = 1;
     int fd, ret;
@@ -870,7 +871,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       ucs_warn("local address used to bind for rendezvous %s",
                ucs_sockaddr_str((struct sockaddr*)&local_port_addr,
-                                ipadd, sizeof(ipadd)));
+                                source_ipadd, sizeof(source_ipadd)));
 
       server_data.sin_family = AF_INET;
       server_data.sin_addr.s_addr = inet_addr(iface->config.rendezvous_ip_address);
@@ -898,7 +899,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
       ucs_warn("client data returned from rendezvous: %s:%i", ip_to_string(&public_info.ip.s_addr,
-                                                                           ipadd, sizeof(ipadd)),
+                                                                           public_ipadd,
+                                                                           sizeof(public_ipadd)),
                ntohs(public_info.port));
 
       if (ntohs(public_info.port) != mapped_port) {
@@ -909,8 +911,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       //create key in redis
       setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                    ipadd, ipadd);
-      ucs_warn("wrote redis key:value %s:%s", ipadd, redisValue);
+                    source_ipadd, public_ipadd);
+      ucs_warn("wrote redis key:value %s:%s", source_ipadd, redisValue);
 
 
       //3. use public address from redis as peer address
