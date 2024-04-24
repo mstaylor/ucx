@@ -73,6 +73,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
    {UCT_TCP_CONFIG_REMOTE_ADDRESS_OVERRIDE, "",
    "Override the remote address IP ",
    ucs_offsetof(uct_tcp_iface_config_t, override_ip_address), UCS_CONFIG_TYPE_STRING},
+    {"NAT_PAIRING_NAME", "cylon",
+     "pairing name to use for nat traversal ",
+     ucs_offsetof(uct_tcp_iface_config_t, pairing_name), UCS_CONFIG_TYPE_STRING},
     {"IGNORE_IFNAME", "n",
      "ignore ifname",
      ucs_offsetof(uct_tcp_iface_config_t, ignore_ifname), UCS_CONFIG_TYPE_BOOL},
@@ -547,53 +550,11 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     ucs_status_t status;
     size_t addr_len;
     int port, retry = -1;
-    char ip_port_str[UCS_SOCKADDR_STRING_LEN];
-    PeerConnectionData peerConnectionData;
 
-      /* retry is 1 for a range of ports or when port value is zero.
+
+    /* retry is 1 for a range of ports or when port value is zero.
      * retry is 0 for a single value port that is not zero */
-    if (iface->config.enable_nat_traversal) {
-      status = connectandBindLocal(&iface->config.rendezvous_fd, &peerConnectionData, &iface->config.ifaddr,
-                                  "cylon", iface->config.rendezvous_ip_address,
-                                  iface->config.rendezvous_port);
-      if (status != UCS_OK) {
-        ucs_warn("connectandbindlocal failed");
-        return status;
-      }
 
-
-
-      if (ip_to_string(&peerConnectionData.ip.s_addr, iface->config.public_ip_address,
-                       sizeof(iface->config.public_ip_address)) == NULL) {
-        ucs_warn("ip_to_string failed");
-        return UCS_ERR_IO_ERROR;
-      }
-
-      ucs_warn("rendezvous server reported public_ip_address as %s", iface->config.public_ip_address);
-
-      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
-      if (status != UCS_OK) {
-        return status;
-      }
-
-
-
-      status = ucs_socket_server_init(
-          (struct sockaddr *)&iface->config.ifaddr, addr_len,
-          ucs_socket_max_conn(), retry, 1, &iface->listen_fd);
-
-      if (status != UCS_OK) {
-        ucs_warn("ucs_socket_server_init failed");
-        return status;
-      }
-
-      ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
-                       ip_port_str, sizeof(ip_port_str));
-      ucs_warn("private ip bound %s: ", ip_port_str);
-    }
-
-
-    if (!iface->config.enable_nat_traversal) {
       retry = (port_range_start == 0) || (port_range_start < port_range_end);
 
       do {
@@ -619,10 +580,11 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
           status = ucs_socket_server_init(
               (struct sockaddr *)&iface->config.ifaddr, addr_len,
-              ucs_socket_max_conn(), retry, 0, &iface->listen_fd);
+              ucs_socket_max_conn(), retry, iface->config.enable_nat_traversal,
+            &iface->listen_fd);
 
       } while (retry && (status == UCS_ERR_BUSY));
-    }
+
     return status;
 }
 
@@ -633,8 +595,6 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
     char ip_port_str[UCS_SOCKADDR_STRING_LEN];
     ucs_status_t status;
     uint16_t port;
-    uint16_t natPubPort;
-    char redisValue[200];
     int ret;
 
     status = uct_tcp_iface_server_init(iface);
@@ -680,7 +640,7 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
                               ip_port_str, sizeof(ip_port_str)),
               iface->if_name);
 
-    if (iface->config.enable_nat_traversal) {
+    /*if (iface->config.enable_nat_traversal) {
 
       status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &natPubPort);
       if (status != UCS_OK) {
@@ -693,7 +653,7 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
       setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                     ip_port_str, redisValue);
       ucs_warn("wrote redis key:value %s:%s", ip_port_str, redisValue);
-    }
+    }*/
     return UCS_OK;
 
 err_close_sock:
@@ -815,6 +775,8 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     ucs_strncpy_zero(self->config.rendezvous_ip_address, config->rendezvous_ip_address,
                      sizeof(self->config.rendezvous_ip_address));
     self->config.enable_nat_traversal = config->enable_nat_traversal;
+    ucs_strncpy_zero(self->config.pairing_name, config->pairing_name,
+                     sizeof(self->config.pairing_name));
 
     ucs_warn("rendezvous ip set to: %s", self->config.rendezvous_ip_address);
 

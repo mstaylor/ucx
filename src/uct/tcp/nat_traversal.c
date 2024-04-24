@@ -89,7 +89,7 @@ ucs_status_t connectandBindLocal(int *rendezvous_fd, PeerConnectionData * data, 
   }
 
   local_addr.sin_family = AF_INET;
-  local_addr.sin_addr.s_addr = INADDR_ANY;
+  local_addr.sin_addr = sa_in->sin_addr;
   local_addr.sin_port = 0;
   /*if (setsockopt(*fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout,
                  sizeof timeout) < 0) {

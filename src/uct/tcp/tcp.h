@@ -419,6 +419,7 @@ typedef struct uct_tcp_iface {
         int                       rendezvous_port;
         int                       rendezvous_fd;
         char                      public_ip_address[INET6_ADDRSTRLEN];
+        char                      pairing_name[200];
         struct {
             ucs_time_t            idle;              /* The time the connection needs to remain
                                                       * idle before TCP starts sending keepalive
@@ -472,7 +473,7 @@ typedef struct uct_tcp_iface_config {
     int                            redis_port;
     char *                         rendezvous_ip_address;
     int                            rendezvous_port;
-    int                            rendezvous_fd;
+    char *                         pairing_name;
 
 } uct_tcp_iface_config_t;
 
