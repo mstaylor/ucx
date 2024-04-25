@@ -8,13 +8,13 @@
 
 redisContext * redisLogin(const char *hostname, int port) {
     redisContext *c;
-    ucs_warn("Logging into redis host: %s port: %i", hostname, port);
+//    ucs_warn("Logging into redis host: %s port: %i", hostname, port);
 
     // Connect to Redis server
     c = redisConnect(hostname, port);
     if (c == NULL || c->err) {
         if (c) {
-            ucs_warn("Connection error: %s\n", c->errstr);
+            ucs_warn("Connection error: %s", c->errstr);
             redisFree(c);
         } else {
             ucs_warn("Connection error: can't allocate redis context\n");

@@ -760,6 +760,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int token_index = 0;
     char publicAddress[UCS_SOCKADDR_STRING_LEN];
     int publicPort = 0;
+    char publicAddressPort[UCS_SOCKADDR_STRING_LEN*2];
     struct sockaddr_in local_port_addr;
     socklen_t local_addr_len = sizeof(local_port_addr);
     int enable_flag = 1;
@@ -905,17 +906,19 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       //2. write redis value
 
+      sprintf(publicAddressPort, "%s:%i", public_ipadd, ntohs(public_info.port));
+
 
       status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                    source_ipadd, public_ipadd);
+                    source_ipadd, publicAddressPort);
       if (status == UCS_OK) {
-        ucs_warn("wrote redis key:value %s:%s", source_ipadd, public_ipadd);
+        ucs_warn("wrote redis key:value %s:%s", source_ipadd, publicAddressPort);
       }
       //3. write peer:ip:port -> sourceip:port to redis
       //listen thread for recv worker to process
       sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
       setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                    peer_redis_key, public_ipadd);
+                    peer_redis_key, publicAddressPort);
 
       //4. use public address from redis as peer address (wait until peer writes redis address)
 
