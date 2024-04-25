@@ -756,7 +756,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char src_str[UCS_SOCKADDR_STRING_LEN];
-    char src_str2[UCS_SOCKADDR_STRING_LEN];
+    //char src_str2[UCS_SOCKADDR_STRING_LEN];
     char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
     char* remote_address = NULL;
     char * token = NULL;
@@ -777,8 +777,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     size_t addrlen;
 
     //int flags;
-    struct timeval timeout;
-    size_t addr_len;
+    //struct timeval timeout;
+    //size_t addr_len;
     //size_t peer_addr_len;
 
     //fd_set set;
@@ -833,8 +833,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     if (iface->config.enable_nat_traversal) {
       //1. Call Rendezvous server and retrieve public port
-      timeout.tv_sec = NAT_CONNECT_TO_SEC;
-      timeout.tv_usec = 0;
+      //timeout.tv_sec = NAT_CONNECT_TO_SEC;
+      //timeout.tv_usec = 0;
       fd = socket(AF_INET, SOCK_STREAM, 0);
       if (fd == -1) {
         ucs_error("Could not create socket for rendezvous server: ");
@@ -962,7 +962,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       //5. configure the endpoint socket to reuse the same local port used for communication with
       //the rendezvous server
-      status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+     /* status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
                                  &enable_flag, sizeof(int));
       if (status != UCS_OK) {
         ucs_warn("could NOT configure to reuse socket port");
@@ -1004,7 +1004,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
                        src_str2, sizeof(src_str2));
 
-      ucs_warn("bound endpoint socket ip: %s", src_str2);
+      ucs_warn("bound endpoint socket ip: %s", src_str2);*/
 
 
       /**
