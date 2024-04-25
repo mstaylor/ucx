@@ -912,7 +912,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                     source_ipadd, publicAddressPort);
       if (status == UCS_OK) {
-        ucs_warn("wrote redis key:value %s:%s", source_ipadd, publicAddressPort);
+        ucs_warn("wrote redis key:value %s->%s", source_ipadd, publicAddressPort);
       }
       //3. write peer:ip:port -> sourceip:port to redis
       //listen thread for recv worker to process
@@ -1053,6 +1053,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
           if (so_error == 0) {
             ucs_warn("Connected on attempt %d", retries + 1);
             status = UCS_OK;
+            close(fd);//close the rendezvous socket
             break;
           } else {
             ucs_warn("Connection failed: %s and continuing", strerror(so_error));

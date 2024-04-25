@@ -90,7 +90,7 @@ _Noreturn void listen_for_updates(void *p) {
   while(true) { //loop throughout the lifetime of the ucx process
     //1. poll redis for the
     remote_address = getValueFromRedis(iface->config.redis_ip_address,
-                                       iface->config.redis_port, src_str);
+                                       iface->config.redis_port, peer_redis_key);
     while (remote_address == NULL) {
       msleep(1000);
       // ucs_warn("sleeping waiting for remote address from redis...");
@@ -363,8 +363,12 @@ _Noreturn void listen_for_updates(void *p) {
     flags &= ~(O_NONBLOCK);
     fcntl(peer_fd, F_SETFL, flags);
 
+    close(fd);
+    close(peer_fd);
+
+    ucs_warn("deleting redis key: %s", peer_redis_key);
     //delete redis key
-    deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, src_str);
+    deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
 
   }
 
