@@ -762,7 +762,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char src_str[UCS_SOCKADDR_STRING_LEN];
-    //char src_str2[UCS_SOCKADDR_STRING_LEN];
+    char src_str2[UCS_SOCKADDR_STRING_LEN];
     char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
     char* remote_address = NULL;
     char * token = NULL;
@@ -997,8 +997,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return status;
       }
 
+      close(fd);
 
-      /*ret = bind(ep->fd, (struct sockaddr *)&local_port_addr, addr_len);
+
+      ret = bind(ep->fd, (struct sockaddr *)&local_port_addr, addr_len);
       if (ret < 0) {
 
         status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
@@ -1010,7 +1012,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
                        src_str2, sizeof(src_str2));
 
-      ucs_warn("bound endpoint socket ip: %s", src_str2);*/
+      ucs_warn("bound endpoint socket ip: %s", src_str2);
 
 
       /**
