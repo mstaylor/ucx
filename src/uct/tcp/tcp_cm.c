@@ -247,6 +247,7 @@ ucs_status_t uct_tcp_cm_send_event(uct_tcp_ep_t *ep,
 
     status = ucs_socket_send(ep->fd, pkt_buf, pkt_length);
     if (status == UCS_OK) {
+      ucs_warn("ucs_socket_send");
         uct_tcp_cm_trace_conn_pkt(ep, UCS_LOG_LEVEL_TRACE,
                                   "%s sent to", event);
     } else {
@@ -573,7 +574,7 @@ uct_tcp_cm_handle_conn_req(uct_tcp_ep_t **ep_p,
             ep->flags |= UCT_TCP_EP_FLAG_CONNECT_TO_EP;
         }
     }
-
+    ucs_warn("connection request...");
     uct_tcp_cm_trace_conn_pkt(ep, UCS_LOG_LEVEL_TRACE,
                               "%s received from", UCT_TCP_CM_CONN_REQ);
 
