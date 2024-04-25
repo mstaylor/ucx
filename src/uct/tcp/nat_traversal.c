@@ -44,9 +44,9 @@ int msleep(long msec)
 }
 
 void listen_for_updates(void *p) {
-  /*char* remote_address = NULL;
+  char* remote_address = NULL;
   char src_str[UCS_SOCKADDR_STRING_LEN];
-  char src_str2[UCS_SOCKADDR_STRING_LEN];
+
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
   int fd, ret;
   int enable_flag = 1;
@@ -64,9 +64,9 @@ void listen_for_updates(void *p) {
   char publicAddressPort[UCS_SOCKADDR_STRING_LEN*2];
   int publicPort = 0;
 
-  struct sockaddr_storage connect_addr;
+  /*struct sockaddr_storage connect_addr;
   struct sockaddr* addr = NULL;
-
+char src_str2[UCS_SOCKADDR_STRING_LEN];
   size_t addrlen;
   size_t addr_len;
 
@@ -78,7 +78,7 @@ void listen_for_updates(void *p) {
   int so_error;
   socklen_t len = sizeof(so_error);
   int flags;
-
+*/
   uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
   struct sockaddr_in *sa_in = (struct sockaddr_in  *)&iface->config.ifaddr;
   ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
@@ -199,7 +199,7 @@ void listen_for_updates(void *p) {
                   source_ipadd, publicAddressPort);
     ucs_warn("wrote redis key:value %s:%s", source_ipadd, public_ipadd);
 
-    timeout.tv_sec = NAT_CONNECT_TO_SEC;
+    /*timeout.tv_sec = NAT_CONNECT_TO_SEC;
     timeout.tv_usec = 0;
 
     if (ucs_socket_create(AF_INET, SOCK_STREAM, &peer_fd) != UCS_OK) {
@@ -361,7 +361,7 @@ void listen_for_updates(void *p) {
 
     flags = fcntl(peer_fd,  F_GETFL, 0);
     flags &= ~(O_NONBLOCK);
-    fcntl(peer_fd, F_SETFL, flags);
+    fcntl(peer_fd, F_SETFL, flags);*/
 
     //close(fd);
     //close(peer_fd);
@@ -372,7 +372,7 @@ void listen_for_updates(void *p) {
 
 
 
-  }*/
+  }
 
 
 

@@ -1030,7 +1030,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
       }
 
-      iface->config.sockaddr_len = addr_len;//update based on change in address
+
 
       status =
           ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
