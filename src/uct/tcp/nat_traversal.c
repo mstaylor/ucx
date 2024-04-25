@@ -44,7 +44,7 @@ int msleep(long msec)
 }
 
 void listen_for_updates(void *p) {
-  char* remote_address = NULL;
+  /*char* remote_address = NULL;
   char src_str[UCS_SOCKADDR_STRING_LEN];
   char src_str2[UCS_SOCKADDR_STRING_LEN];
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
@@ -372,7 +372,7 @@ void listen_for_updates(void *p) {
 
 
 
-  }
+  }*/
 
 
 
