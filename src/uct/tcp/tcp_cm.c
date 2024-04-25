@@ -209,12 +209,15 @@ ucs_status_t uct_tcp_cm_send_event(uct_tcp_ep_t *ep,
 
     pkt_length                  = sizeof(*pkt_hdr);
     if (event == UCT_TCP_CM_CONN_REQ) {
+      ucs_warn("UCT_TCP_CM_CONN_REQ...");
         cm_pkt_length = sizeof(*conn_pkt) + iface->config.sockaddr_len;
 
         if (ep->conn_state == UCT_TCP_EP_CONN_STATE_CONNECTING) {
+          ucs_warn("UCT_TCP_EP_CONN_STATE_CONNECTING...");
             magic_number_length = sizeof(uint64_t);
         }
     } else {
+      ucs_warn("fallthru...");
         cm_pkt_length           = sizeof(event);
     }
 
@@ -226,7 +229,9 @@ ucs_status_t uct_tcp_cm_send_event(uct_tcp_ep_t *ep,
     pkt_hdr->length = cm_pkt_length;
 
     if (event == UCT_TCP_CM_CONN_REQ) {
+      ucs_warn("UCT_TCP_CM_CONN_REQ2...");
         if (ep->conn_state == UCT_TCP_EP_CONN_STATE_CONNECTING) {
+          ucs_warn("UCT_TCP_EP_CONN_STATE_CONNECTING...");
             ucs_assert(magic_number_length == sizeof(uint64_t));
             *(uint64_t*)pkt_buf = UCT_TCP_MAGIC_NUMBER;
         }
@@ -238,6 +243,7 @@ ucs_status_t uct_tcp_cm_send_event(uct_tcp_ep_t *ep,
         conn_pkt->cm_id = ep->cm_id;
         memcpy(conn_pkt + 1, &iface->config.ifaddr, iface->config.sockaddr_len);
     } else {
+      ucs_warn("got here...");
         /* CM events (except CONN_REQ) are not sent for EPs connected with
          * CONNECT_TO_EP connection method */
         ucs_assert(!(ep->flags & UCT_TCP_EP_FLAG_CONNECT_TO_EP));
@@ -756,7 +762,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 {
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char src_str[UCS_SOCKADDR_STRING_LEN];
-    //char src_str2[UCS_SOCKADDR_STRING_LEN];
+    char src_str2[UCS_SOCKADDR_STRING_LEN];
     char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
     char* remote_address = NULL;
     char * token = NULL;
@@ -992,7 +998,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
 
-      /*ret = bind(ep->fd, (struct sockaddr *)&local_port_addr, addr_len);
+      ret = bind(ep->fd, (struct sockaddr *)&local_port_addr, addr_len);
       if (ret < 0) {
 
         status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
@@ -1004,7 +1010,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
                        src_str2, sizeof(src_str2));
 
-      ucs_warn("bound endpoint socket ip: %s", src_str2);*/
+      ucs_warn("bound endpoint socket ip: %s", src_str2);
 
 
       /**
