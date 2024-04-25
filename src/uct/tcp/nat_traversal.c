@@ -363,8 +363,8 @@ void listen_for_updates(void *p) {
     flags &= ~(O_NONBLOCK);
     fcntl(peer_fd, F_SETFL, flags);
 
-    close(fd);
-    close(peer_fd);
+    //close(fd);
+    //close(peer_fd);
 
     ucs_warn("deleting redis key: %s", peer_redis_key);
     //delete redis key
