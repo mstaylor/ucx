@@ -1100,7 +1100,7 @@ ucs_status_t uct_tcp_ep_handle_io_err(uct_tcp_ep_t *ep, const char *op_str,
 {
     uct_tcp_iface_t *iface    = ucs_derived_of(ep->super.super.iface,
                                                uct_tcp_iface_t);
-    ucs_log_level_t log_level = UCS_LOG_LEVEL_DIAG;
+    //ucs_log_level_t log_level = UCS_LOG_LEVEL_DIAG;
     ucs_status_t status;
     char str_local_addr[UCS_SOCKADDR_STRING_LEN];
     char str_remote_addr[UCS_SOCKADDR_STRING_LEN];
@@ -1113,19 +1113,19 @@ ucs_status_t uct_tcp_ep_handle_io_err(uct_tcp_ep_t *ep, const char *op_str,
 
     if (!uct_tcp_ep_is_conn_closed_by_peer(io_status)) {
         /* IO operation failed with the unrecoverable error */
-        log_level = UCS_LOG_LEVEL_ERROR;
+        //log_level = UCS_LOG_LEVEL_ERROR;
         goto err;
     }
 
     if ((ep->conn_state == UCT_TCP_EP_CONN_STATE_ACCEPTING) ||
         (ep->conn_state == UCT_TCP_EP_CONN_STATE_RECV_MAGIC_NUMBER)) {
-        ucs_debug("tcp_ep %p: detected that connection was dropped by the peer",
+        ucs_warn("tcp_ep %p: detected that connection was dropped by the peer",
                   ep);
         return io_status;
     } else if ((ep->conn_state == UCT_TCP_EP_CONN_STATE_CONNECTED) &&
                ((ep->flags & UCT_TCP_EP_CTX_CAPS) ==
                 UCT_TCP_EP_FLAG_CTX_TYPE_RX) /* only RX cap */) {
-        ucs_debug("tcp_ep %p: detected that [%s <-> %s]:%"PRIu64" connection was "
+        ucs_warn("tcp_ep %p: detected that [%s <-> %s]:%"PRIu64" connection was "
                   "dropped by the peer", ep,
                   ucs_sockaddr_str((const struct sockaddr*)&iface->config.ifaddr,
                                    str_local_addr, UCS_SOCKADDR_STRING_LEN),
@@ -1147,7 +1147,7 @@ ucs_status_t uct_tcp_ep_handle_io_err(uct_tcp_ep_t *ep, const char *op_str,
 
         /* if connection establishment fails, the system limits
          * may not be big enough */
-        ucs_error("try to increase \"net.core.somaxconn\", "
+        ucs_warn("try to increase \"net.core.somaxconn\", "
                   "\"net.core.netdev_max_backlog\", "
                   "\"net.ipv4.tcp_max_syn_backlog\" to the maximum value "
                   "on the remote node or increase %s%s%s (=%u)",
@@ -1162,7 +1162,7 @@ ucs_status_t uct_tcp_ep_handle_io_err(uct_tcp_ep_t *ep, const char *op_str,
         ucs_close_fd(&ep->fd);
         /* if this connection is needed for the local side, it will be
          * detected by the TX operations and error handling will be done */
-        ucs_debug("tcp_ep %p: detected that [%s <-> %s]:%"PRIu64" connection was "
+        ucs_warn("tcp_ep %p: detected that [%s <-> %s]:%"PRIu64" connection was "
                   "closed by the peer", ep,
                   ucs_sockaddr_str((const struct sockaddr*)&iface->config.ifaddr,
                                    str_local_addr, UCS_SOCKADDR_STRING_LEN),
@@ -1173,7 +1173,7 @@ ucs_status_t uct_tcp_ep_handle_io_err(uct_tcp_ep_t *ep, const char *op_str,
     }
 
 err:
-    ucs_log(log_level, "tcp_ep %p (state=%s): %s(%d) failed: %s",
+    ucs_warn("tcp_ep %p (state=%s): %s(%d) failed: %s",
             ep, uct_tcp_ep_cm_state[ep->conn_state].name,
             op_str, ep->fd, ucs_status_string(io_status));
     return io_status;
