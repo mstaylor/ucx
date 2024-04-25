@@ -765,23 +765,23 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     socklen_t local_addr_len = sizeof(local_port_addr);
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
-    int retries = 0;
-    int result = 0;
+    //int retries = 0;
+    //int result = 0;
     uint16_t port = 0;
 
     struct sockaddr* addr = NULL;
 
     size_t addrlen;
 
-    int flags;
+    //int flags;
     struct timeval timeout;
     size_t addr_len;
-    size_t peer_addr_len;
+    //size_t peer_addr_len;
 
-    fd_set set;
+    //fd_set set;
 
-    int so_error;
-    socklen_t len = sizeof(so_error);
+    //int so_error;
+    //socklen_t len = sizeof(so_error);
 
     //rendezvous variables
 
@@ -916,14 +916,22 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
       //3. write peer:ip:port -> sourceip:port to redis
       //listen thread for recv worker to process
-      sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
-      setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                    peer_redis_key, publicAddressPort);
-
-      //4. use public address from redis as peer address (wait until peer writes redis address)
 
       remote_address = getValueFromRedis(iface->config.redis_ip_address,
                                          iface->config.redis_port, dest_str);
+
+      if (remote_address == NULL) { //set the peer redis key only if the public address is not found
+
+
+        sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
+        setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                      peer_redis_key, publicAddressPort);
+
+        ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key, publicAddressPort);
+      }
+      //4. use public address from redis as peer address (wait until peer writes redis address)
+
+
       while(remote_address == NULL) {
         msleep(1);
         remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
@@ -1013,10 +1021,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
       }
 
+      status =
+          ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+
       //7. set the socket to be non-blocking so we can retry
       //connection attempts if necessary
 
-      if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+      /*if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
       }
 
@@ -1121,20 +1132,20 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         }
 
         retries++;
-      }
+      }*/
 
       //8. renable blocking on fd amd continue
-      flags = fcntl(ep->fd,  F_GETFL, 0);
+      /*flags = fcntl(ep->fd,  F_GETFL, 0);
       flags &= ~(O_NONBLOCK);
-      fcntl(ep->fd, F_SETFL, flags);
+      fcntl(ep->fd, F_SETFL, flags);*/
 
-      /*if (UCS_STATUS_IS_ERR(status)) {
+      if (UCS_STATUS_IS_ERR(status)) {
         return status;
       } else if (status == UCS_INPROGRESS) {
         ucs_assert(iface->config.conn_nb);
         uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
         return UCS_OK;
-      }*/
+      }
 
       ucs_assert(status == UCS_OK);
 
