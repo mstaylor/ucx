@@ -10,7 +10,7 @@
 
 #include "tcp.h"
 
-#define PEER_KEY "peer:"
+#define PEER_KEY "peer"
 
 redisContext * redisLogin(const char *hostname, int port);
 

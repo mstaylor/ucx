@@ -85,6 +85,7 @@ _Noreturn void listen_for_updates(void *p) {
 
 
   sprintf(peer_redis_key, "%s:%s", PEER_KEY, src_str);
+  ucs_warn("retrieving key->value from redis - key: %s", peer_redis_key);
   while(true) { //loop throughout the lifetime of the ucx process
     //1. poll redis for the
     remote_address = getValueFromRedis(iface->config.redis_ip_address,
@@ -244,7 +245,7 @@ _Noreturn void listen_for_updates(void *p) {
     ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
                      src_str2, sizeof(src_str2));
 
-    ucs_warn("endpoint socket ip: %s", src_str2);
+    ucs_warn("bound peer endpoint socket ip: %s", src_str2);
 
     set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
@@ -345,7 +346,7 @@ _Noreturn void listen_for_updates(void *p) {
       ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
                        src_str2, sizeof(src_str2));
 
-      ucs_warn("endpoint socket ip: %s", src_str2);
+      ucs_warn("bound endpoint socket ip: %s", src_str2);
 
       if(fcntl(peer_fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
@@ -361,8 +362,6 @@ _Noreturn void listen_for_updates(void *p) {
 
     //delete redis key
     deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, src_str);
-
-    msleep(1000);//sleep for a second
 
   }
 

@@ -797,17 +797,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char source_ipadd[UCS_SOCKADDR_STRING_LEN];
     char public_ipadd[UCS_SOCKADDR_STRING_LEN];
 
-    //int enable_flag = 1;
     int fd, ret;
-    //ucs_status_t status;
-
 
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
-    ucs_status_t status = UCS_OK;
-
-
-
+    ucs_status_t status;
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -921,15 +915,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //listen thread for recv worker to process
       sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
       setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                    peer_redis_key, src_str);
+                    peer_redis_key, public_ipadd);
 
       //4. use public address from redis as peer address (wait until peer writes redis address)
-      ucs_warn("nat traversal enabled - connection retries: %i", ep->conn_retries);
+
       remote_address = getValueFromRedis(iface->config.redis_ip_address,
                                          iface->config.redis_port, dest_str);
       while(remote_address == NULL) {
         msleep(1);
-        ucs_warn("sleeping waiting for remote address from redis...");
         remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
 
       }
@@ -962,7 +955,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return status;
       }
 
-      ucs_warn("configuring to reuse socket address");
       status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
                                  &enable_flag, sizeof(int));
       if (status != UCS_OK) {
@@ -970,7 +962,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return status;
       }
 
-      ucs_warn("configuring to set connect timeout");
       status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
                                  &timeout,
                                  sizeof timeout);
@@ -999,7 +990,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
                        src_str2, sizeof(src_str2));
 
-      ucs_warn("endpoint socket ip: %s", src_str2);
+      ucs_warn("bound endpoint socket ip: %s", src_str2);
 
 
       /**
@@ -1018,8 +1009,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       if ((struct sockaddr*)&ep->peer_addr != NULL) {
         memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
       }
-
-
 
       //7. set the socket to be non-blocking so we can retry
       //connection attempts if necessary
@@ -1121,7 +1110,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
                          src_str2, sizeof(src_str2));
 
-        ucs_warn("endpoint socket ip: %s", src_str2);
+        ucs_warn("bou d endpoint socket ip: %s", src_str2);
 
         if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
           ucs_warn("Setting O_NONBLOCK failed: ");
