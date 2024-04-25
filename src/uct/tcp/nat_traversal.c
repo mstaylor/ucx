@@ -61,6 +61,7 @@ _Noreturn void listen_for_updates(void *p) {
   char * token = NULL;
   int token_index = 0;
   char publicAddress[UCS_SOCKADDR_STRING_LEN];
+  char publicAddressPort[UCS_SOCKADDR_STRING_LEN*2];
   int publicPort = 0;
 
   struct sockaddr_storage connect_addr;
@@ -191,9 +192,11 @@ _Noreturn void listen_for_updates(void *p) {
       ucs_warn("public port %i does not match private port %i", ntohs(public_info.port), sa_in->sin_port);
     }
 
+    sprintf(publicAddressPort, "%s:%i", public_ipadd, ntohs(public_info.port));
+
     //2. write redis value
     setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                  source_ipadd, public_ipadd);
+                  source_ipadd, publicAddressPort);
     ucs_warn("wrote redis key:value %s:%s", source_ipadd, public_ipadd);
 
     timeout.tv_sec = NAT_CONNECT_TO_SEC;

@@ -91,17 +91,17 @@ char * getValueFromRedis(const char *hostname, int port, const char *key){
     if (c != NULL) {
         reply = redisCommand(c, "GET %s", key);
         if (reply == NULL) {
-            ucs_warn("Error in GET command or key not found\n");
+            ucs_warn("Error in GET command or key not found");
         } else {
             // store the value in a char*
             if (reply->type == REDIS_REPLY_STRING) {
-                ucs_warn("The value of '%s' is: %s\n", key, reply->str);
+                //ucs_warn("The value of '%s' is: %s", key, reply->str);
                 result = (char*) malloc(strlen(reply->str)+1);
                 strcpy(result, reply->str);
 
-            } else {
-                ucs_warn("The key '%s' does not exist\n", key);
-            }
+            } //else {
+                //ucs_warn("The key '%s' does not exist", key);
+            //}
             freeReplyObject(reply);
         }
 
