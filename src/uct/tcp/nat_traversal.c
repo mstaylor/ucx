@@ -182,7 +182,7 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
       continue;
     }
 
-    close(fd);
+
 
     ucs_warn("client data returned from rendezvous: %s:%i",
              ip_to_string(&public_info.ip.s_addr,
@@ -365,8 +365,8 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
     flags &= ~(O_NONBLOCK);
     fcntl(peer_fd, F_SETFL, flags);
 
-    //close(fd);
-    //close(peer_fd);
+    close(fd);
+    close(peer_fd);
 
     ucs_warn("deleting redis key: %s", peer_redis_key);
     //delete redis key
