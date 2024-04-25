@@ -251,6 +251,7 @@ ucs_status_t uct_tcp_cm_send_event(uct_tcp_ep_t *ep,
                                   "%s sent to", event);
     } else {
         ucs_assert(status != UCS_ERR_NO_PROGRESS);
+        ucs_warn("unable to send");
         status = uct_tcp_ep_handle_io_err(ep, "send", status);
         uct_tcp_cm_trace_conn_pkt(ep,
                                   (log_error && (status != UCS_ERR_CANCELED)) ?
@@ -652,6 +653,7 @@ static void uct_tcp_cm_handle_conn_ack(uct_tcp_ep_t *ep,
                                        uct_tcp_cm_conn_event_t cm_event,
                                        uct_tcp_ep_conn_state_t new_conn_state)
 {
+  ucs_warn("handling uct_tcp_cm_handle_conn_ack");
     uct_tcp_cm_trace_conn_pkt(ep, UCS_LOG_LEVEL_TRACE,
                               "%s received from", cm_event);
 

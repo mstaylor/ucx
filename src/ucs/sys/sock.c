@@ -677,10 +677,10 @@ ucs_socket_handle_io_error(int fd, const char *name, ssize_t io_retval, int io_e
         /* 0 can be returned only by recv() system call as an error if
          * the connection was dropped by peer */
         ucs_assert(!strcmp(name, "recv"));
-        ucs_trace("fd %d is closed", fd);
+        ucs_warn("fd %d is closed", fd);
         status = UCS_ERR_NOT_CONNECTED; /* Connection closed by peer */
     } else {
-        ucs_debug("%s(%d) failed: %s", name, fd, strerror(io_errno));
+        ucs_warn("%s(%d) failed: %s", name, fd, strerror(io_errno));
         status = ucs_socket_check_errno(io_errno);
     }
 
