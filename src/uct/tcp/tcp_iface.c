@@ -14,6 +14,7 @@
 #include <ucs/sys/string.h>
 #include <ucs/config/types.h>
 #include <sys/socket.h>
+#include <pthread.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
 #include <dirent.h>
@@ -25,8 +26,9 @@
 
 extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
+int current_address_count = 0;
 
-
+pthread_t redis_update_thread;
 static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {"", "MAX_NUM_EPS=256", NULL,
    ucs_offsetof(uct_tcp_iface_config_t, super),
@@ -588,6 +590,17 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     return status;
 }
 
+static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
+{
+  int thread_return = pthread_create(&redis_update_thread, NULL,
+                                     (void *)listen_for_updates, (void*) iface);
+  if(thread_return) {
+    ucs_error("Error when creating thread for listening for updated");
+    return UCS_ERR_IO_ERROR;
+  }
+  return UCS_OK;
+}
+
 static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
 {
     struct sockaddr_storage bind_addr = iface->config.ifaddr;
@@ -624,6 +637,7 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
 
 
     /* Register event handler for incoming connections */
+
     status = ucs_async_set_event_handler(iface->super.worker->async->mode,
                                          iface->listen_fd,
                                          UCS_EVENT_SET_EVREAD |
@@ -640,20 +654,6 @@ static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
                               ip_port_str, sizeof(ip_port_str)),
               iface->if_name);
 
-    /*if (iface->config.enable_nat_traversal) {
-
-      status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &natPubPort);
-      if (status != UCS_OK) {
-        ucs_warn("unable to retrieve port in ucs_sockaddr_get_port for mapped");
-        return status;
-      }
-      sprintf(redisValue, "%s:%i", iface->config.public_ip_address, natPubPort);
-
-      //create key in redis
-      setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                    ip_port_str, redisValue);
-      ucs_warn("wrote redis key:value %s:%s", ip_port_str, redisValue);
-    }*/
     return UCS_OK;
 
 err_close_sock:
@@ -869,6 +869,14 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         goto err_cleanup_event_set;
     }
 
+    if (self->config.enable_nat_traversal && current_address_count ==0) {
+      //assume first address is used by worker as a receiver
+      //and ping peer worker asynchronously
+      uct_tcp_iface_connect_with_peers(self);
+    }
+
+    current_address_count++;
+
     return UCS_OK;
 
 err_cleanup_event_set:
@@ -928,6 +936,10 @@ static UCS_CLASS_CLEANUP_FUNC(uct_tcp_iface_t)
     ucs_status_t status;
 
     ucs_debug("tcp_iface %p: destroying", self);
+
+    if (current_address_count == 0 && self->config.enable_nat_traversal) {
+      pthread_join(redis_update_thread, NULL);
+    }
 
     uct_base_iface_progress_disable(&self->super.super,
                                     UCT_PROGRESS_SEND |

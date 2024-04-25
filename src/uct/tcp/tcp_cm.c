@@ -754,6 +754,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char src_str[UCS_SOCKADDR_STRING_LEN];
     char src_str2[UCS_SOCKADDR_STRING_LEN];
+    char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
     char* remote_address = NULL;
     char * token = NULL;
     int token_index = 0;
@@ -766,8 +767,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int retries = 0;
     int result = 0;
     uint16_t port = 0;
-
-
 
     struct sockaddr* addr = NULL;
 
@@ -784,7 +783,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     socklen_t len = sizeof(so_error);
 
     //rendezvous variables
-
 
     struct sockaddr_in *sa_in;
     //struct timeval timeout;
@@ -804,11 +802,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     //ucs_status_t status;
 
 
-    char redisValue[200];
-
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
     ucs_status_t status = UCS_OK;
+
+
+
 
     ep->conn_retries++;
     if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -836,6 +835,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     if (iface->config.enable_nat_traversal) {
       //1. Call Rendezvous server and retrieve public port
+      timeout.tv_sec = NAT_CONNECT_TO_SEC;
+      timeout.tv_usec = 0;
       fd = socket(AF_INET, SOCK_STREAM, 0);
       if (fd == -1) {
         ucs_error("Could not create socket for rendezvous server: ");
@@ -898,10 +899,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return UCS_ERR_IO_ERROR;
       }
 
-      ucs_warn("client data returned from rendezvous: %s:%i", ip_to_string(&public_info.ip.s_addr,
-                                                                           public_ipadd,
-                                                                           sizeof(public_ipadd)),
-               ntohs(public_info.port));
+      ucs_warn("client data returned from rendezvous: %s:%i",
+               ip_to_string(&public_info.ip.s_addr,
+                            public_ipadd,
+                            sizeof(public_ipadd)),
+                              ntohs(public_info.port));
 
       if (ntohs(public_info.port) != mapped_port) {
         ucs_warn("public port %i does not match private port %i", ntohs(public_info.port), sa_in->sin_port);
@@ -909,15 +911,22 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       //2. write redis value
 
-      //create key in redis
-      setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+
+      status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                     source_ipadd, public_ipadd);
-      ucs_warn("wrote redis key:value %s:%s", source_ipadd, redisValue);
+      if (status == UCS_OK) {
+        ucs_warn("wrote redis key:value %s:%s", source_ipadd, public_ipadd);
+      }
+      //3. write peer:ip:port -> sourceip:port to redis
+      //listen thread for recv worker to process
+      sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
+      setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                    peer_redis_key, src_str);
 
-
-      //3. use public address from redis as peer address
+      //4. use public address from redis as peer address (wait until peer writes redis address)
       ucs_warn("nat traversal enabled - connection retries: %i", ep->conn_retries);
-      remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
+      remote_address = getValueFromRedis(iface->config.redis_ip_address,
+                                         iface->config.redis_port, dest_str);
       while(remote_address == NULL) {
         msleep(1);
         ucs_warn("sleeping waiting for remote address from redis...");
@@ -940,16 +949,17 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         token_index++;
       }
 
+      free(remote_address);
+
       ucs_warn("set public address to %s and port %i from redis", publicAddress, publicPort);
 
-      ucs_warn("configuring to reuse socket port");
-      //4. configure the endpoint socket to reuse the same local port used for communication with
+      //5. configure the endpoint socket to reuse the same local port used for communication with
       //the rendezvous server
       status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
                                  &enable_flag, sizeof(int));
       if (status != UCS_OK) {
         ucs_warn("could NOT configure to reuse socket port");
-
+        return status;
       }
 
       ucs_warn("configuring to reuse socket address");
@@ -957,6 +967,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                                  &enable_flag, sizeof(int));
       if (status != UCS_OK) {
         ucs_warn("could NOT configure to reuse socket address");
+        return status;
       }
 
       ucs_warn("configuring to set connect timeout");
@@ -965,6 +976,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                                  sizeof timeout);
       if (status != UCS_OK) {
         ucs_warn("could NOT configure to set connect timeout");
+        return status;
       }
 
 
@@ -975,15 +987,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
 
-      status = ucs_socket_server_init((struct sockaddr *)&local_port_addr, addr_len,
-                                      ucs_socket_max_conn(), 1, 1,
-                                      &ep->fd);
+      ret = bind(ep->fd, (struct sockaddr *)&local_port_addr, addr_len);
+      if (ret < 0) {
 
-      if (status != UCS_OK) {
-        ucs_warn("ucs_socket_server_init failed ");
+        status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
+        ucs_warn("bind(fd=%d addr=%s) failed: %m",
+                 ep->fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
+                                      src_str2, sizeof(src_str2)));
         return status;
       }
-
       ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
                        src_str2, sizeof(src_str2));
 
@@ -991,7 +1003,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
       /**
-       * 5. Update the peer address to the remote address returned by redis
+       * 6. Update the peer address to the remote address returned by redis
        */
       set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
@@ -999,6 +1011,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       status = ucs_sockaddr_sizeof(addr, &addrlen);
       if (status != UCS_OK) {
+        ucs_warn("ucs_sockaddr_sizeof failed");
         return status;
       }
 
@@ -1006,20 +1019,16 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
       }
 
-      free(remote_address);
 
-      //6. set the socket to be non-blocking so we can retry
+
+      //7. set the socket to be non-blocking so we can retry
       //connection attempts if necessary
 
       if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
       }
 
-
-      timeout.tv_sec = 6;
-      timeout.tv_usec = 0;
-
-      while (retries < 50) {
+      while (retries < NAT_RETRIES) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
         status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr, &peer_addr_len);
@@ -1063,30 +1072,33 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         status = ucs_socket_create(((struct sockaddr*)ep->peer_addr)->sa_family, SOCK_STREAM, &ep->fd);
         if (status != UCS_OK) {
           ucs_warn("could not create socket");
+          return status;
         }
 
-        ucs_warn("configuring to reuse socket port");
+
         status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
                                    &enable_flag, sizeof(int));
         if (status != UCS_OK) {
           ucs_warn("could NOT configure to reuse socket port");
-
+          return status;
         }
 
-        ucs_warn("configuring to reuse socket address");
+
         status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
                                    &enable_flag, sizeof(int));
         if (status != UCS_OK) {
           ucs_warn("could NOT configure to reuse socket address");
+          return status;
         }
 
 
-        ucs_warn("configuring to set connect timeout");
+
         status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
                                    &timeout,
                                    sizeof timeout);
         if (status != UCS_OK) {
           ucs_warn("could NOT configure to set connect timeout");
+          return status;
         }
 
         status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr, &addr_len);
@@ -1095,14 +1107,16 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
           return status;
         }
 
-        status = ucs_socket_server_init((struct sockaddr *)&local_port_addr, addr_len,
-                                        ucs_socket_max_conn(), 1, 1,
-                                        &ep->fd);
+        ret = bind(ep->fd, (struct sockaddr *)&local_port_addr, addr_len);
+        if (ret < 0) {
 
-        if (status != UCS_OK) {
-          ucs_warn("ucs_socket_server_init failed ");
+          status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
+          ucs_warn("bind(fd=%d addr=%s) failed: %m",
+                   ep->fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
+                                        src_str2, sizeof(src_str2)));
           return status;
         }
+
 
         ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
                          src_str2, sizeof(src_str2));
@@ -1116,7 +1130,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         retries++;
       }
 
-      //7. renable blocking on fd amd continue
+      //8. renable blocking on fd amd continue
       flags = fcntl(ep->fd,  F_GETFL, 0);
       flags &= ~(O_NONBLOCK);
       fcntl(ep->fd, F_SETFL, flags);

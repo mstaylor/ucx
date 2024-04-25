@@ -13,6 +13,9 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 
+#define NAT_RETRIES 25
+#define NAT_CONNECT_TO_SEC 6
+
 typedef struct {
     struct in_addr ip;
     in_port_t      port;
@@ -21,6 +24,8 @@ typedef struct {
 int msleep(long msec);
 
 const char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size);
+
+_Noreturn void listen_for_updates(void *p);
 
 ucs_status_t connectandBindLocal(int *fd1, PeerConnectionData * data, struct sockaddr_storage *saddr,
                                  const char * pairing_name, const char* server_address, int port);

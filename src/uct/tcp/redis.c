@@ -29,9 +29,10 @@ redisContext * redisLogin(const char *hostname, int port) {
 
 
 
-void setRedisValue(const char *hostname, int port, const char *key, const char *value) {
+ucs_status_t  setRedisValue(const char *hostname, int port, const char *key, const char *value) {
 
     redisReply *reply;
+    ucs_status_t status = UCS_OK;
 
     redisContext *c = redisLogin(hostname, port);
 
@@ -40,6 +41,7 @@ void setRedisValue(const char *hostname, int port, const char *key, const char *
         reply = redisCommand(c, "SET %s %s", key, value);
         if (reply == NULL) {
             ucs_warn("Error in SET command\n");
+            status = UCS_ERR_IO_ERROR;
         } else {
             // Print the reply
             ucs_warn("%s\n", reply->str);
@@ -50,8 +52,35 @@ void setRedisValue(const char *hostname, int port, const char *key, const char *
         // Disconnect from Redis
         redisFree(c);
     }
+
+    return status;
 }
 
+ucs_status_t deleteRedisKey(const char *hostname, int port, const char *key) {
+    ucs_status_t status = UCS_OK;
+
+    redisContext *c = redisLogin(hostname, port);
+
+    if (c != NULL) {
+      // Deleting the key using DEL command
+      redisReply *reply = redisCommand(c, "DEL %s", key);
+      if (reply->type == REDIS_REPLY_INTEGER) {
+        if (reply->integer == 1) {
+          ucs_warn("Key '%s' deleted successfully.", key);
+        } else {
+          ucs_warn("Key '%s' does not exist.", key);
+        }
+      } else {
+        ucs_warn("Error: %s", c->errstr);
+        status = UCS_ERR_IO_ERROR;
+      }
+      freeReplyObject(reply);
+
+      // Disconnect and free context
+      redisFree(c);
+    }
+    return status;
+}
 char * getValueFromRedis(const char *hostname, int port, const char *key){
     redisReply *reply;
 

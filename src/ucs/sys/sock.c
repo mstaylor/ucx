@@ -632,13 +632,14 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
         goto err_close_socket;
     }
 
-    if (listen(fd, backlog) < 0) {
+      if (listen(fd, backlog) < 0) {
         ucs_error("listen(fd=%d addr=%s backlog=%d) failed: %m", fd,
                   ucs_sockaddr_str(saddr, ip_port_str, sizeof(ip_port_str)),
                   backlog);
         status = UCS_ERR_IO_ERROR;
         goto err_close_socket;
-    }
+      }
+
 
 
     *listen_fd = fd;

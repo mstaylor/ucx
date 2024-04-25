@@ -10,13 +10,19 @@
 
 #include "tcp.h"
 
+#define PEER_KEY "peer:"
+
 redisContext * redisLogin(const char *hostname, int port);
 
 
-void setRedisValue(const char *hostname, int port, const char *key, const char *value);
+ucs_status_t setRedisValue(const char *hostname, int port, const char *key, const char *value);
+
+ucs_status_t deleteRedisKey(const char *hostname, int port, const char *key);
 
 
 
 char * getValueFromRedis(const char *hostname, int port, const char *key);
+
+
 
 #endif //UCX_REDIS_H
