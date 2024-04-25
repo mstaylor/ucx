@@ -43,7 +43,7 @@ int msleep(long msec)
     return res;
 }
 
-_Noreturn void listen_for_updates(void *p) {
+void listen_for_updates(void *p) {
   char* remote_address = NULL;
   char src_str[UCS_SOCKADDR_STRING_LEN];
   char src_str2[UCS_SOCKADDR_STRING_LEN];
@@ -369,6 +369,8 @@ _Noreturn void listen_for_updates(void *p) {
     ucs_warn("deleting redis key: %s", peer_redis_key);
     //delete redis key
     deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
+
+
 
   }
 
