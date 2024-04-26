@@ -466,8 +466,10 @@ uct_tcp_iface_connect_handler(int listen_fd, ucs_event_set_types_t events,
                                                  (struct sockaddr*)&peer_addr,
                                                  fd);
         if (status != UCS_OK) {
-            ucs_close_fd(&fd);
-            return;
+          ucs_warn("unable to handle incoming connection");
+            //ucs_close_fd(&fd);
+            //return;
+            continue;
         }
     }
 }

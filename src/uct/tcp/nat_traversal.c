@@ -92,7 +92,7 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
     remote_address = getValueFromRedis(iface->config.redis_ip_address,
                                        iface->config.redis_port, peer_redis_key);
     while (remote_address == NULL) {
-      msleep(1);
+      msleep(6000);
       // ucs_warn("sleeping waiting for remote address from redis...");
       remote_address =
           getValueFromRedis(iface->config.redis_ip_address,

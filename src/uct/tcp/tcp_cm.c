@@ -1037,6 +1037,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       status =
           ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
 
+      if (status == UCS_ERR_UNREACHABLE) {
+        ucs_warn("sleeping because unreachable");
+        msleep(2000);
+        status =
+            ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+      }
+
       //7. set the socket to be non-blocking so we can retry
       //connection attempts if necessary
 
