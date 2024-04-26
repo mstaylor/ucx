@@ -77,7 +77,7 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
   fd_set set;
   int so_error;
   socklen_t len = sizeof(so_error);
-  int flags;
+  //int flags;
 
   uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
   struct sockaddr_in *sa_in = (struct sockaddr_in  *)&iface->config.ifaddr;
@@ -147,6 +147,8 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
     if (ret < 0) {
       ucs_error("getsockname(fd=%d) failed: %m", fd);
     }
+
+    local_port_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (ucs_sockaddr_get_port((struct sockaddr*)&local_port_addr, &mapped_port) != UCS_OK) {
       ucs_error("ucs_sockaddr_get_port failed");
@@ -304,7 +306,7 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
         }
       }
 
-      close(peer_fd);
+
 
       if (ucs_socket_create(AF_INET, SOCK_STREAM, &peer_fd) != UCS_OK) {
         ucs_warn("could not create socket");
@@ -360,10 +362,6 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
 
       retries++;
     }
-
-    flags = fcntl(peer_fd,  F_GETFL, 0);
-    flags &= ~(O_NONBLOCK);
-    fcntl(peer_fd, F_SETFL, flags);
 
     close(fd);
     close(peer_fd);

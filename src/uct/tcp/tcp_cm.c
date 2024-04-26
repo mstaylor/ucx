@@ -869,6 +869,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_error("getsockname(fd=%d) failed: %m", fd);
       }
 
+      local_port_addr.sin_addr.s_addr = INADDR_ANY;//set to any address
+
       status = ucs_sockaddr_get_port((struct sockaddr*)&local_port_addr, &mapped_port);
       if (status != UCS_OK) {
         ucs_error("ucs_sockaddr_get_port failed");
@@ -1037,12 +1039,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       status =
           ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
 
-      if (status == UCS_ERR_UNREACHABLE) {
-        ucs_warn("sleeping because unreachable");
-        msleep(2000);
-        status =
-            ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
-      }
+
 
       //7. set the socket to be non-blocking so we can retry
       //connection attempts if necessary
