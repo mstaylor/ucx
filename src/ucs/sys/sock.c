@@ -114,7 +114,7 @@ void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_f
   switch (ai_family) {
   case AF_INET:
     sa_in = (struct sockaddr_in*)saddr;
-    if (address_str != NULL) {
+    if (address_str != NULL && strlen(address_str) > 0) {
       inet_pton(AF_INET, address_str, &sa_in->sin_addr);
     } else {
       sa_in->sin_addr.s_addr = INADDR_ANY;
@@ -147,7 +147,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                                 struct sockaddr *saddr,
                                 struct sockaddr *netmask,
                                 const char * overrideAddress,
-                                 int ignore_fname)
+                                 int ignore_fname, int enable_nat_traversal)
 {
     ucs_status_t status = UCS_ERR_NO_DEVICE;
     struct ifaddrs *ifa;
@@ -187,7 +187,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
 
         if ((af == AF_UNSPEC) || (ifa->ifa_addr->sa_family == af)) {
 
-          if ((overrideAddress != NULL && strlen(overrideAddress) > 0) ) {
+          if ((overrideAddress != NULL && strlen(overrideAddress) > 0) || enable_nat_traversal) {
 
             ucs_warn("configuring with override address %s for ifname %s",
                        overrideAddress, if_name);

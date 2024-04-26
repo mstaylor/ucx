@@ -51,7 +51,9 @@ void listen_for_updates(void *p) {
   int fd, ret;
   int enable_flag = 1;
   struct sockaddr_in local_port_addr;
+  struct sockaddr_in local_port_addr2;
   socklen_t local_addr_len = sizeof(local_port_addr);
+  socklen_t local_addr_len2 = sizeof(local_port_addr2);
   uint16_t mapped_port;
   struct sockaddr_in server_data;
   PeerConnectionData public_info;
@@ -66,7 +68,7 @@ void listen_for_updates(void *p) {
 
   struct sockaddr_storage connect_addr;
   struct sockaddr* addr = NULL;
-char src_str2[UCS_SOCKADDR_STRING_LEN];
+  char src_str2[UCS_SOCKADDR_STRING_LEN];
   size_t addrlen;
   size_t addr_len;
 
@@ -138,25 +140,31 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
       continue;
     }
 
-    if (bind(fd, (struct sockaddr*)&local_port_addr, local_addr_len) < 0) {
+    local_port_addr2.sin_family = AF_INET;
+    local_port_addr2.sin_addr.s_addr = INADDR_ANY;
+    local_port_addr2.sin_port = local_port_addr.sin_port;
+
+    if (bind(fd, (struct sockaddr*)&local_port_addr2, local_addr_len2) < 0) {
       ucs_error("error binding to rendezvous socket %s", strerror(errno));
       continue;
     }
 
-    ret = getsockname(fd, (struct sockaddr*)&local_port_addr, &local_addr_len);
+    ret = getsockname(fd, (struct sockaddr*)&local_port_addr2, &local_addr_len2);
     if (ret < 0) {
       ucs_error("getsockname(fd=%d) failed: %m", fd);
     }
 
-    local_port_addr.sin_addr.s_addr = INADDR_ANY;
 
-    if (ucs_sockaddr_get_port((struct sockaddr*)&local_port_addr, &mapped_port) != UCS_OK) {
+
+
+
+    if (ucs_sockaddr_get_port((struct sockaddr*)&local_port_addr2, &mapped_port) != UCS_OK) {
       ucs_error("ucs_sockaddr_get_port failed");
       continue;
     }
 
     ucs_warn("local address used to bind for rendezvous %s",
-             ucs_sockaddr_str((struct sockaddr*)&local_port_addr,
+             ucs_sockaddr_str((struct sockaddr*)&local_port_addr2,
                               source_ipadd, sizeof(source_ipadd)));
 
     server_data.sin_family = AF_INET;
@@ -193,7 +201,8 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
              ntohs(public_info.port));
 
     if (ntohs(public_info.port) != mapped_port) {
-      ucs_warn("public port %i does not match private port %i", ntohs(public_info.port), sa_in->sin_port);
+      ucs_warn("public port %i does not match private port %i", ntohs(public_info.port),
+               sa_in->sin_port);
     }
 
     sprintf(publicAddressPort, "%s:%i", public_ipadd, ntohs(public_info.port));
@@ -305,7 +314,6 @@ char src_str2[UCS_SOCKADDR_STRING_LEN];
           ucs_warn("Connection failed: %s and continuing", strerror(so_error));
         }
       }
-
 
 
       if (ucs_socket_create(AF_INET, SOCK_STREAM, &peer_fd) != UCS_OK) {
