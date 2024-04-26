@@ -772,6 +772,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char publicAddressPort[UCS_SOCKADDR_STRING_LEN*2];
     struct sockaddr_in local_port_addr;
     socklen_t local_addr_len = sizeof(local_port_addr);
+    struct sockaddr_in local_port_addr2;
+    socklen_t local_addr_len2 = sizeof(local_port_addr2);
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
     //int retries = 0;
@@ -859,25 +861,30 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_warn("getsockname failed");
       }
 
-      if (bind(fd, (struct sockaddr*)&local_port_addr, local_addr_len) < 0) {
+      local_port_addr2.sin_family = AF_INET;
+      local_port_addr2.sin_addr.s_addr = INADDR_ANY;
+      local_port_addr2.sin_port = local_port_addr.sin_port;
+
+
+
+      if (bind(fd, (struct sockaddr*)&local_port_addr2, local_addr_len2) < 0) {
         ucs_error("error binding to rendezvous socket %s", strerror(errno));
         return UCS_ERR_IO_ERROR;
       }
 
-      ret = getsockname(fd, (struct sockaddr*)&local_port_addr, &local_addr_len);
+      ret = getsockname(fd, (struct sockaddr*)&local_port_addr2, &local_addr_len2);
       if (ret < 0) {
         ucs_error("getsockname(fd=%d) failed: %m", fd);
       }
 
-      local_port_addr.sin_addr.s_addr = INADDR_ANY;//set to any address
 
-      status = ucs_sockaddr_get_port((struct sockaddr*)&local_port_addr, &mapped_port);
+      status = ucs_sockaddr_get_port((struct sockaddr*)&local_port_addr2, &mapped_port);
       if (status != UCS_OK) {
         ucs_error("ucs_sockaddr_get_port failed");
       }
 
       ucs_warn("local address used to bind for rendezvous %s",
-               ucs_sockaddr_str((struct sockaddr*)&local_port_addr,
+               ucs_sockaddr_str((struct sockaddr*)&local_port_addr2,
                                 source_ipadd, sizeof(source_ipadd)));
 
       server_data.sin_family = AF_INET;
@@ -945,7 +952,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       while(remote_address == NULL) {
         msleep(1);
-        remote_address = getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, dest_str);
+        remote_address = getValueFromRedis(iface->config.redis_ip_address,
+                                           iface->config.redis_port, dest_str);
 
       }
 
@@ -993,7 +1001,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
 
-      status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr, &addr_len);
+      status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr2, &addr_len);
       if (status != UCS_OK) {
         ucs_warn("ucs_sockaddr_sizeof failed ");
         return status;
@@ -1002,16 +1010,16 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       close(fd);
 
 
-      ret = bind(ep->fd, (struct sockaddr *)&local_port_addr, addr_len);
+      ret = bind(ep->fd, (struct sockaddr *)&local_port_addr2, addr_len);
       if (ret < 0) {
 
         status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
         ucs_warn("bind(fd=%d addr=%s) failed: %m",
-                 ep->fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
+                 ep->fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
                                       src_str2, sizeof(src_str2)));
         return status;
       }
-      ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
+      ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
                        src_str2, sizeof(src_str2));
 
       ucs_warn("bound endpoint socket ip: %s", src_str2);
@@ -1033,8 +1041,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       if ((struct sockaddr*)&ep->peer_addr != NULL) {
         memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
       }
-
-
 
       status =
           ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);

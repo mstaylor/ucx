@@ -108,7 +108,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                                 struct sockaddr *saddr,
                                 struct sockaddr *netmask,
                                 const char * overrideAddress,
-                                 int ignore_fname);
+                                 int ignore_fname, int enable_nat_traversal);
 
 void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_family_t ai_family, int port );
 
