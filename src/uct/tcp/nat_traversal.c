@@ -154,10 +154,6 @@ void listen_for_updates(void *p) {
       ucs_error("getsockname(fd=%d) failed: %m", fd);
     }
 
-
-
-
-
     if (ucs_sockaddr_get_port((struct sockaddr*)&local_port_addr2, &mapped_port) != UCS_OK) {
       ucs_error("ucs_sockaddr_get_port failed");
       continue;
@@ -206,11 +202,6 @@ void listen_for_updates(void *p) {
     }
 
     sprintf(publicAddressPort, "%s:%i", public_ipadd, ntohs(public_info.port));
-
-    //2. write redis value
-    setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                  source_ipadd, publicAddressPort);
-    ucs_warn("wrote redis key:value %s:%s", source_ipadd, public_ipadd);
 
     timeout.tv_sec = NAT_CONNECT_TO_SEC;
     timeout.tv_usec = 0;
@@ -262,6 +253,11 @@ void listen_for_updates(void *p) {
                      src_str2, sizeof(src_str2));
 
     ucs_warn("bound peer endpoint socket ip: %s", src_str2);
+
+    //write redis value
+    setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                  source_ipadd, publicAddressPort);
+    ucs_warn("wrote redis key:value %s:%s", source_ipadd, public_ipadd);
 
     set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 

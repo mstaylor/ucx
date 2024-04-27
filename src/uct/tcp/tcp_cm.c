@@ -928,7 +928,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
       status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                    source_ipadd, publicAddressPort);
+                    src_str, publicAddressPort);
       if (status == UCS_OK) {
         ucs_warn("wrote redis key:value %s->%s", source_ipadd, publicAddressPort);
       }
