@@ -256,7 +256,7 @@ void listen_for_updates(void *p) {
 
     //write redis value
     setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                  source_ipadd, publicAddressPort);
+                  src_str2, publicAddressPort);
     ucs_warn("wrote redis key:value %s:%s", source_ipadd, public_ipadd);
 
     set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);

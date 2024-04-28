@@ -948,7 +948,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key, publicAddressPort);
       }
       //4. use public address from redis as peer address (wait until peer writes redis address)
-
+        ucs_warn("look for public ")
 
       while(remote_address == NULL) {
         msleep(1);
