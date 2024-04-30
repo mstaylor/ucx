@@ -784,7 +784,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     size_t addrlen;
 
-    //int flags;
+    int flags;
     struct timeval timeout;
     size_t addr_len;
     size_t peer_addr_len;
@@ -1159,9 +1159,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
       //8. renable blocking on fd amd continue
-      /*flags = fcntl(ep->fd,  F_GETFL, 0);
+      flags = fcntl(ep->fd,  F_GETFL, 0);
       flags &= ~(O_NONBLOCK);
-      fcntl(ep->fd, F_SETFL, flags);*/
+      fcntl(ep->fd, F_SETFL, flags);
 
       if (UCS_STATUS_IS_ERR(status)) {
         return status;
