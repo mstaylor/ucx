@@ -19,7 +19,7 @@
 void uct_tcp_cm_change_conn_state(uct_tcp_ep_t *ep,
                                   uct_tcp_ep_conn_state_t new_conn_state)
 {
-    int full_log           = 1;
+    //int full_log           = 1;
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
     char str_local_addr[UCS_SOCKADDR_STRING_LEN];
@@ -76,7 +76,7 @@ void uct_tcp_cm_change_conn_state(uct_tcp_ep_t *ep,
         if ((old_conn_state == UCT_TCP_EP_CONN_STATE_ACCEPTING) ||
             (old_conn_state == UCT_TCP_EP_CONN_STATE_RECV_MAGIC_NUMBER)) {
             /* Since ep::peer_addr is 0'ed, we have to print w/o peer's address */
-            full_log = 0;
+            //full_log = 0;
         }
         break;
     case UCT_TCP_EP_CONN_STATE_ACCEPTING:
@@ -91,12 +91,12 @@ void uct_tcp_cm_change_conn_state(uct_tcp_ep_t *ep,
                    (ep->conn_state == UCT_TCP_EP_CONN_STATE_RECV_MAGIC_NUMBER));
         /* Since ep::peer_addr is 0'ed and client's <address:port>
          * has already been logged, print w/o peer's address */
-        full_log = 0;
+        //full_log = 0;
         break;
     }
 
-    if (full_log) {
-        ucs_debug("tcp_ep %p: %s -> %s for the [%s]<->[%s]:%"PRIu64" connection %s",
+    /*if (full_log) {*/
+        ucs_warn("tcp_ep %p: %s -> %s for the [%s]<->[%s]:%"PRIu64" connection %s",
                   ep, uct_tcp_ep_cm_state[old_conn_state].name,
                   uct_tcp_ep_cm_state[ep->conn_state].name,
                   ucs_sockaddr_str((const struct sockaddr*)&iface->config.ifaddr,
@@ -105,11 +105,11 @@ void uct_tcp_cm_change_conn_state(uct_tcp_ep_t *ep,
                                    str_remote_addr, UCS_SOCKADDR_STRING_LEN),
                   uct_tcp_ep_get_cm_id(ep),
                   uct_tcp_ep_ctx_caps_str(ep->flags, str_ctx_caps));
-    } else {
+    /*} else {
         ucs_debug("tcp_ep %p: %s -> %s",
                   ep, uct_tcp_ep_cm_state[old_conn_state].name,
                   uct_tcp_ep_cm_state[ep->conn_state].name);
-    }
+    }*/
 }
 
 /* `fmt_str` parameter has to contain "%s" to write event type */
@@ -931,8 +931,21 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                     src_str, publicAddressPort);
       if (status == UCS_OK) {
-        ucs_warn("wrote redis key:value %s->%s", src_str, publicAddressPort);
+        ucs_warn("wrote redis private to public key:value %s->%s", src_str, publicAddressPort);
+      } else {
+        ucs_warn("could not write redis private to public key:value %s->%s", src_str, publicAddressPort);
       }
+
+      //now write public->public because we will receive an endpoint src that can be a public
+      //address as well
+      status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                             publicAddressPort, publicAddressPort);
+      if (status == UCS_OK) {
+        ucs_warn("wrote redis public to public key:value %s->%s", publicAddressPort, publicAddressPort);
+      } else {
+        ucs_warn("could not write redis public to public key:value %s->%s", publicAddressPort, publicAddressPort);
+      }
+
       //3. write peer:ip:port -> sourceip:port to redis
       //listen thread for recv worker to process
 

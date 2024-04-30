@@ -79,6 +79,7 @@ void listen_for_updates(void *p) {
   fd_set set;
   int so_error;
   socklen_t len = sizeof(so_error);
+  ucs_status_t redis_write_status;
   //int flags;
 
   uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
@@ -167,9 +168,9 @@ void listen_for_updates(void *p) {
     server_data.sin_addr.s_addr = inet_addr(iface->config.rendezvous_ip_address);
     server_data.sin_port = htons(iface->config.rendezvous_port);
 
-    if (connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
+    while (connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
       ucs_error("Connection with the rendezvous server failed: %s", strerror(errno));
-      continue;
+      msleep(1000);
     }
 
     if(send(fd, iface->config.pairing_name, strlen(iface->config.pairing_name),
@@ -254,10 +255,22 @@ void listen_for_updates(void *p) {
 
     ucs_warn("bound peer endpoint socket ip: %s", src_str2);
 
-    //write redis value
-    setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+    //write redis value (private->public and public->public)
+    redis_write_status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                   src_str2, publicAddressPort);
-    ucs_warn("wrote redis key:value %s:%s", source_ipadd, public_ipadd);
+    if (redis_write_status == UCS_OK) {
+      ucs_warn("wrote redis private to public key:value %s->%s", src_str2, publicAddressPort);
+    } else {
+      ucs_warn("could not write redis private to public key:value %s->%s", src_str2, publicAddressPort);
+    }
+
+    redis_write_status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                                       publicAddressPort, publicAddressPort);
+    if (redis_write_status == UCS_OK) {
+      ucs_warn("wrote redis public to public key:value %s->%s", publicAddressPort, publicAddressPort);
+    } else {
+      ucs_warn("could not write redis public to public key:value %s->%s", publicAddressPort, publicAddressPort);
+    }
 
     set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
