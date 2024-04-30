@@ -456,6 +456,7 @@ uct_tcp_iface_connect_handler(int listen_fd, ucs_event_set_types_t events,
         ucs_warn("socket accept status - fd: %i status: %i", iface->listen_fd, status);
         if (status != UCS_OK) {
             if (status != UCS_ERR_NO_PROGRESS) {
+              ucs_warn("closing file descriptor...");
                 ucs_close_fd(&iface->listen_fd);
             }
             return;
@@ -466,6 +467,7 @@ uct_tcp_iface_connect_handler(int listen_fd, ucs_event_set_types_t events,
                                                  (struct sockaddr*)&peer_addr,
                                                  fd);
         if (status != UCS_OK) {
+          ucs_warn("closing fd");
             ucs_close_fd(&fd);
             return;
 

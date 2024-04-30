@@ -1245,7 +1245,7 @@ ucs_status_t uct_tcp_cm_handle_incoming_conn(uct_tcp_iface_t *iface,
     uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_RECV_MAGIC_NUMBER);
     uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVREAD, 0);
 
-    ucs_debug("tcp_iface %p: accepted connection from "
+    ucs_warn("tcp_iface %p: accepted connection from "
               "%s on %s to tcp_ep %p (fd %d)", iface,
               ucs_sockaddr_str(peer_addr, str_remote_addr,
                                UCS_SOCKADDR_STRING_LEN),
