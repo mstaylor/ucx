@@ -891,10 +891,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       server_data.sin_addr.s_addr = inet_addr(iface->config.rendezvous_ip_address);
       server_data.sin_port = htons(iface->config.rendezvous_port);
 
-      if (connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
-        ucs_error("Connection with the rendezvous server failed: %s", strerror(errno));
-        return UCS_ERR_IO_ERROR;
 
+      while(connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
+        ucs_error("Connection with the rendezvous server failed: %s", strerror(errno));
+        //return UCS_ERR_IO_ERROR;
+        msleep(1000);
       }
 
       if(send(fd, iface->config.pairing_name, strlen(iface->config.pairing_name), MSG_DONTWAIT) == -1) {
@@ -911,7 +912,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_error("Server has disconnected");
         return UCS_ERR_IO_ERROR;
       }
-
+      close(fd);
       ucs_warn("client data returned from rendezvous: %s:%i",
                ip_to_string(&public_info.ip.s_addr,
                             public_ipadd,
@@ -1008,7 +1009,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return status;
       }
 
-      close(fd);
+
 
 
       ret = bind(ep->fd, (struct sockaddr *)&local_port_addr2, addr_len);
