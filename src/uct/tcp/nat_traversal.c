@@ -259,9 +259,9 @@ void listen_for_updates(void *p) {
     redis_write_status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                   src_str2, publicAddressPort);
     if (redis_write_status == UCS_OK) {
-      ucs_warn("wrote redis private to public key:value %s->%s", src_str2, publicAddressPort);
+      ucs_warn("wrote redis private to public key:value %s->%s", src_str, publicAddressPort);
     } else {
-      ucs_warn("could not write redis private to public key:value %s->%s", src_str2, publicAddressPort);
+      ucs_warn("could not write redis private to public key:value %s->%s", src_str, publicAddressPort);
     }
 
     redis_write_status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
