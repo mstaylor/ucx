@@ -776,8 +776,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     socklen_t local_addr_len2 = sizeof(local_port_addr2);
     int enable_flag = 1;
     struct sockaddr_storage connect_addr;
-    //int retries = 0;
-    //int result = 0;
+    int retries = 0;
+    int result = 0;
     uint16_t port = 0;
 
     struct sockaddr* addr = NULL;
@@ -787,12 +787,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     //int flags;
     struct timeval timeout;
     size_t addr_len;
-    //size_t peer_addr_len;
+    size_t peer_addr_len;
 
-    //fd_set set;
+    fd_set set;
 
-    //int so_error;
-    //socklen_t len = sizeof(so_error);
+    int so_error;
+    socklen_t len = sizeof(so_error);
 
     //rendezvous variables
 
@@ -930,7 +930,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                     src_str, publicAddressPort);
       if (status == UCS_OK) {
-        ucs_warn("wrote redis key:value %s->%s", source_ipadd, publicAddressPort);
+        ucs_warn("wrote redis key:value %s->%s", src_str, publicAddressPort);
       }
       //3. write peer:ip:port -> sourceip:port to redis
       //listen thread for recv worker to process
@@ -1043,15 +1043,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
       }
 
-      status =
-          ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+      /*status =
+          ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);*/
 
 
 
       //7. set the socket to be non-blocking so we can retry
       //connection attempts if necessary
 
-      /*if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+      if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
       }
 
@@ -1156,7 +1156,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         }
 
         retries++;
-      }*/
+      }
 
       //8. renable blocking on fd amd continue
       /*flags = fcntl(ep->fd,  F_GETFL, 0);
