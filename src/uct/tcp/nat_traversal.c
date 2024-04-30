@@ -74,11 +74,11 @@ void listen_for_updates(void *p) {
 
   int peer_fd;
   struct timeval timeout;
-  int retries = 0;
-  int result = 0;
-  fd_set set;
-  int so_error;
-  socklen_t len = sizeof(so_error);
+  //int retries = 0;
+  //int result = 0;
+  //fd_set set;
+  //int so_error;
+  //socklen_t len = sizeof(so_error);
   ucs_status_t redis_write_status;
   //int flags;
 
@@ -286,9 +286,9 @@ void listen_for_updates(void *p) {
       continue;
     }
 
-    retries = 0;
+/*    retries = 0;
     //next ping the peer a few times to try to connect
-/*
+
 
     while (retries < NAT_RETRIES) {
       ucs_warn("retrying connection - current retry: %i", retries);
