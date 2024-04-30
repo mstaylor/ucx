@@ -44,7 +44,7 @@ int msleep(long msec)
 }
 
 void listen_for_updates(void *p) {
-  char* remote_address = NULL;
+  /*char* remote_address = NULL;
   char src_str[UCS_SOCKADDR_STRING_LEN];
 
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
@@ -68,21 +68,21 @@ void listen_for_updates(void *p) {
 
   struct sockaddr_storage connect_addr;
   struct sockaddr* addr = NULL;
-  char src_str2[UCS_SOCKADDR_STRING_LEN];
+  //char src_str2[UCS_SOCKADDR_STRING_LEN];
   size_t addrlen;
-  size_t addr_len;
+  //size_t addr_len;
 
   int peer_fd;
-  struct timeval timeout;
+  //struct timeval timeout;
   //int retries = 0;
   //int result = 0;
   //fd_set set;
   //int so_error;
   //socklen_t len = sizeof(so_error);
-  ucs_status_t redis_write_status;
+  //ucs_status_t redis_write_status;
   //int flags;
-
-  uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
+*/
+  /*uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
   struct sockaddr_in *sa_in = (struct sockaddr_in  *)&iface->config.ifaddr;
   ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                    src_str, sizeof(src_str));
@@ -284,7 +284,7 @@ void listen_for_updates(void *p) {
     if(fcntl(peer_fd, F_SETFL, O_NONBLOCK) != 0) {
       ucs_warn("Setting O_NONBLOCK failed: ");
       continue;
-    }
+    }*/
 
 /*    retries = 0;
     //next ping the peer a few times to try to connect
@@ -380,7 +380,7 @@ void listen_for_updates(void *p) {
       retries++;
     }*/
 
-    close(fd);
+    /*close(fd);
     close(peer_fd);
 
     ucs_warn("deleting redis key: %s", peer_redis_key);
@@ -391,7 +391,7 @@ void listen_for_updates(void *p) {
 
   }
 
-
+*/
 
 }
 
