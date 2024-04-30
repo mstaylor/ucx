@@ -288,7 +288,7 @@ void listen_for_updates(void *p) {
 
     retries = 0;
     //next ping the peer a few times to try to connect
-
+/*
 
     while (retries < NAT_RETRIES) {
       ucs_warn("retrying connection - current retry: %i", retries);
@@ -378,7 +378,7 @@ void listen_for_updates(void *p) {
       }
 
       retries++;
-    }
+    }*/
 
     close(fd);
     close(peer_fd);
