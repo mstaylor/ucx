@@ -90,6 +90,17 @@ void listen_for_updates(void *p) {
 
   sprintf(peer_redis_key, "%s:%s", PEER_KEY, src_str);
   ucs_warn("retrieving key->value from redis - key: %s", peer_redis_key);
+
+
+  //TODO: only call rendezvous once because same ip:port should result in publicip:port
+  //maintain port, address that will be used
+
+  //another idea - drop thread after initial request
+
+  //baseline first without this stuff
+
+
+
   while(true) { //loop throughout the lifetime of the ucx process
     //1. poll redis for the
     remote_address = getValueFromRedis(iface->config.redis_ip_address,
