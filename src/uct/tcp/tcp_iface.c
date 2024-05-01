@@ -593,7 +593,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     return status;
 }
 
-/*static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
+static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 {
   int thread_return = pthread_create(&redis_update_thread, NULL,
                                      (void *)listen_for_updates, (void*) iface);
@@ -602,7 +602,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     return UCS_ERR_IO_ERROR;
   }
   return UCS_OK;
-}*/
+}
 
 static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
 {
@@ -872,11 +872,11 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         goto err_cleanup_event_set;
     }
 
-    //if (self->config.enable_nat_traversal && current_address_count ==0) {
+    if (self->config.enable_nat_traversal && current_address_count ==0) {
       //assume first address is used by worker as a receiver
       //and ping peer worker asynchronously
-    //  uct_tcp_iface_connect_with_peers(self);
-    //}
+      uct_tcp_iface_connect_with_peers(self);
+    }
 
     current_address_count++;
 
@@ -940,9 +940,9 @@ static UCS_CLASS_CLEANUP_FUNC(uct_tcp_iface_t)
 
     ucs_debug("tcp_iface %p: destroying", self);
 
-    /*if (current_address_count == 0 && self->config.enable_nat_traversal) {
+    if (current_address_count == 0 && self->config.enable_nat_traversal) {
       pthread_join(redis_update_thread, NULL);
-    }*/
+    }
 
     uct_base_iface_progress_disable(&self->super.super,
                                     UCT_PROGRESS_SEND |
