@@ -775,24 +775,24 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in local_port_addr2;
     socklen_t local_addr_len2 = sizeof(local_port_addr2);
     int enable_flag = 1;
-    struct sockaddr_storage connect_addr;
-    int retries = 0;
-    int result = 0;
+    //struct sockaddr_storage connect_addr;
+    //int retries = 0;
+    //int result = 0;
     uint16_t port = 0;
 
-    struct sockaddr* addr = NULL;
+    //struct sockaddr* addr = NULL;
 
-    size_t addrlen;
+    //size_t addrlen;
 
-    int flags;
-    struct timeval timeout;
-    size_t addr_len;
-    size_t peer_addr_len;
+    //int flags;
+    //struct timeval timeout;
+    //size_t addr_len;
+    //size_t peer_addr_len;
 
-    fd_set set;
+    //fd_set set;
 
-    int so_error;
-    socklen_t len = sizeof(so_error);
+    //int so_error;
+    //socklen_t len = sizeof(so_error);
 
     //rendezvous variables
 
@@ -841,8 +841,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     if (iface->config.enable_nat_traversal) {
       //1. Call Rendezvous server and retrieve public port
-      timeout.tv_sec = NAT_CONNECT_TO_SEC;
-      timeout.tv_usec = 0;
+
       fd = socket(AF_INET, SOCK_STREAM, 0);
       if (fd == -1) {
         ucs_error("Could not create socket for rendezvous server: ");
@@ -961,6 +960,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key, publicAddressPort);
       }
+
+
       //4. use public address from redis as peer address (wait until peer writes redis address)
         ucs_warn("looking for public address %s", dest_str);
 
@@ -971,7 +972,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       }
 
+      //delete peer
       ucs_warn("remote address returned from redis: %s", remote_address);
+
+      ucs_warn("deleting redis key: %s", peer_redis_key);
+
+      //delete redis key if it exists
+
+      deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
 
       token = strtok(remote_address, ":");
 
@@ -992,7 +1000,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       //5. configure the endpoint socket to reuse the same local port used for communication with
       //the rendezvous server
-      status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+     /* status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
                                  &enable_flag, sizeof(int));
       if (status != UCS_OK) {
         ucs_warn("could NOT configure to reuse socket port");
@@ -1038,11 +1046,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       ucs_warn("bound endpoint socket ip: %s", src_str2);
 
-
+*/
       /**
        * 6. Update the peer address to the remote address returned by redis
        */
-      set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
+ /*     set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
       addr = (struct sockaddr*)&connect_addr;
 
@@ -1055,10 +1063,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       if ((struct sockaddr*)&ep->peer_addr != NULL) {
         memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
       }
+*/
+      ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr,
+                       src_str2, sizeof(src_str2));
 
-      /*status =
-          ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);*/
-
+      ucs_warn("connecting to peer address socket ip: %s", src_str2);
+      status =
+          ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+/*
 
 
       //7. set the socket to be non-blocking so we can retry
@@ -1067,7 +1079,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
       }
-
+      timeout.tv_sec = NAT_CONNECT_TO_SEC;
+      timeout.tv_usec = 0;
       while (retries < NAT_RETRIES) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
@@ -1175,16 +1188,16 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       flags = fcntl(ep->fd,  F_GETFL, 0);
       flags &= ~(O_NONBLOCK);
       fcntl(ep->fd, F_SETFL, flags);
-
-      /*if (UCS_STATUS_IS_ERR(status)) {
+*/
+      if (UCS_STATUS_IS_ERR(status)) {
         return status;
       } else if (status == UCS_INPROGRESS) {
         ucs_assert(iface->config.conn_nb);
         uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
         return UCS_OK;
-      }*/
+      }
 
-      /*ucs_assert(status == UCS_OK);*/
+      ucs_assert(status == UCS_OK);
 
       if (!iface->config.conn_nb) {
         status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
