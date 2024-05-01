@@ -44,7 +44,7 @@ ucs_status_t  setRedisValue(const char *hostname, int port, const char *key, con
             status = UCS_ERR_IO_ERROR;
         } else {
             // Print the reply
-            ucs_warn("%s\n", reply->str);
+            //ucs_warn("%s\n", reply->str);
             // Free the reply object
             freeReplyObject(reply);
         }
