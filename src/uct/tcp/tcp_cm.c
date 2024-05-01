@@ -912,7 +912,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_error("Server has disconnected");
         return UCS_ERR_IO_ERROR;
       }
-      close(fd);
+      //close(fd);
       ucs_warn("client data returned from rendezvous: %s:%i",
                ip_to_string(&public_info.ip.s_addr,
                             public_ipadd,
@@ -1142,27 +1142,27 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
           return status;
         }
 
-        status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr, &addr_len);
+        status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr2, &addr_len);
         if (status != UCS_OK) {
           ucs_warn("ucs_sockaddr_sizeof failed ");
           return status;
         }
 
-        ret = bind(ep->fd, (struct sockaddr *)&local_port_addr, addr_len);
+        ret = bind(ep->fd, (struct sockaddr *)&local_port_addr2, addr_len);
         if (ret < 0) {
 
           status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
           ucs_warn("bind(fd=%d addr=%s) failed: %m",
-                   ep->fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
+                   ep->fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
                                         src_str2, sizeof(src_str2)));
           return status;
         }
 
 
-        ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
+        ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
                          src_str2, sizeof(src_str2));
 
-        ucs_warn("bou d endpoint socket ip: %s", src_str2);
+        ucs_warn("bound endpoint socket ip: %s", src_str2);
 
         if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
           ucs_warn("Setting O_NONBLOCK failed: ");
@@ -1176,15 +1176,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       flags &= ~(O_NONBLOCK);
       fcntl(ep->fd, F_SETFL, flags);
 
-      if (UCS_STATUS_IS_ERR(status)) {
+      /*if (UCS_STATUS_IS_ERR(status)) {
         return status;
       } else if (status == UCS_INPROGRESS) {
         ucs_assert(iface->config.conn_nb);
         uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
         return UCS_OK;
-      }
+      }*/
 
-      ucs_assert(status == UCS_OK);
+      /*ucs_assert(status == UCS_OK);*/
 
       if (!iface->config.conn_nb) {
         status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);

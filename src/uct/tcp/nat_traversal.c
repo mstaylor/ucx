@@ -396,9 +396,9 @@ void listen_for_updates(void *p) {
 
       retries++;
     }*/
-    if (fd != -1) {
+    /*if (fd != -1) {
       close(fd);
-    }
+    }*/
     /*close(peer_fd);*/
 
     ucs_warn("deleting redis key: %s", peer_redis_key);
