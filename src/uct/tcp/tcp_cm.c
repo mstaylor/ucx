@@ -1000,7 +1000,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       //5. configure the endpoint socket to reuse the same local port used for communication with
       //the rendezvous server
-     /* status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+      /*status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
                                  &enable_flag, sizeof(int));
       if (status != UCS_OK) {
         ucs_warn("could NOT configure to reuse socket port");
@@ -1012,9 +1012,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       if (status != UCS_OK) {
         ucs_warn("could NOT configure to reuse socket address");
         return status;
-      }
+      }*/
 
-      status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
+     /* status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
                                  &timeout,
                                  sizeof timeout);
       if (status != UCS_OK) {
@@ -1023,7 +1023,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
 
-      status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr2, &addr_len);
+     */ /*status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr2, &addr_len);
       if (status != UCS_OK) {
         ucs_warn("ucs_sockaddr_sizeof failed ");
         return status;
@@ -1044,9 +1044,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
                        src_str2, sizeof(src_str2));
 
-      ucs_warn("bound endpoint socket ip: %s", src_str2);
+      ucs_warn("bound endpoint socket ip: %s", src_str2);*/
 
-*/
+
       /**
        * 6. Update the peer address to the remote address returned by redis
        */
