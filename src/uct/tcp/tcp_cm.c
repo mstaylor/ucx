@@ -996,7 +996,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
       free(remote_address);
-
+      close(fd);
       ucs_warn("set public address to %s and port %i from redis", publicAddress, publicPort);
 
 

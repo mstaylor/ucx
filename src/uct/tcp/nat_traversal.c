@@ -207,6 +207,8 @@ void listen_for_updates(void *p) {
         continue;
       }
 
+      close(fd);
+
       ucs_warn("client data returned from rendezvous: %s:%i",
                ip_to_string(&public_info.ip.s_addr, public_ipadd,
                             sizeof(public_ipadd)),
@@ -220,6 +222,7 @@ void listen_for_updates(void *p) {
       sprintf(publicAddressPort, "%s:%i", public_ipadd,
               ntohs(public_info.port));
     }
+
 
     /*timeout.tv_sec = NAT_CONNECT_TO_SEC;
     timeout.tv_usec = 0;
