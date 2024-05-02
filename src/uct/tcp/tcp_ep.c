@@ -619,7 +619,7 @@ static ucs_status_t uct_tcp_ep_create_socket_and_connect(uct_tcp_ep_t *ep)
     }
 
     //check to bind...
-
+/*
     if (iface->config.enable_nat_traversal) {
       status = getsockname(iface->listen_fd, (struct sockaddr*)&local_port_addr, &local_addr_len);
       if (status < 0) {
@@ -641,7 +641,7 @@ static ucs_status_t uct_tcp_ep_create_socket_and_connect(uct_tcp_ep_t *ep)
                        src_str, sizeof(src_str));
 
       ucs_warn("bound endpoint socket ip: %s", src_str);
-    }
+    }*/
 
     status = uct_tcp_cm_conn_start(ep);
     if (status != UCS_OK) {
