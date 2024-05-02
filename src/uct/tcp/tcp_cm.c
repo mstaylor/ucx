@@ -778,6 +778,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     //struct sockaddr_storage connect_addr;
     int retries = 0;
     int result = 0;
+    int result_opt = 0;
     uint16_t port = 0;
 
     //struct sockaddr* addr = NULL;
@@ -1057,21 +1058,27 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         FD_ZERO(&set);
         FD_SET(ep->fd, &set);
+        timeout.tv_sec = 10; // 10 second timeout
+        timeout.tv_usec = 0;
 
         result = select(ep->fd + 1, NULL, &set, NULL, &timeout);
-        if (result <= 0) {
+        if (result < 0 && errno != EINTR) {
           // select() failed or connection timed out
           ucs_warn("select failed/connect timeout on peer socket %i", ep->fd);
-        } else {
-          getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
-          if (so_error == 0) {
+        }  else if (result > 0) {
+          result_opt = getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+          if (result_opt < 0) {
+            ucs_warn("Connection failed: %s and continuing", strerror(so_error));
+          } else if (so_error) {
+            ucs_warn("Error in delayed connection() %d - %s", so_error, strerror(so_error));
+          } else {
             ucs_warn("Connected on attempt %d", retries + 1);
             status = UCS_OK;
-            close(fd);//close the rendezvous socket
+            //close(fd);//close the rendezvous socket
             break;
-          } else {
-            ucs_warn("Connection failed: %s and continuing", strerror(so_error));
           }
+        } else {
+          ucs_warn("Timeout or error.");
         }
 
         close(ep->fd);
