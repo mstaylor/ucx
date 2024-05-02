@@ -593,13 +593,13 @@ static ucs_status_t uct_tcp_ep_keepalive_enable(uct_tcp_ep_t *ep)
 
 static ucs_status_t uct_tcp_ep_create_socket_and_connect(uct_tcp_ep_t *ep)
 {
-    struct sockaddr_in local_port_addr;
-    struct sockaddr_in local_port_addr2;
-    socklen_t local_addr_len = sizeof(local_port_addr);
+    //struct sockaddr_in local_port_addr;
+    //struct sockaddr_in local_port_addr2;
+    //socklen_t local_addr_len = sizeof(local_port_addr);
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
     struct sockaddr *saddr = (struct sockaddr*)ep->peer_addr;
-    char src_str[UCS_SOCKADDR_STRING_LEN];
+    //char src_str[UCS_SOCKADDR_STRING_LEN];
     ucs_status_t status;
 
     status = ucs_socket_create(saddr->sa_family, SOCK_STREAM, &ep->fd);
