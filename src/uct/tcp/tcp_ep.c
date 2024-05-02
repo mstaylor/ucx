@@ -593,9 +593,13 @@ static ucs_status_t uct_tcp_ep_keepalive_enable(uct_tcp_ep_t *ep)
 
 static ucs_status_t uct_tcp_ep_create_socket_and_connect(uct_tcp_ep_t *ep)
 {
+    struct sockaddr_in local_port_addr;
+    struct sockaddr_in local_port_addr2;
+    socklen_t local_addr_len = sizeof(local_port_addr);
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
     struct sockaddr *saddr = (struct sockaddr*)ep->peer_addr;
+    char src_str[UCS_SOCKADDR_STRING_LEN];
     ucs_status_t status;
 
     status = ucs_socket_create(saddr->sa_family, SOCK_STREAM, &ep->fd);
@@ -615,6 +619,27 @@ static ucs_status_t uct_tcp_ep_create_socket_and_connect(uct_tcp_ep_t *ep)
     }
 
     //check to bind...
+
+    if (iface->config.enable_nat_traversal) {
+      status = getsockname(iface->listen_fd, (struct sockaddr*)&local_port_addr, &local_addr_len);
+      if (status < 0) {
+        ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
+      }
+
+      status = bind(ep->fd, (struct sockaddr *)&local_port_addr, local_addr_len);
+      if (status < 0) {
+
+        status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
+        ucs_warn("bind(fd=%d addr=%s) failed: %m",
+                 ep->fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
+                                          src_str, sizeof(src_str)));
+        return status;
+      }
+      ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
+                       src_str, sizeof(src_str));
+
+      ucs_warn("bound endpoint socket ip: %s", src_str);
+    }
 
     status = uct_tcp_cm_conn_start(ep);
     if (status != UCS_OK) {
