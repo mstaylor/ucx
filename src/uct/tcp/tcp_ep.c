@@ -614,6 +614,8 @@ static ucs_status_t uct_tcp_ep_create_socket_and_connect(uct_tcp_ep_t *ep)
         goto err;
     }
 
+    //check to bind...
+
     status = uct_tcp_cm_conn_start(ep);
     if (status != UCS_OK) {
         goto err;

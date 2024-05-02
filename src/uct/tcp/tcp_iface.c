@@ -480,6 +480,7 @@ ucs_status_t uct_tcp_iface_set_sockopt(uct_tcp_iface_t *iface, int fd,
 {
     ucs_status_t status;
 
+    int enable_flag = 1;
     if (set_nb) {
         status = ucs_sys_fcntl_modfl(fd, O_NONBLOCK, 0);
         if (status != UCS_OK) {
@@ -494,21 +495,23 @@ ucs_status_t uct_tcp_iface_set_sockopt(uct_tcp_iface_t *iface, int fd,
         return status;
     }
 
-    /*ucs_warn("configuring to reuse socket port");
-    status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
-                               &enable_flag, sizeof(int));
-    if (status != UCS_OK) {
-      ucs_warn("could NOT configure to reuse socket port");
+    if (iface->config.enable_nat_traversal) {
 
+      ucs_warn("configuring to reuse socket port");
+      status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEPORT,
+                                 &enable_flag, sizeof(int));
+      if (status != UCS_OK) {
+        ucs_warn("could NOT configure to reuse socket port");
+
+      }
+
+      ucs_warn("configuring to reuse socket address");
+      status = ucs_socket_setopt(fd, SOL_SOCKET, SO_REUSEADDR,
+                                 &enable_flag, sizeof(int));
+      if (status != UCS_OK) {
+        ucs_warn("could NOT configure to reuse socket address");
+      }
     }
-
-    ucs_warn("configuring to reuse socket address");
-    status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
-                               &enable_flag, sizeof(int));
-    if (status != UCS_OK) {
-      ucs_warn("could NOT configure to reuse socket address");
-    }*/
-
     status = ucs_socket_set_buffer_size(fd, iface->sockopt.sndbuf,
                                         iface->sockopt.rcvbuf);
     if (status != UCS_OK) {
