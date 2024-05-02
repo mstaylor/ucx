@@ -775,15 +775,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     struct sockaddr_in local_port_addr2;
     socklen_t local_addr_len2 = sizeof(local_port_addr2);
     int enable_flag = 1;
-    //struct sockaddr_storage connect_addr;
+    struct sockaddr_storage connect_addr;
     int retries = 0;
     int result = 0;
     int result_opt = 0;
     uint16_t port = 0;
 
-    //struct sockaddr* addr = NULL;
+    struct sockaddr* addr = NULL;
 
-    //size_t addrlen;
+    size_t addrlen;
 
     int flags;
     struct timeval timeout;
@@ -1004,7 +1004,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       /**
        * 6. Update the peer address to the remote address returned by redis
        */
- /*     set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
+      set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
       addr = (struct sockaddr*)&connect_addr;
 
@@ -1017,7 +1017,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       if ((struct sockaddr*)&ep->peer_addr != NULL) {
         memcpy((struct sockaddr*)&ep->peer_addr, addr, addrlen);
       }
-*/
+
       ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr,
                        src_str2, sizeof(src_str2));
 
