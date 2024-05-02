@@ -626,6 +626,8 @@ static ucs_status_t uct_tcp_ep_create_socket_and_connect(uct_tcp_ep_t *ep)
         ucs_error("getsockname(fd=%d) failed: %m", iface->listen_fd);
       }
 
+      local_port_addr.sin_addr.s_addr = INADDR_ANY;
+
       status = bind(ep->fd, (struct sockaddr *)&local_port_addr, local_addr_len);
       if (status < 0) {
 
