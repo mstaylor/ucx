@@ -776,23 +776,23 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     socklen_t local_addr_len2 = sizeof(local_port_addr2);
     int enable_flag = 1;
     //struct sockaddr_storage connect_addr;
-    //int retries = 0;
-    //int result = 0;
+    int retries = 0;
+    int result = 0;
     uint16_t port = 0;
 
     //struct sockaddr* addr = NULL;
 
     //size_t addrlen;
 
-    //int flags;
-    //struct timeval timeout;
-    //size_t addr_len;
-    //size_t peer_addr_len;
+    int flags;
+    struct timeval timeout;
+    size_t addr_len;
+    size_t peer_addr_len;
 
-    //fd_set set;
+    fd_set set;
 
-    //int so_error;
-    //socklen_t len = sizeof(so_error);
+    int so_error;
+    socklen_t len = sizeof(so_error);
 
     //rendezvous variables
 
@@ -998,53 +998,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       ucs_warn("set public address to %s and port %i from redis", publicAddress, publicPort);
 
-      //5. configure the endpoint socket to reuse the same local port used for communication with
-      //the rendezvous server
-      /*status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
-                                 &enable_flag, sizeof(int));
-      if (status != UCS_OK) {
-        ucs_warn("could NOT configure to reuse socket port");
-        return status;
-      }
-
-      status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
-                                 &enable_flag, sizeof(int));
-      if (status != UCS_OK) {
-        ucs_warn("could NOT configure to reuse socket address");
-        return status;
-      }*/
-
-     /* status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
-                                 &timeout,
-                                 sizeof timeout);
-      if (status != UCS_OK) {
-        ucs_warn("could NOT configure to set connect timeout");
-        return status;
-      }
-
-
-     */ /*status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr2, &addr_len);
-      if (status != UCS_OK) {
-        ucs_warn("ucs_sockaddr_sizeof failed ");
-        return status;
-      }
-
-
-
-
-      ret = bind(ep->fd, (struct sockaddr *)&local_port_addr2, addr_len);
-      if (ret < 0) {
-
-        status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
-        ucs_warn("bind(fd=%d addr=%s) failed: %m",
-                 ep->fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
-                                      src_str2, sizeof(src_str2)));
-        return status;
-      }
-      ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
-                       src_str2, sizeof(src_str2));
-
-      ucs_warn("bound endpoint socket ip: %s", src_str2);*/
 
 
       /**
@@ -1068,9 +1021,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                        src_str2, sizeof(src_str2));
 
       ucs_warn("connecting to peer address socket ip: %s", src_str2);
-      status =
-          ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
-/*
+      /*status =
+          ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);*/
+
 
 
       //7. set the socket to be non-blocking so we can retry
@@ -1147,13 +1100,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
+        /*status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_SNDTIMEO,
                                    &timeout,
                                    sizeof timeout);
         if (status != UCS_OK) {
           ucs_warn("could NOT configure to set connect timeout");
           return status;
-        }
+        }*/
 
         status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr2, &addr_len);
         if (status != UCS_OK) {
@@ -1188,7 +1141,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       flags = fcntl(ep->fd,  F_GETFL, 0);
       flags &= ~(O_NONBLOCK);
       fcntl(ep->fd, F_SETFL, flags);
-*/
+
       if (UCS_STATUS_IS_ERR(status)) {
         return status;
       } else if (status == UCS_INPROGRESS) {
