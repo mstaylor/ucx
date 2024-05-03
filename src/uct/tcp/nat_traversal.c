@@ -46,7 +46,7 @@ int msleep(long msec)
 void listen_for_updates(void *p) {
   char* remote_address = NULL;
   char src_str[UCS_SOCKADDR_STRING_LEN];
-
+  char src_str2[UCS_SOCKADDR_STRING_LEN];
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
   int fd = -1, ret;
   int enable_flag = 1;
@@ -66,20 +66,22 @@ void listen_for_updates(void *p) {
   char publicAddressPort[UCS_SOCKADDR_STRING_LEN*2];
   int publicPort = 0;
 
-  //struct sockaddr_storage connect_addr;
-  //struct sockaddr* addr = NULL;
+  struct sockaddr_storage connect_addr;
+  struct sockaddr* addr = NULL;
   //char src_str2[UCS_SOCKADDR_STRING_LEN];
-  //size_t addrlen;
+  size_t addrlen;
   //size_t addr_len;
 
-  //int peer_fd;
-  //struct timeval timeout;
-  //int retries = 0;
-  //int result = 0;
-  //fd_set set;
-  //int so_error;
-  //socklen_t len = sizeof(so_error);
+  int peer_fd;
+  struct timeval timeout;
+  int retries = 0;
+  int result = 0;
+  int result_opt;
+  fd_set set;
+  int so_error;
+  socklen_t len = sizeof(so_error);
   ucs_status_t redis_write_status;
+  ucs_status_t status;
   //int flags;
 
   uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
@@ -90,16 +92,6 @@ void listen_for_updates(void *p) {
 
   sprintf(peer_redis_key, "%s:%s", PEER_KEY, src_str);
   ucs_warn("retrieving key->value from redis - key: %s", peer_redis_key);
-
-
-  //TODO: only call rendezvous once because same ip:port should result in publicip:port
-  //maintain port, address that will be used
-
-  //another idea - drop thread after initial request
-
-  //baseline first without this stuff
-
-
 
   while(true) { //loop throughout the lifetime of the ucx process
     //1. poll redis for the
@@ -223,58 +215,6 @@ void listen_for_updates(void *p) {
               ntohs(public_info.port));
     }
 
-
-    /*timeout.tv_sec = NAT_CONNECT_TO_SEC;
-    timeout.tv_usec = 0;
-
-    if (ucs_socket_create(AF_INET, SOCK_STREAM, &peer_fd) != UCS_OK) {
-       ucs_warn("could not create socket");
-       continue;
-    }
-
-
-    if (ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEPORT,
-                               &enable_flag, sizeof(int)) != UCS_OK) {
-      ucs_warn("could NOT configure to reuse socket port");
-      continue;
-
-    }
-
-
-    if (ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEADDR,
-                               &enable_flag, sizeof(int)) != UCS_OK) {
-      ucs_warn("could NOT configure to reuse socket address");
-      continue;
-    }
-
-
-    if(ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_SNDTIMEO,
-                               &timeout,
-                               sizeof timeout) != UCS_OK) {
-          ucs_warn("could NOT configure to set connect timeout");
-          continue;
-    }
-
-
-    if (ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr, &addr_len) != UCS_OK) {
-      ucs_warn("ucs_sockaddr_sizeof failed ");
-      continue;
-    }
-
-
-    ret = bind(peer_fd, (struct sockaddr *)&local_port_addr, addr_len);
-    if (ret < 0) {
-
-      ucs_warn("bind(fd=%d addr=%s) failed: %m",
-               peer_fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
-                                    src_str2, sizeof(src_str2)));
-      continue;
-    }
-    ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
-                     src_str2, sizeof(src_str2));
-
-    ucs_warn("bound peer endpoint socket ip: %s", src_str2);*/
-
     //write redis value (private->public and public->public)
     redis_write_status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                                        src_str, publicAddressPort);
@@ -292,7 +232,11 @@ void listen_for_updates(void *p) {
       ucs_warn("could not write redis public to public key:value %s->%s", publicAddressPort, publicAddressPort);
     }
 
-    /*set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
+    ucs_warn("deleting redis key: %s", peer_redis_key);
+    //delete redis key
+    deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
+
+    set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
     addr = (struct sockaddr*)&connect_addr;
 
@@ -301,18 +245,33 @@ void listen_for_updates(void *p) {
       continue;
     }
 
-    if(fcntl(peer_fd, F_SETFL, O_NONBLOCK) != 0) {
-      ucs_warn("Setting O_NONBLOCK failed: ");
+    if (ucs_socket_create(AF_INET, SOCK_STREAM, &peer_fd) != UCS_OK) {
+      ucs_warn("could not create socket");
       continue;
     }
 
-    retries = 0;
-    //next ping the peer a few times to try to connect
+
+    if (ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEPORT,
+                          &enable_flag, sizeof(int)) != UCS_OK) {
+      ucs_warn("could NOT configure to reuse socket port");
+      continue;
+
+    }
 
 
+    if (ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEADDR,
+                          &enable_flag, sizeof(int)) != UCS_OK) {
+      ucs_warn("could NOT configure to reuse socket address");
+      continue;
+    }
+
+    if(fcntl(peer_fd, F_SETFL, O_NONBLOCK) != 0) {
+      ucs_warn("Setting O_NONBLOCK failed: ");
+    }
+    timeout.tv_sec = NAT_CONNECT_TO_SEC;
+    timeout.tv_usec = 0;
     while (retries < NAT_RETRIES) {
       ucs_warn("retrying connection - current retry: %i", retries);
-
 
       ucs_sockaddr_str(addr,
                        src_str2, sizeof(src_str2));
@@ -322,93 +281,78 @@ void listen_for_updates(void *p) {
       result = connect(peer_fd, addr, addrlen);
 
       if (result == 0) {
-        ucs_warn("successfully connected to peer: %s", src_str2);
+        status = UCS_OK;
         break;
       }
 
       FD_ZERO(&set);
       FD_SET(peer_fd, &set);
+      timeout.tv_sec = 10; // 10 second timeout
+      timeout.tv_usec = 0;
 
       result = select(peer_fd + 1, NULL, &set, NULL, &timeout);
-      if (result <= 0) {
+      if (result < 0 && errno != EINTR) {
         // select() failed or connection timed out
         ucs_warn("select failed/connect timeout on peer socket %i", peer_fd);
-      } else {
-        getsockopt(peer_fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
-        if (so_error == 0) {
-          ucs_warn("Connected on attempt %d", retries + 1);
-
-          break;
-        } else {
+      }  else if (result > 0) {
+        result_opt = getsockopt(peer_fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+        if (result_opt < 0) {
           ucs_warn("Connection failed: %s and continuing", strerror(so_error));
+        } else if (so_error) {
+          ucs_warn("Error in delayed connection() %d - %s", so_error, strerror(so_error));
+        } else {
+          ucs_warn("Connected on attempt %d", retries + 1);
+          status = UCS_OK;
+          //close(fd);//close the rendezvous socket
+          break;
         }
+      } else {
+        ucs_warn("Timeout or error.");
       }
 
+      close(peer_fd);
 
-      if (ucs_socket_create(AF_INET, SOCK_STREAM, &peer_fd) != UCS_OK) {
+      status = ucs_socket_create(AF_INET, SOCK_STREAM, &peer_fd);
+      if (status != UCS_OK) {
         ucs_warn("could not create socket");
         break;
       }
 
 
-      if(ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEPORT,
-                                 &enable_flag, sizeof(int))!= UCS_OK) {
+      status = ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEPORT,
+                                 &enable_flag, sizeof(int));
+      if (status != UCS_OK) {
         ucs_warn("could NOT configure to reuse socket port");
         break;
       }
 
 
-      if (ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEADDR,
-                                 &enable_flag, sizeof(int)) != UCS_OK) {
+      status = ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEADDR,
+                                 &enable_flag, sizeof(int));
+      if (status != UCS_OK) {
         ucs_warn("could NOT configure to reuse socket address");
         break;
       }
 
-      if (ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_SNDTIMEO,
-                                 &timeout,
-                                 sizeof timeout) != UCS_OK) {
-        ucs_warn("could NOT configure to set connect timeout");
-        break;
-      }
 
-      if (ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr, &addr_len) != UCS_OK) {
-
+      /*status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr2, &addr_len);
+      if (status != UCS_OK) {
         ucs_warn("ucs_sockaddr_sizeof failed ");
         break;
       }
 
-      ret = bind(peer_fd, (struct sockaddr *)&local_port_addr, addr_len);
-      if (ret < 0) {
 
-        ucs_warn("bind(fd=%d addr=%s) failed: %m",
-                 fd, ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
-                                      src_str2, sizeof(src_str2)));
-        continue;
-      }
-
-
-      ucs_sockaddr_str((struct sockaddr *)&local_port_addr,
+      ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
                        src_str2, sizeof(src_str2));
 
-      ucs_warn("bound endpoint socket ip: %s", src_str2);
+      ucs_warn("bound endpoint socket ip: %s", src_str2);*/
 
       if(fcntl(peer_fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
-        continue;
       }
 
       retries++;
-    }*/
-    /*if (fd != -1) {
-      close(fd);
-    }*/
-    /*close(peer_fd);*/
-
-    ucs_warn("deleting redis key: %s", peer_redis_key);
-    //delete redis key
-    deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
-
-
+    }
 
   }
 
