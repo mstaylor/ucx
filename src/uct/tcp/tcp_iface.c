@@ -455,9 +455,7 @@ uct_tcp_iface_connect_handler(int listen_fd, ucs_event_set_types_t events,
                                     &addrlen, &fd);
         ucs_warn("socket accept status - fd: %i status: %i", iface->listen_fd, status);
 
-        if (fd == -1) {
-          continue;
-        }
+
         if (status != UCS_OK) {
             if (status != UCS_ERR_NO_PROGRESS) {
               ucs_warn("closing file descriptor...");
