@@ -869,7 +869,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       if (bind(fd, (struct sockaddr*)&local_port_addr2, local_addr_len2) < 0) {
         ucs_error("error binding to rendezvous socket %s", strerror(errno));
-        return UCS_ERR_IO_ERROR;
+
       }
 
       ret = getsockname(fd, (struct sockaddr*)&local_port_addr2, &local_addr_len2);
@@ -912,7 +912,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_error("Server has disconnected");
         return UCS_ERR_IO_ERROR;
       }
-      //close(fd);
+      close(fd);
       ucs_warn("client data returned from rendezvous: %s:%i",
                ip_to_string(&public_info.ip.s_addr,
                             public_ipadd,
@@ -996,7 +996,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
       free(remote_address);
-      close(fd);
+
       ucs_warn("set public address to %s and port %i from redis", publicAddress, publicPort);
 
 
@@ -1029,6 +1029,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       //7. set the socket to be non-blocking so we can retry
       //connection attempts if necessary
+
+      if (bind(ep->fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
+        ucs_error("error binding to rendezvous socket %s", strerror(errno));
+
+      }
 
       if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
@@ -1119,6 +1124,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         if (status != UCS_OK) {
           ucs_warn("ucs_sockaddr_sizeof failed ");
           return status;
+        }
+
+        if (bind(ep->fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
+          ucs_error("error binding to rendezvous socket %s", strerror(errno));
+
         }
 
         /*ret = bind(ep->fd, (struct sockaddr *)&local_port_addr2, addr_len);
