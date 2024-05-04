@@ -265,6 +265,11 @@ void listen_for_updates(void *p) {
       continue;
     }
 
+    if (bind(peer_fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
+      ucs_error("error binding to rendezvous socket %s", strerror(errno));
+      continue;
+    }
+
     if(fcntl(peer_fd, F_SETFL, O_NONBLOCK) != 0) {
       ucs_warn("Setting O_NONBLOCK failed: ");
     }
@@ -334,18 +339,12 @@ void listen_for_updates(void *p) {
         break;
       }
 
-
-      /*status = ucs_sockaddr_sizeof((struct sockaddr *)&local_port_addr2, &addr_len);
-      if (status != UCS_OK) {
-        ucs_warn("ucs_sockaddr_sizeof failed ");
-        break;
+      if (bind(peer_fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
+        ucs_error("error binding to rendezvous socket %s", strerror(errno));
+        continue;
       }
 
 
-      ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
-                       src_str2, sizeof(src_str2));
-
-      ucs_warn("bound endpoint socket ip: %s", src_str2);*/
 
       if(fcntl(peer_fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
