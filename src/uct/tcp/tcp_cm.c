@@ -912,7 +912,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_error("Server has disconnected");
         return UCS_ERR_IO_ERROR;
       }
-      close(fd);
+      //close(fd);
       ucs_warn("client data returned from rendezvous: %s:%i",
                ip_to_string(&public_info.ip.s_addr,
                             public_ipadd,
