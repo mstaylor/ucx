@@ -1030,10 +1030,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //7. set the socket to be non-blocking so we can retry
       //connection attempts if necessary
 
-      if (bind(ep->fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
+      /*if (bind(ep->fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
         ucs_error("error binding to rendezvous socket %s", strerror(errno));
 
-      }
+      }*/
 
       if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
