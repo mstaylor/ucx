@@ -797,20 +797,20 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     //rendezvous variables
 
-    struct sockaddr_in *sa_in;
+    //struct sockaddr_in *sa_in;
     //struct timeval timeout;
 
-    uint16_t mapped_port;
+    //uint16_t mapped_port;
     //socklen_t local_addr_len = sizeof(local_addr);
 
 
-    struct sockaddr_in server_data;
-    PeerConnectionData public_info;
-    ssize_t bytes;
-    char source_ipadd[UCS_SOCKADDR_STRING_LEN];
-    char public_ipadd[UCS_SOCKADDR_STRING_LEN];
+    //struct sockaddr_in server_data;
+    //PeerConnectionData public_info;
+    //ssize_t bytes;
+    //char source_ipadd[UCS_SOCKADDR_STRING_LEN];
+    //char public_ipadd[UCS_SOCKADDR_STRING_LEN];
 
-    int fd, ret;
+    //int fd, ret;
 
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
@@ -831,7 +831,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
              ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                               src_str, sizeof(src_str)));
 
-    sa_in = (struct sockaddr_in  *)&iface->config.ifaddr;
+    //sa_in = (struct sockaddr_in  *)&iface->config.ifaddr;
 
     status = ucs_sockaddr_get_port((struct sockaddr*)&iface->config.ifaddr, &port);
     if (status != UCS_OK) {
@@ -843,7 +843,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     if (iface->config.enable_nat_traversal) {
       //1. Call Rendezvous server and retrieve public port
 
-      fd = socket(AF_INET, SOCK_STREAM, 0);
+      /*fd = socket(AF_INET, SOCK_STREAM, 0);
       if (fd == -1) {
         ucs_error("Could not create socket for rendezvous server: ");
         return UCS_ERR_IO_ERROR;
@@ -855,7 +855,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
               0) {
         ucs_error("Setting REUSE options failed: ");
         return UCS_ERR_IO_ERROR;
-      }
+      }*/
 
       if (getsockname(iface->listen_fd, (struct sockaddr*)&local_port_addr, &local_addr_len)< 0 ) {
         ucs_warn("getsockname failed");
@@ -867,7 +867,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
 
-      if (bind(fd, (struct sockaddr*)&local_port_addr2, local_addr_len2) < 0) {
+      /*if (bind(fd, (struct sockaddr*)&local_port_addr2, local_addr_len2) < 0) {
         ucs_error("error binding to rendezvous socket %s", strerror(errno));
 
       }
@@ -921,11 +921,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       if (ntohs(public_info.port) != mapped_port) {
         ucs_warn("public port %i does not match private port %i", ntohs(public_info.port), sa_in->sin_port);
-      }
+      }*/
 
       //2. write redis value
 
-      sprintf(publicAddressPort, "%s:%i", public_ipadd, ntohs(public_info.port));
+
+
+      sprintf(publicAddressPort, "%s:%i", iface->config.public_ip_address,
+              ntohs(local_port_addr.sin_port));
 
 
       status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,

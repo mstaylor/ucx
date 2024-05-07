@@ -96,7 +96,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
     {"RENDEZVOUS_PORT", "10000",
      "Rendezvous Port\n",
      ucs_offsetof(uct_tcp_iface_config_t, rendezvous_port), UCS_CONFIG_TYPE_INT},
-
+    {"PUBLIC_IP_ADDRESS", "",
+     "Public IP Address associated with Host/Function ",
+     ucs_offsetof(uct_tcp_iface_config_t, public_ip_address), UCS_CONFIG_TYPE_STRING},
 
 
   {"NODELAY", "y",
@@ -785,6 +787,8 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.enable_nat_traversal = config->enable_nat_traversal;
     ucs_strncpy_zero(self->config.pairing_name, config->pairing_name,
                      sizeof(self->config.pairing_name));
+    ucs_strncpy_zero(self->config.public_ip_address, config->public_ip_address,
+                     sizeof(self->config.public_ip_address));
 
     ucs_warn("rendezvous ip set to: %s", self->config.rendezvous_ip_address);
 
