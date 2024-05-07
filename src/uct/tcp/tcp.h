@@ -474,6 +474,7 @@ typedef struct uct_tcp_iface_config {
     char *                         rendezvous_ip_address;
     int                            rendezvous_port;
     char *                         pairing_name;
+    char *                         public_ip_address;
 
 } uct_tcp_iface_config_t;
 

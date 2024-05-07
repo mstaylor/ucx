@@ -48,18 +48,18 @@ void listen_for_updates(void *p) {
   char src_str[UCS_SOCKADDR_STRING_LEN];
   char src_str2[UCS_SOCKADDR_STRING_LEN];
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
-  int fd = -1, ret;
+  //int fd = -1, ret;
   int enable_flag = 1;
   struct sockaddr_in local_port_addr;
   struct sockaddr_in local_port_addr2;
   socklen_t local_addr_len = sizeof(local_port_addr);
   socklen_t local_addr_len2 = sizeof(local_port_addr2);
-  uint16_t mapped_port;
-  struct sockaddr_in server_data;
-  PeerConnectionData public_info;
-  ssize_t bytes;
-  char source_ipadd[UCS_SOCKADDR_STRING_LEN];
-  char public_ipadd[UCS_SOCKADDR_STRING_LEN];
+  //uint16_t mapped_port;
+  //struct sockaddr_in server_data;
+  //PeerConnectionData public_info;
+  //ssize_t bytes;
+  //char source_ipadd[UCS_SOCKADDR_STRING_LEN];
+  //char public_ipadd[UCS_SOCKADDR_STRING_LEN];
   char * token = NULL;
   int token_index = 0;
   char publicAddress[UCS_SOCKADDR_STRING_LEN];
@@ -85,7 +85,7 @@ void listen_for_updates(void *p) {
   //int flags;
 
   uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
-  struct sockaddr_in *sa_in = (struct sockaddr_in  *)&iface->config.ifaddr;
+  //struct sockaddr_in *sa_in = (struct sockaddr_in  *)&iface->config.ifaddr;
   ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                    src_str, sizeof(src_str));
 
@@ -123,9 +123,22 @@ void listen_for_updates(void *p) {
 
     free(remote_address);
 
+    if (getsockname(iface->listen_fd, (struct sockaddr *)&local_port_addr,
+                    &local_addr_len) < 0) {
+      ucs_warn("getsockname failed");
+      continue;
+    }
+
+    local_port_addr2.sin_family = AF_INET;
+    local_port_addr2.sin_addr.s_addr = INADDR_ANY;
+    local_port_addr2.sin_port = local_port_addr.sin_port;
+
+    sprintf(publicAddressPort, "%s:%i", iface->config.public_ip_address,
+            ntohs(local_port_addr.sin_port));
+
 
     //1. Call Rendezvous server and retrieve public port if we don't already have done so
-    if (!(strlen(publicAddressPort)> 0)) {
+    /*if (!(strlen(publicAddressPort)> 0)) {
       ucs_warn("calling rendezvous within nat_traversal");
       fd = socket(AF_INET, SOCK_STREAM, 0);
       if (fd == -1) {
@@ -213,7 +226,7 @@ void listen_for_updates(void *p) {
 
       sprintf(publicAddressPort, "%s:%i", public_ipadd,
               ntohs(public_info.port));
-    }
+    }*/
 
     //write redis value (private->public and public->public)
     redis_write_status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
