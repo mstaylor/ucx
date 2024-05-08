@@ -977,11 +977,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //delete peer
       ucs_warn("remote address returned from redis: %s", remote_address);
 
-      ucs_warn("deleting redis key: %s", peer_redis_key);
+      //ucs_warn("deleting redis key: %s", peer_redis_key);
 
       //delete redis key if it exists
 
-      deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
+      //deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
 
       token = strtok(remote_address, ":");
 
