@@ -955,15 +955,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       remote_address = getValueFromRedis(iface->config.redis_ip_address,
                                          iface->config.redis_port, dest_str);
 
-      if (remote_address == NULL) { //set the peer redis key only if the public address is not found
+      //if (remote_address == NULL) { //set the peer redis key only if the public address is not found
 
-
-        sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
-        setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+      sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
+      setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                       peer_redis_key, publicAddressPort);
-
-        ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key, publicAddressPort);
-      }
+      ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key, publicAddressPort);
+      //}
 
 
       //4. use public address from redis as peer address (wait until peer writes redis address)
