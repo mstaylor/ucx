@@ -792,6 +792,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
 
     ucs_warn("rendezvous ip set to: %s", self->config.rendezvous_ip_address);
 
+    ucs_warn("provided public address: %s", self->config.public_ip_address);
     if (config->keepalive.idle != UCS_MEMUNITS_AUTO) {
         /* TCP iface configuration sets the keepalive interval */
         self->config.keepalive.idle = config->keepalive.idle;
