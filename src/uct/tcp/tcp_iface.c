@@ -607,7 +607,7 @@ static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 
   //first peer update thread
   int thread_return = pthread_create(&redis_update_thread, NULL,
-                                     (void *)listen_for_updates_peer, (void*) iface);
+                                     (void *)listen_for_updates_peer2, (void*) iface);
   if(thread_return) {
     ucs_error("Error when creating thread for listening for updated peer");
     return UCS_ERR_IO_ERROR;
