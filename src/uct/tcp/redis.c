@@ -128,9 +128,10 @@ ucs_status_t deleteRedisKeyTransactional(const char *hostname, int port, const c
     reply = redisCommand(c,"EXEC");
     if (reply->type == REDIS_REPLY_ARRAY) {
       ucs_warn("Transaction executed, counter delete key: %s ", key);
-      status = UCS_ERR_IO_ERROR;
+      status = UCS_OK;
     } else {
       printf("Transaction failed, counter not delete Key: %s ", key);
+      status = UCS_ERR_IO_ERROR;
     }
     freeReplyObject(reply);
 
@@ -180,9 +181,10 @@ ucs_status_t updateKeyIfMissing(const char *hostname, int port, const char *key,
     reply = redisCommand(c,"EXEC");
     if (reply->type == REDIS_REPLY_ARRAY) {
       ucs_warn("Transaction executed, counter updated key: %s value: %s", key, value);
-      status = UCS_ERR_IO_ERROR;
+      status = UCS_OK;
     } else {
       printf("Transaction failed, counter not updated Key: %s value: %s", key, value);
+      status = UCS_ERR_IO_ERROR;
     }
     freeReplyObject(reply);
 
