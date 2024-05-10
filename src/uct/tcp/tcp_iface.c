@@ -29,6 +29,8 @@ extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 int current_address_count = 0;
 
 pthread_t redis_update_thread;
+
+
 static ucs_config_field_t uct_tcp_iface_config_table[] = {
   {"", "MAX_NUM_EPS=256", NULL,
    ucs_offsetof(uct_tcp_iface_config_t, super),
@@ -602,12 +604,15 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
 static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 {
+
+  //first peer update thread
   int thread_return = pthread_create(&redis_update_thread, NULL,
-                                     (void *)listen_for_updates, (void*) iface);
+                                     (void *)listen_for_updates_peer, (void*) iface);
   if(thread_return) {
-    ucs_error("Error when creating thread for listening for updated");
+    ucs_error("Error when creating thread for listening for updated peer");
     return UCS_ERR_IO_ERROR;
   }
+
   return UCS_OK;
 }
 
@@ -952,6 +957,7 @@ static UCS_CLASS_CLEANUP_FUNC(uct_tcp_iface_t)
 
     if (current_address_count == 0 && self->config.enable_nat_traversal) {
       pthread_join(redis_update_thread, NULL);
+
     }
 
     uct_base_iface_progress_disable(&self->super.super,
