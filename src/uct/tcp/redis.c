@@ -171,7 +171,7 @@ ucs_status_t updateKeyIfMissing(const char *hostname, int port, const char *key,
     }
     freeReplyObject(reply);
 
-    reply = redisCommand(c,"SET %s %d", key, value);
+    reply = redisCommand(c,"SET %s %s", key, value);
     if (reply == NULL) {
       ucs_warn("could not set value in redis transaction");
       return UCS_ERR_IO_ERROR;
