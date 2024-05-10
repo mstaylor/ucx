@@ -81,6 +81,118 @@ ucs_status_t deleteRedisKey(const char *hostname, int port, const char *key) {
     }
     return status;
 }
+
+ucs_status_t deleteRedisKeyTransactional(const char *hostname, int port, const char *key) {
+  ucs_status_t status = UCS_OK;
+
+  redisReply *reply;
+  redisContext *c = redisLogin(hostname, port);
+
+  if (c != NULL) {
+
+    reply = redisCommand(c,"WATCH %s", key);
+    if (reply == NULL) {
+      ucs_warn("Failed to execute WATCH command");
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"GET %s", key);
+
+    if (reply == NULL) {
+      //key exists so not updating
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"MULTI");
+    if (reply == NULL) {
+      ucs_warn("could not set redis MULTI");
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c, "DEL %s", key);
+    if (reply->type == REDIS_REPLY_INTEGER) {
+      if (reply->integer == 1) {
+        ucs_warn("Key '%s' deleted successfully.", key);
+      } else {
+        ucs_warn("Key '%s' does not exist.", key);
+      }
+    } else {
+      ucs_warn("Error: %s", c->errstr);
+      status = UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"EXEC");
+    if (reply->type == REDIS_REPLY_ARRAY) {
+      ucs_warn("Transaction executed, counter delete key: %s ", key);
+      status = UCS_ERR_IO_ERROR;
+    } else {
+      printf("Transaction failed, counter not delete Key: %s ", key);
+    }
+    freeReplyObject(reply);
+
+  }
+
+
+  return status;
+}
+
+ucs_status_t updateKeyIfMissing(const char *hostname, int port, const char *key, const char *value) {
+  ucs_status_t status = UCS_OK;
+
+  redisReply *reply;
+  redisContext *c = redisLogin(hostname, port);
+
+  if (c != NULL) {
+
+    reply = redisCommand(c,"WATCH %s", key);
+    if (reply == NULL) {
+      ucs_warn("Failed to execute WATCH command");
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"GET %s", key);
+
+    if (reply == NULL) {
+      //key exists so not updating
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"MULTI");
+    if (reply == NULL) {
+      ucs_warn("could not set redis MULTI");
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"SET %s %d", key, value);
+    if (reply == NULL) {
+      ucs_warn("could not set value in redis transaction");
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"EXEC");
+    if (reply->type == REDIS_REPLY_ARRAY) {
+      ucs_warn("Transaction executed, counter updated key: %s value: %s", key, value);
+      status = UCS_ERR_IO_ERROR;
+    } else {
+      printf("Transaction failed, counter not updated Key: %s value: %s", key, value);
+    }
+    freeReplyObject(reply);
+
+  }
+
+
+  return status;
+
+
+}
 char * getValueFromRedis(const char *hostname, int port, const char *key){
     redisReply *reply;
 
