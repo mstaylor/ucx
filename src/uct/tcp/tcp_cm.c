@@ -1017,7 +1017,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //already listening which is created by the receiver worker
       endpoint_local_port_addr.sin_family = AF_INET;
       endpoint_local_port_addr.sin_addr.s_addr = INADDR_ANY;
-      endpoint_local_port_addr.sin_port = 0;
+      endpoint_local_port_addr.sin_port = htons(INADDR_ANY);
 
 
       ///bind the endpoint to the newly created socket
@@ -1048,6 +1048,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       sprintf(publicAddressPort2, "%s:%i", iface->config.public_ip_address,
               htons(endpoint_src_port));
+
+      ucs_warn("writing peer2 key/value to redis - key: %s value: %s", peer_redis_key2, publicAddressPort2);
       //run this redis in a transaction to prevent race conditions
       status = updateKeyIfMissing(iface->config.redis_ip_address, iface->config.redis_port,
                          peer_redis_key2, publicAddressPort2);
