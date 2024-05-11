@@ -22,6 +22,7 @@ ucs_status_t peer_listen(void* p) {
   struct sockaddr_in peer_info;
   struct sockaddr_in local_port_data;
   int peer;
+  char src_str[UCS_SOCKADDR_STRING_LEN*2];
 
   unsigned int len;
   int enable_flag = 1;
@@ -56,12 +57,16 @@ ucs_status_t peer_listen(void* p) {
   }
 
 
+  ucs_socket_getname_str(listen_socket, src_str, UCS_SOCKADDR_STRING_LEN);
+
+  ucs_warn("listen_socket listening on %s", src_str);
+
   len = sizeof(peer_info);
 
   while(true) {
     peer = accept(listen_socket, (struct sockaddr*)&peer_info, &len);
     if (peer == -1) {
-      ucs_error("Error when connecting to peer %s", strerror(errno));
+      ucs_warn("Error when connecting to peer %s", strerror(errno));
     } else {
       ucs_warn("Succesfully connected to peer, accepting");
       atomic_store(&accepting_socket, peer);
@@ -841,7 +846,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int result_opt = 0;
     uint16_t port = 0;
     uint16_t listen_port = 0;
-    uint16_t endpoint_src_port = 0;
+    int endpoint_src_port = 0;
+
 
 
     struct sockaddr* addr = NULL;
@@ -1017,7 +1023,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //already listening which is created by the receiver worker
       endpoint_local_port_addr.sin_family = AF_INET;
       endpoint_local_port_addr.sin_addr.s_addr = INADDR_ANY;
-      endpoint_local_port_addr.sin_port = htons(INADDR_ANY);
+      endpoint_local_port_addr.sin_port = htons(0);
 
 
       ///bind the endpoint to the newly created socket
@@ -1029,9 +1035,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //we need that so the remote can hit the endpoint of this port number
       //to open up the nat
 
-      ucs_sockaddr_get_port((struct sockaddr*)&endpoint_local_port_addr,
-                            &endpoint_src_port);
+      if (getsockname(ep->fd, (struct sockaddr *)&endpoint_local_port_addr, &endpoint_local_addr_len) == -1) {
+        ucs_warn("getsockname failed for ep->fd");
 
+      }
+
+      endpoint_src_port = ntohs(endpoint_local_port_addr.sin_port);
+
+      ucs_warn("Assigned port: ep->fd %d", endpoint_src_port);
       // set the peer redis key#1 to point to peeraddress-> public address
       // this will be used by the peer to send connect requests
 
@@ -1047,7 +1058,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       sprintf(peer_redis_key2, "%s:%s", PEER_KEY2, dest_str);
 
       sprintf(publicAddressPort2, "%s:%i", iface->config.public_ip_address,
-              htons(endpoint_src_port));
+              endpoint_src_port);
 
       ucs_warn("writing peer2 key/value to redis - key: %s value: %s", peer_redis_key2, publicAddressPort2);
       //run this redis in a transaction to prevent race conditions
@@ -1125,8 +1136,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       /*status =
           ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);*/
 
-
-
       //set the peer socket to be non-blocking so we can retry
       //connection attempts if necessary
 
@@ -1149,7 +1158,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_error("Error when creating thread for listening to endpoint src address ");
         return UCS_ERR_IO_ERROR;
       }
-
 
       while (retries < NAT_RETRIES &&!atomic_load(&connection_established)) {
         ucs_warn("retrying connection - current retry: %i", retries);
