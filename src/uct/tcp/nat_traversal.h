@@ -18,7 +18,7 @@
 
 typedef struct {
     struct in_addr ip;
-    in_port_t      port;
+    int      port;
 } PeerConnectionData;
 
 int msleep(long msec);

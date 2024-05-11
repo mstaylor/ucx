@@ -42,24 +42,30 @@ ucs_status_t peer_listen(void* p) {
   }
 
 
-  local_port_data.sin_family = AF_INET;
+  /*local_port_data.sin_family = AF_INET;
   local_port_data.sin_addr.s_addr = INADDR_ANY;
-  local_port_data.sin_port = info->port;
+  local_port_data.sin_port = info->port;*/
+
+  set_sock_addr(NULL, (struct sockaddr_storage *)&local_port_data, AF_INET, info->port);
 
   if (bind(listen_socket, (const struct sockaddr *)&local_port_data, sizeof(local_port_data)) < 0) {
     ucs_error("Could not bind to local port: ");
     return UCS_ERR_IO_ERROR;
+  } else {
+    ucs_warn("bound peer listen socket %d", listen_socket);
   }
 
   if (listen(listen_socket, 1) == -1) {
     ucs_error("Listening on local port failed: ");
     return UCS_ERR_IO_ERROR;
+  } else {
+    ucs_warn("peer listen_socket %d listening ", listen_socket);
   }
 
 
   ucs_socket_getname_str(listen_socket, src_str, UCS_SOCKADDR_STRING_LEN);
 
-  ucs_warn("listen_socket listening on %s", src_str);
+  ucs_warn("peer listen_socket listening on %s", src_str);
 
   len = sizeof(peer_info);
 
