@@ -48,6 +48,7 @@ void listen_for_updates_peer2(void *p) {
   char src_str[UCS_SOCKADDR_STRING_LEN];
   char src_str2[UCS_SOCKADDR_STRING_LEN];
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
+  char peer_redis_key2[UCS_SOCKADDR_STRING_LEN*2];
   //int fd = -1, ret;
   int enable_flag = 1;
   struct sockaddr_in local_port_addr;
@@ -80,6 +81,8 @@ void listen_for_updates_peer2(void *p) {
   int result_opt;
   fd_set set;
   int so_error;
+  int idx = 0;
+  const char * peer_str = NULL;
   socklen_t len = sizeof(so_error);
 
   ucs_status_t status;
@@ -90,22 +93,37 @@ void listen_for_updates_peer2(void *p) {
   ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                    src_str, sizeof(src_str));
 
+  if (getsockname(iface->listen_fd, (struct sockaddr *)&local_port_addr,
+                  &local_addr_len) < 0) {
+    ucs_warn("getsockname failed");
+
+  }
+
+  sprintf(peer_redis_key2, "%s:%s:%d", PEER_KEY2, iface->config.public_ip_address, ntohs(local_port_addr.sin_port));
 
   sprintf(peer_redis_key, "%s:%s", PEER_KEY2, src_str);
-  ucs_warn("retrieving key->value from redis - key: %s", peer_redis_key);
+
 
   while(true) { //loop throughout the lifetime of the ucx process
     //1. poll redis for the
-    remote_address = getValueFromRedis(iface->config.redis_ip_address,
-                                       iface->config.redis_port, peer_redis_key);
 
+    if (idx % 2 == 0){
+      peer_str = peer_redis_key;
+    } else {
+      peer_str = peer_redis_key2;
+    }
+    idx++;
+
+    remote_address = getValueFromRedis(iface->config.redis_ip_address,
+                                       iface->config.redis_port, peer_str);
 
     while (remote_address == NULL) {
       msleep(6000);
+
       // ucs_warn("sleeping waiting for remote address from redis...");
       remote_address =
           getValueFromRedis(iface->config.redis_ip_address,
-                            iface->config.redis_port, peer_redis_key);
+                            iface->config.redis_port, peer_str);
     }
     ucs_warn("received remote address: %s", remote_address);
     //peer endpoint should now start pinging the source endpoint
@@ -126,12 +144,6 @@ void listen_for_updates_peer2(void *p) {
 
     free(remote_address);
     remote_address = NULL;
-
-    if (getsockname(iface->listen_fd, (struct sockaddr *)&local_port_addr,
-                    &local_addr_len) < 0) {
-      ucs_warn("getsockname failed");
-      continue;
-    }
 
 
 

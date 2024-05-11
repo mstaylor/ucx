@@ -111,7 +111,7 @@ ucs_status_t deleteRedisKeyTransactional(const char *hostname, int port, const c
       return UCS_ERR_IO_ERROR;
     }
     freeReplyObject(reply);
-
+    ucs_warn("deleting redis key %s", key);
     reply = redisCommand(c, "DEL %s", key);
     if (reply->type == REDIS_REPLY_INTEGER) {
       if (reply->integer == 1) {
