@@ -1002,7 +1002,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //2. write redis value
 
       sprintf(publicAddressPort, "%s:%i", iface->config.public_ip_address,
-              htons(listen_port));
+              listen_port);
 
 
       status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
