@@ -118,7 +118,7 @@ void listen_for_updates_peer2(void *p) {
                                        iface->config.redis_port, peer_str);
 
     while (remote_address == NULL) {
-      msleep(6000);
+      msleep(1000);
 
       // ucs_warn("sleeping waiting for remote address from redis...");
       remote_address =
@@ -355,7 +355,7 @@ void listen_for_updates_peer(void *p) {
 
 
     while (remote_address == NULL) {
-      msleep(6000);
+      msleep(1000);
       // ucs_warn("sleeping waiting for remote address from redis...");
       remote_address =
           getValueFromRedis(iface->config.redis_ip_address,

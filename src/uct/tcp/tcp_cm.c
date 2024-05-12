@@ -1092,7 +1092,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
                                          iface->config.redis_port, dest_str);
 
       while(remote_address == NULL) {
-        msleep(1);
+        msleep(1000);
         remote_address = getValueFromRedis(iface->config.redis_ip_address,
                                            iface->config.redis_port, dest_str);
       }
