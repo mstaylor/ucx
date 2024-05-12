@@ -1182,82 +1182,100 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         result = connect(ep->fd, (const struct sockaddr *)&ep->peer_addr, peer_addr_len);
 
         if (result == 0) {
-          status = UCS_OK;
-          break;
-        }
-
-        FD_ZERO(&set);
-        FD_SET(ep->fd, &set);
-        timeout.tv_sec = 10; // 10 second timeout
-        timeout.tv_usec = 0;
-
-        result = select(ep->fd + 1, NULL, &set, NULL, &timeout);
-        if (result < 0 && errno != EINTR) {
-          // select() failed or connection timed out
-          ucs_warn("select failed/connect timeout on peer socket %i", ep->fd);
-        }  else if (result > 0) {
-          result_opt = getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
-          if (result_opt < 0) {
-            ucs_warn("Connection failed: %s and continuing", strerror(so_error));
-          } else if (so_error) {
-            ucs_warn("Error in delayed connection() %d - %s", so_error, strerror(so_error));
-          } else {
-            ucs_warn("Connected on attempt %d", retries + 1);
             status = UCS_OK;
-            //close(fd);//close the rendezvous socket
             break;
+
+        } else  {
+          if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
+            FD_ZERO(&set);
+            FD_SET(ep->fd, &set);
+            timeout.tv_sec = 10; // 10 second timeout
+            timeout.tv_usec = 0;
+
+            result = select(ep->fd + 1, NULL, &set, NULL, &timeout);
+            if (result < 0 && errno != EINTR) {
+              // select() failed or connection timed out
+              ucs_warn("select failed/connect timeout on peer socket %i", ep->fd);
+            }  else if (result > 0) {
+              result_opt = getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+              if (result_opt < 0) {
+                ucs_warn("Connection failed: %s and continuing", strerror(so_error));
+              } else if (so_error) {
+                ucs_warn("Error in delayed connection() %d - %s", so_error, strerror(so_error));
+              } else {
+                ucs_warn("Connected on attempt %d", retries + 1);
+                status = UCS_OK;
+                if (atomic_load(&connection_established)) {
+                  break;
+                }
+                continue;
+                //close(fd);//close the rendezvous socket
+
+              }
+            } else {
+              ucs_warn("Timeout or error.");
+            }
+
+            close(ep->fd);
+
+            status = ucs_socket_create(((struct sockaddr*)ep->peer_addr)->sa_family, SOCK_STREAM, &ep->fd);
+            if (status != UCS_OK) {
+              ucs_warn("could not create socket");
+              return status;
+            }
+
+
+            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                                       &enable_flag, sizeof(int));
+            if (status != UCS_OK) {
+              ucs_warn("could NOT configure to reuse socket port");
+              return status;
+            }
+
+
+            status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+                                       &enable_flag, sizeof(int));
+            if (status != UCS_OK) {
+              ucs_warn("could NOT configure to reuse socket address");
+              return status;
+            }
+
+
+
+            status = ucs_sockaddr_sizeof((struct sockaddr *)&endpoint_local_port_addr, &addr_len);
+            if (status != UCS_OK) {
+              ucs_warn("ucs_sockaddr_sizeof failed ");
+              return status;
+            }
+
+            if (bind(ep->fd, (struct sockaddr *)&endpoint_local_port_addr, endpoint_local_addr_len) < 0) {
+              ucs_error("error binding to rendezvous socket %s", strerror(errno));
+
+            }
+
+            ucs_sockaddr_str((struct sockaddr *)&endpoint_local_port_addr,
+                             src_str2, sizeof(src_str2));
+
+            ucs_warn("bound endpoint socket ip: %s", src_str2);
+
+            if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+              ucs_warn("Setting O_NONBLOCK failed: ");
+            }
+
+            retries++;
+            continue;
+          } else if(errno == EISCONN) {
+
+            ucs_warn("Succesfully connected to peer, EISCONN");
+
+            break;
+          } else {
+            msleep(100);
+            retries++;
+            //continue;
           }
-        } else {
-          ucs_warn("Timeout or error.");
         }
 
-        close(ep->fd);
-
-        status = ucs_socket_create(((struct sockaddr*)ep->peer_addr)->sa_family, SOCK_STREAM, &ep->fd);
-        if (status != UCS_OK) {
-          ucs_warn("could not create socket");
-          return status;
-        }
-
-
-        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
-                                   &enable_flag, sizeof(int));
-        if (status != UCS_OK) {
-          ucs_warn("could NOT configure to reuse socket port");
-          return status;
-        }
-
-
-        status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
-                                   &enable_flag, sizeof(int));
-        if (status != UCS_OK) {
-          ucs_warn("could NOT configure to reuse socket address");
-          return status;
-        }
-
-
-
-        status = ucs_sockaddr_sizeof((struct sockaddr *)&endpoint_local_port_addr, &addr_len);
-        if (status != UCS_OK) {
-          ucs_warn("ucs_sockaddr_sizeof failed ");
-          return status;
-        }
-
-        if (bind(ep->fd, (struct sockaddr *)&endpoint_local_port_addr, endpoint_local_addr_len) < 0) {
-          ucs_error("error binding to rendezvous socket %s", strerror(errno));
-
-        }
-
-        ucs_sockaddr_str((struct sockaddr *)&endpoint_local_port_addr,
-                         src_str2, sizeof(src_str2));
-
-        ucs_warn("bound endpoint socket ip: %s", src_str2);
-
-        if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
-          ucs_warn("Setting O_NONBLOCK failed: ");
-        }
-
-        retries++;
       }
 
       //Do we need to switch the fd?
