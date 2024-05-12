@@ -13,7 +13,7 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 
-#define NAT_RETRIES 25
+#define NAT_RETRIES 6
 #define NAT_CONNECT_TO_SEC 6
 
 typedef struct {
