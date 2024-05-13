@@ -1282,6 +1282,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       if(atomic_load(&connection_established)) {
         pthread_join(peer_listen_thread, NULL);
         ep->fd = atomic_load(&accepting_socket);
+        ucs_warn("switched ep->fd to listen socket - socket fd: %d", ep->fd);
       }
 
       //8. renable blocking on fd amd continue
