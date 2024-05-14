@@ -81,6 +81,7 @@ ucs_status_t peer_listen(void* p) {
     }
   }
 
+  return UCS_OK;
 
 }
 
