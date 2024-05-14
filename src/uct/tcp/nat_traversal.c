@@ -341,21 +341,23 @@ void listen_for_updates_peer2(void *p) {
       result = select(peer_fd + 1, NULL, &set, NULL, &timeout);
       if (result < 0 && errno != EINTR) {
         // select() failed or connection timed out
-        ucs_warn("select failed/connect timeout on peer socket %i", peer_fd);
+        ucs_warn("select failed/connect timeout on peer socket %i peer address %s", peer_fd, src_str2);
       }  else if (result > 0) {
         result_opt = getsockopt(peer_fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
         if (result_opt < 0) {
-          ucs_warn("Connection failed: %s and continuing", strerror(so_error));
+          ucs_warn("Connection failed: %s and continuing peer socket %i peer address %s",
+                   strerror(so_error), peer_fd, src_str2);
         } else if (so_error) {
-          ucs_warn("Error in delayed connection() %d - %s", so_error, strerror(so_error));
+          ucs_warn("Error in delayed connection() %d - %s peer socket %i peer address %s", so_error,
+                   strerror(so_error), peer_fd, src_str2);
         } else {
-          ucs_warn("Connected on attempt %d", retries + 1);
+          ucs_warn("Connected on attempt %d peer socket %i peer address %s", retries + 1, peer_fd, src_str2);
           status = UCS_OK;
           //close(fd);//close the rendezvous socket
           break;
         }
       } else {
-        ucs_warn("Timeout or error.");
+        ucs_warn("Timeout or error. peer socket %i peer address %s", peer_fd, src_str2);
       }
 
       close(peer_fd);

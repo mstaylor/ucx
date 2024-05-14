@@ -69,7 +69,7 @@ ucs_status_t peer_listen(void* p) {
 
   len = sizeof(peer_info);
 
-  while(true) {
+  while(true && !atomic_load(&connection_established)) {
     peer = accept(listen_socket, (struct sockaddr*)&peer_info, &len);
     if (peer == -1) {
       ucs_warn("Error when connecting to peer %s", strerror(errno));
@@ -1351,6 +1351,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ep->fd = atomic_load(&accepting_socket);
         ucs_warn("switched ep->fd to listen socket - socket fd: %d host %s", ep->fd, src_str2);
       }
+
+      atomic_store(&connection_established, true);//stop listening
 
       //8. renable blocking on fd amd continue
       flags = fcntl(ep->fd,  F_GETFL, 0);
