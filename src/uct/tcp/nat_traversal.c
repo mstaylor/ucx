@@ -129,7 +129,7 @@ void listen_for_updates_peer2(void *p) {
       }
       idx++;
 
-      ucs_warn("trying remote address %s", peer_str);
+      //ucs_warn("trying remote address %s", peer_str);
       // ucs_warn("sleeping waiting for remote address from redis...");
       remote_address =
           getValueFromRedis(iface->config.redis_ip_address,
