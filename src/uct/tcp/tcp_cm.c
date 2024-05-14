@@ -1045,11 +1045,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
 
-ucs_warn("binding rendezvous port");
+/*ucs_warn("binding rendezvous port");
       if (bind(fd, (struct sockaddr*)&endpoint_local_port_addr, endpoint_local_addr_len) < 0) {
         ucs_error("error binding to rendezvous socket %s", strerror(errno));
 
-      }
+      }*/
 
 
 
@@ -1068,7 +1068,7 @@ ucs_warn("sending to rendezvous");
             ucs_error("Failed to send data to rendezvous server: ");
             return UCS_ERR_IO_ERROR;
           }
-
+          ucs_warn("receiving from rendezvous");
 
           bytes = recv(fd, &public_info, sizeof(public_info), MSG_WAITALL);
           if (bytes == -1) {
