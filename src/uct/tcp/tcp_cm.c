@@ -1340,10 +1340,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       }
 
       //delete peer2 since we should have connected
-      ucs_warn("deleting redis peer key since connected to peer: %s", peer_redis_key2);
+      /*ucs_warn("deleting redis peer key since connected to peer: %s", peer_redis_key2);
       deleteRedisKeyTransactional(iface->config.redis_ip_address, iface->config.redis_port,
                                   peer_redis_key2);
-
+*/
 
       //Do we need to switch the fd?
       if(atomic_load(&connection_established)) {
