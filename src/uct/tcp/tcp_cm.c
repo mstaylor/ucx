@@ -1005,28 +1005,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //listen thread for recv worker to process
       //this is a separate os assigned port because there is another socket
       //already listening which is created by the receiver worker
-      endpoint_local_port_addr.sin_family = AF_INET;
-      endpoint_local_port_addr.sin_addr.s_addr = INADDR_ANY;
-      endpoint_local_port_addr.sin_port = htons(0);
-
-
-      ///bind the endpoint to the newly created socket
-      if (bind(ep->fd, (struct sockaddr *)&endpoint_local_port_addr, endpoint_local_addr_len) < 0) {
-        ucs_error("error binding to rendezvous socket %s", strerror(errno));
-      }
-
-      //find the local port used to bind this endpoint
-      //we need that so the remote can hit the endpoint of this port number
-      //to open up the nat
-
-      if (getsockname(ep->fd, (struct sockaddr *)&endpoint_local_port_addr, &endpoint_local_addr_len) == -1) {
-        ucs_warn("getsockname failed for ep->fd");
-
-      }
-
-      endpoint_src_port = ntohs(endpoint_local_port_addr.sin_port);
-
-      ucs_warn("Assigned port: ep->fd %d", endpoint_src_port);
 
       ucs_warn("creating rendezvous socket");
       fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -1044,8 +1022,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return UCS_ERR_IO_ERROR;
       }
 
-
-/*ucs_warn("binding rendezvous port");
+/*
+      ucs_warn("binding rendezvous port");
       if (bind(fd, (struct sockaddr*)&endpoint_local_port_addr, endpoint_local_addr_len) < 0) {
         ucs_error("error binding to rendezvous socket %s", strerror(errno));
 
@@ -1057,13 +1035,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
           server_data.sin_addr.s_addr = inet_addr(iface->config.rendezvous_ip_address);
           server_data.sin_port = htons(iface->config.rendezvous_port);
 
-ucs_warn("connecting to rendezvous");
+          ucs_warn("connecting to rendezvous");
           while(connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
             ucs_error("Connection with the rendezvous server failed: %s", strerror(errno));
             //return UCS_ERR_IO_ERROR;
             msleep(1000);
           }
-ucs_warn("sending to rendezvous");
+          ucs_warn("sending to rendezvous");
           if(send(fd, iface->config.pairing_name, strlen(iface->config.pairing_name), MSG_DONTWAIT) == -1) {
             ucs_error("Failed to send data to rendezvous server: ");
             return UCS_ERR_IO_ERROR;
@@ -1085,6 +1063,7 @@ ucs_warn("sending to rendezvous");
                                 sizeof(public_ipadd)),
                                   ntohs(public_info.port));
 
+          endpoint_src_port = ntohs(public_info.port);
 
           //2. write redis value
 
@@ -1199,6 +1178,33 @@ ucs_warn("sending to rendezvous");
       //set the peer socket to be non-blocking so we can retry
       //connection attempts if necessary
 
+
+
+
+      endpoint_local_port_addr.sin_family = AF_INET;
+      endpoint_local_port_addr.sin_addr.s_addr = INADDR_ANY;
+      endpoint_local_port_addr.sin_port = public_info.port;
+
+
+      ///bind the endpoint to the newly created socket
+      if (bind(ep->fd, (struct sockaddr *)&endpoint_local_port_addr, endpoint_local_addr_len) < 0) {
+        ucs_error("error binding to rendezvous socket %s", strerror(errno));
+      }
+
+      //find the local port used to bind this endpoint
+      //we need that so the remote can hit the endpoint of this port number
+      //to open up the nat
+
+      if (getsockname(ep->fd, (struct sockaddr *)&endpoint_local_port_addr, &endpoint_local_addr_len) == -1) {
+        ucs_warn("getsockname failed for ep->fd");
+
+      }
+
+      ucs_warn("Assigned port: ep->fd %d  ", endpoint_src_port);
+
+
+
+
       if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
       }
@@ -1249,15 +1255,16 @@ ucs_warn("sending to rendezvous");
             result = select(ep->fd + 1, NULL, &set, NULL, &timeout);
             if (result < 0 && errno != EINTR) {
               // select() failed or connection timed out
-              ucs_warn("select failed/connect timeout on peer socket %i", ep->fd);
+              ucs_warn("select failed/connect timeout on peer socket %d host %s", ep->fd, src_str2);
             }  else if (result > 0) {
               result_opt = getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
               if (result_opt < 0) {
-                ucs_warn("Connection failed: %s and continuing", strerror(so_error));
+                ucs_warn("Connection failed: %s and continuing host %s", strerror(so_error), src_str2);
               } else if (so_error) {
-                ucs_warn("Error in delayed connection() %d - %s", so_error, strerror(so_error));
+                ucs_warn("Error in delayed connection() %d - %s host %s", so_error,
+                         strerror(so_error), src_str2);
               } else {
-                ucs_warn("Connected on attempt %d", retries + 1);
+                ucs_warn("Connected on attempt %d host %s", retries + 1, src_str2);
                 status = UCS_OK;
                 if (atomic_load(&connection_established)) {
                   break;
@@ -1267,7 +1274,7 @@ ucs_warn("sending to rendezvous");
 
               }
             } else {
-              ucs_warn("Timeout or error.");
+              ucs_warn("Timeout or error on fd %d host %s", ep->fd, src_str2);
             }
 
             close(ep->fd);
@@ -1332,11 +1339,17 @@ ucs_warn("sending to rendezvous");
 
       }
 
+      //delete peer2 since we should have connected
+      ucs_warn("deleting redis peer key since connected to peer: %s", peer_redis_key2);
+      deleteRedisKeyTransactional(iface->config.redis_ip_address, iface->config.redis_port,
+                                  peer_redis_key2);
+
+
       //Do we need to switch the fd?
       if(atomic_load(&connection_established)) {
         pthread_join(peer_listen_thread, NULL);
         ep->fd = atomic_load(&accepting_socket);
-        ucs_warn("switched ep->fd to listen socket - socket fd: %d", ep->fd);
+        ucs_warn("switched ep->fd to listen socket - socket fd: %d host %s", ep->fd, src_str2);
       }
 
       //8. renable blocking on fd amd continue
