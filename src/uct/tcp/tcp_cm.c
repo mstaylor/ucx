@@ -28,8 +28,12 @@ ucs_status_t peer_listen(void* p) {
   int enable_flag = 1;
   PeerConnectionData* info = (PeerConnectionData*)p;
 
+
   // Create socket on the port that was previously used to contact the rendezvous server
   int listen_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+  atomic_store(&accepting_socket, -1);
+  atomic_store(&connection_established, false);
   if (listen_socket == -1) {
     ucs_error("Socket creation failed: ");
     return UCS_ERR_IO_ERROR;
