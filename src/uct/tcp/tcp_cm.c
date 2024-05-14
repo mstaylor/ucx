@@ -32,8 +32,8 @@ ucs_status_t peer_listen(void* p) {
   // Create socket on the port that was previously used to contact the rendezvous server
   int listen_socket = socket(AF_INET, SOCK_STREAM, 0);
 
-  atomic_store(&accepting_socket, -1);
-  atomic_store(&connection_established, false);
+  //atomic_store(&accepting_socket, -1);
+  //atomic_store(&connection_established, false);
   if (listen_socket == -1) {
     ucs_error("Socket creation failed: ");
     return UCS_ERR_IO_ERROR;
@@ -1357,7 +1357,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_warn("switched ep->fd to listen socket - socket fd: %d host %s", ep->fd, src_str2);
       }
 
-      atomic_store(&connection_established, true);//stop listening
+      //atomic_store(&connection_established, true);//stop listening
 
       //8. renable blocking on fd amd continue
       flags = fcntl(ep->fd,  F_GETFL, 0);
