@@ -1028,13 +1028,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       ucs_warn("Assigned port: ep->fd %d", endpoint_src_port);
 
-
+      ucs_warn("creating rendezvous socket");
       fd = socket(AF_INET, SOCK_STREAM, 0);
       if (fd == -1) {
         ucs_error("Could not create socket for rendezvous server: ");
         return UCS_ERR_IO_ERROR;
       }
 
+      ucs_warn("updating rendezvous socket options");
       if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) <
               0 ||
           setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) <
@@ -1043,6 +1044,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return UCS_ERR_IO_ERROR;
       }
 
+
+ucs_warn("binding rendezvous port");
       if (bind(fd, (struct sockaddr*)&endpoint_local_port_addr, endpoint_local_addr_len) < 0) {
         ucs_error("error binding to rendezvous socket %s", strerror(errno));
 
@@ -1054,13 +1057,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
           server_data.sin_addr.s_addr = inet_addr(iface->config.rendezvous_ip_address);
           server_data.sin_port = htons(iface->config.rendezvous_port);
 
-
+ucs_warn("connecting to rendezvous");
           while(connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
             ucs_error("Connection with the rendezvous server failed: %s", strerror(errno));
             //return UCS_ERR_IO_ERROR;
             msleep(1000);
           }
-
+ucs_warn("sending to rendezvous");
           if(send(fd, iface->config.pairing_name, strlen(iface->config.pairing_name), MSG_DONTWAIT) == -1) {
             ucs_error("Failed to send data to rendezvous server: ");
             return UCS_ERR_IO_ERROR;
