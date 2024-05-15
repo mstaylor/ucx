@@ -59,15 +59,18 @@ ucs_status_t peer_listen(void* p) {
     ucs_warn("bound peer listen socket %d", listen_socket);
   }
 
+  ucs_socket_getname_str(listen_socket, src_str, UCS_SOCKADDR_STRING_LEN);
+
+  ucs_warn("bound to source address: %s", src_str);
+
+
+
   if (listen(listen_socket, 1) == -1) {
     ucs_error("Listening on local port failed: ");
     return UCS_ERR_IO_ERROR;
   } else {
     ucs_warn("peer listen_socket %d listening ", listen_socket);
   }
-
-
-  ucs_socket_getname_str(listen_socket, src_str, UCS_SOCKADDR_STRING_LEN);
 
   ucs_warn("peer listen_socket listening on %s", src_str);
 
@@ -837,7 +840,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     char dest_str[UCS_SOCKADDR_STRING_LEN];
     char src_str[UCS_SOCKADDR_STRING_LEN];
     char src_str2[UCS_SOCKADDR_STRING_LEN];
-    //char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
+    char endpoint_src_address[UCS_SOCKADDR_STRING_LEN];
+    char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
     char peer_redis_key2[UCS_SOCKADDR_STRING_LEN*2];
     char* remote_address = NULL;
     char * token = NULL;
@@ -846,8 +850,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int publicPort = 0;
     char publicAddressPort[UCS_SOCKADDR_STRING_LEN*2];
     char publicAddressPort2[UCS_SOCKADDR_STRING_LEN*2];
-    //struct sockaddr_in listen_local_port_addr;
-    //socklen_t listen_local_addr_len = sizeof(listen_local_port_addr);
     struct sockaddr_in endpoint_local_port_addr;
     socklen_t endpoint_local_addr_len = sizeof(endpoint_local_port_addr);
     int enable_flag = 1;
@@ -880,21 +882,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     PeerConnectionData peerConnectionData;
 
     //rendezvous variables
-
-    //struct sockaddr_in *sa_in;
-    //struct timeval timeout;
-
-    //uint16_t mapped_port;
-    //socklen_t local_addr_len = sizeof(local_addr);
-
-
     struct sockaddr_in server_data;
     PeerConnectionData public_info;
     ssize_t bytes;
     //char source_ipadd[UCS_SOCKADDR_STRING_LEN];
     char public_ipadd[UCS_SOCKADDR_STRING_LEN];
 
-    int fd/*, ret*/;
+    int fd;
 
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
                                             uct_tcp_iface_t);
@@ -926,80 +920,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     if (iface->config.enable_nat_traversal) {
       //Call Rendezvous server and retrieve public port
 
-      /*fd = socket(AF_INET, SOCK_STREAM, 0);
-      if (fd == -1) {
-        ucs_error("Could not create socket for rendezvous server: ");
-        return UCS_ERR_IO_ERROR;
-      }
-
-      if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) <
-              0 ||
-          setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) <
-              0) {
-        ucs_error("Setting REUSE options failed: ");
-        return UCS_ERR_IO_ERROR;
-      }*/
-
-      /*if (getsockname(iface->listen_fd, (struct sockaddr*)&local_port_addr, &local_addr_len)< 0 ) {
-        ucs_warn("getsockname failed");
-      }*/
-
-      /*if (bind(fd, (struct sockaddr*)&local_port_addr2, local_addr_len2) < 0) {
-        ucs_error("error binding to rendezvous socket %s", strerror(errno));
-
-      }
-
-      ret = getsockname(fd, (struct sockaddr*)&local_port_addr2, &local_addr_len2);
-      if (ret < 0) {
-        ucs_error("getsockname(fd=%d) failed: %m", fd);
-      }
-
-
-      status = ucs_sockaddr_get_port((struct sockaddr*)&local_port_addr2, &mapped_port);
-      if (status != UCS_OK) {
-        ucs_error("ucs_sockaddr_get_port failed");
-      }
-
-      ucs_warn("local address used to bind for rendezvous %s",
-               ucs_sockaddr_str((struct sockaddr*)&local_port_addr2,
-                                source_ipadd, sizeof(source_ipadd)));
-
-      server_data.sin_family = AF_INET;
-      server_data.sin_addr.s_addr = inet_addr(iface->config.rendezvous_ip_address);
-      server_data.sin_port = htons(iface->config.rendezvous_port);
-
-
-      while(connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
-        ucs_error("Connection with the rendezvous server failed: %s", strerror(errno));
-        //return UCS_ERR_IO_ERROR;
-        msleep(1000);
-      }
-
-      if(send(fd, iface->config.pairing_name, strlen(iface->config.pairing_name), MSG_DONTWAIT) == -1) {
-        ucs_error("Failed to send data to rendezvous server: ");
-        return UCS_ERR_IO_ERROR;
-      }
-
-
-      bytes = recv(fd, &public_info, sizeof(public_info), MSG_WAITALL);
-      if (bytes == -1) {
-        ucs_error("Failed to get data from rendezvous server: ");
-        return UCS_ERR_IO_ERROR;
-      } else if(bytes == 0) {
-        ucs_error("Server has disconnected");
-        return UCS_ERR_IO_ERROR;
-      }
-      //close(fd);
-      ucs_warn("client data returned from rendezvous: %s:%i",
-               ip_to_string(&public_info.ip.s_addr,
-                            public_ipadd,
-                            sizeof(public_ipadd)),
-                              ntohs(public_info.port));
-
-      if (ntohs(public_info.port) != mapped_port) {
-        ucs_warn("public port %i does not match private port %i", ntohs(public_info.port), sa_in->sin_port);
-      }*/
-
       //get the current listen and set the public address/port in redis
       ucs_sockaddr_get_port((struct sockaddr*)&iface->config.ifaddr,
                             &listen_port);
@@ -1026,15 +946,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         ucs_error("Setting REUSE options failed: ");
         return UCS_ERR_IO_ERROR;
       }
-
-/*
-      ucs_warn("binding rendezvous port");
-      if (bind(fd, (struct sockaddr*)&endpoint_local_port_addr, endpoint_local_addr_len) < 0) {
-        ucs_error("error binding to rendezvous socket %s", strerror(errno));
-
-      }*/
-
-
 
           server_data.sin_family = AF_INET;
           server_data.sin_addr.s_addr = inet_addr(iface->config.rendezvous_ip_address);
@@ -1097,10 +1008,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       // set the peer redis key#1 to point to peeraddress-> public address
       // this will be used by the peer to send connect requests
 
-      /*sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
+      sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
       setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                       peer_redis_key, publicAddressPort);
-      ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key, publicAddressPort);*/
+      ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key, publicAddressPort);
 
       // set the peer redis key#2 in a transaction to ensure it isn't overwritten
       // and there are no race conditions
@@ -1205,10 +1116,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       }
 
-      ucs_warn("Assigned port: ep->fd %d  ", endpoint_src_port);
+      ucs_sockaddr_str((const struct sockaddr *)&endpoint_local_port_addr,
+                       endpoint_src_address, sizeof(endpoint_src_address));
 
-
-
+      ucs_warn("Assigned port: ep->fd %d src address: %s ", endpoint_src_port, endpoint_src_address);
 
       if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
@@ -1230,7 +1141,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return UCS_ERR_IO_ERROR;
       }
 
-      while (retries < NAT_RETRIES &&!atomic_load(&connection_established)) {
+      while (!atomic_load(&connection_established)) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
         status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr, &peer_addr_len);
