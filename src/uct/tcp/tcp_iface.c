@@ -28,7 +28,7 @@ extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
 int current_address_count = 0;
 
-pthread_t redis_update_thread;
+pthread_t * redis_update_thread = NULL;
 
 
 static ucs_config_field_t uct_tcp_iface_config_table[] = {
@@ -605,13 +605,20 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 {
 
+  int thread_return;
+
+  if (redis_update_thread == NULL) {
+    ucs_warn("creating %zu pthreads based on UCX max_num_eps ", iface->super.config.max_num_eps);
+    redis_update_thread = (pthread_t *)malloc (iface->super.config.max_num_eps * sizeof(pthread_t));
+  }
   //first peer update thread
-  int thread_return = pthread_create(&redis_update_thread, NULL,
-                                     (void *)listen_for_updates_peer2, (void*) iface);
+  thread_return = pthread_create(&redis_update_thread[current_address_count], NULL,
+                                     (void *)listen_for_updates_peer, (void*) iface);
   if(thread_return) {
     ucs_error("Error when creating thread for listening for updated peer");
     return UCS_ERR_IO_ERROR;
   }
+  current_address_count++;
 
   return UCS_OK;
 }
@@ -887,7 +894,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         goto err_cleanup_event_set;
     }
 
-    if (self->config.enable_nat_traversal && current_address_count ==0) {
+    if (self->config.enable_nat_traversal) {
       //assume first address is used by worker as a receiver
       //and ping peer worker asynchronously
       uct_tcp_iface_connect_with_peers(self);
@@ -955,8 +962,12 @@ static UCS_CLASS_CLEANUP_FUNC(uct_tcp_iface_t)
 
     ucs_debug("tcp_iface %p: destroying", self);
 
-    if (current_address_count == 0 && self->config.enable_nat_traversal) {
-      pthread_join(redis_update_thread, NULL);
+    if (current_address_count >= 0 && self->config.enable_nat_traversal) {
+      for (int i = 0; i < current_address_count; i++) {
+        pthread_join(redis_update_thread[i], NULL);
+      }
+
+      free(redis_update_thread);
 
     }
 

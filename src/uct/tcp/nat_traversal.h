@@ -24,17 +24,13 @@ typedef struct {
 int msleep(long msec);
 
 const char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size);
-/**
- * Checks for peer address and creates local->public address map
- * @param p
- */
-void listen_for_updates_peer(void *p);
+
 
 /**
  * Checks for peer address tries to connect to the remote peer
  * @param p
  */
-void listen_for_updates_peer2(void *p);
+void listen_for_updates_peer(void *p);
 
 
 
