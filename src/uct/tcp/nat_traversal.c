@@ -93,6 +93,8 @@ void listen_for_updates_peer(void *p) {
   ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                    src_str, sizeof(src_str));
 
+  ucs_warn("starting nat traversal thread for address: %s", src_str);
+
   if (getsockname(iface->listen_fd, (struct sockaddr *)&local_port_addr,
                   &local_addr_len) < 0) {
     ucs_warn("getsockname failed");
