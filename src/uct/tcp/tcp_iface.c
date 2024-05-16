@@ -612,6 +612,7 @@ static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
     redis_update_thread = (pthread_t *)malloc (iface->super.config.max_num_eps * sizeof(pthread_t));
   }
   //first peer update thread
+  ucs_warn("creating thread %d", current_address_count);
   thread_return = pthread_create(&redis_update_thread[current_address_count], NULL,
                                      (void *)listen_for_updates_peer, (void*) iface);
   if(thread_return) {
