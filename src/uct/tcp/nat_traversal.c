@@ -137,7 +137,8 @@ void listen_for_updates_peer(void *p) {
           getValueFromRedis(iface->config.redis_ip_address,
                             iface->config.redis_port, peer_str);
     }
-    ucs_warn("received remote address: %s", remote_address);
+
+    ucs_warn("received remote address: %s for peer %s", remote_address, peer_str);
     //peer endpoint should now start pinging the source endpoint
     token = strtok(remote_address, ":");
 
@@ -239,6 +240,8 @@ void listen_for_updates_peer(void *p) {
              ntohs(public_info.port));
 
     sprintf(peer_redis_key2, "%s:%s:%d", PEER_KEY2, public_ipadd, ntohs(local_port_addr.sin_port));
+
+    ucs_warn("setting peer_redis_key2 to %s", peer_redis_key2);
 
     /*if (ntohs(public_info.port) != mapped_port) {
       ucs_warn("public port %i does not match private port %i",
