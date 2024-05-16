@@ -901,8 +901,6 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
       uct_tcp_iface_connect_with_peers(self);
     }
 
-    current_address_count++;
-
     return UCS_OK;
 
 err_cleanup_event_set:
