@@ -672,6 +672,7 @@ static ucs_status_t
 ucs_socket_handle_io_error(int fd, const char *name, ssize_t io_retval, int io_errno)
 {
     ucs_status_t status;
+    char src_str[UCS_SOCKADDR_STRING_LEN*2];
 
     if (io_retval == 0) {
         /* 0 can be returned only by recv() system call as an error if
@@ -680,7 +681,8 @@ ucs_socket_handle_io_error(int fd, const char *name, ssize_t io_retval, int io_e
         ucs_warn("fd %d is closed", fd);
         status = UCS_ERR_NOT_CONNECTED; /* Connection closed by peer */
     } else {
-        ucs_warn("%s(%d) failed: %s", name, fd, strerror(io_errno));
+      ucs_socket_getname_str(fd, src_str, UCS_SOCKADDR_STRING_LEN);
+        ucs_warn("%s(%d) failed: %s src socket: %s", name, fd, strerror(io_errno), src_str);
         status = ucs_socket_check_errno(io_errno);
     }
 
