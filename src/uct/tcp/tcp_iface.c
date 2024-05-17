@@ -10,17 +10,17 @@
 
 #include "tcp.h"
 
-#include <ucs/async/async.h>
-#include <ucs/sys/string.h>
-#include <ucs/config/types.h>
-#include <sys/socket.h>
-#include <pthread.h>
-#include <sys/poll.h>
-#include <netinet/tcp.h>
+#include "nat_traversal.h"
+#include "ucs/sys/redis.h"
 #include <dirent.h>
 #include <float.h>
-#include "redis.h"
-#include "nat_traversal.h"
+#include <netinet/tcp.h>
+#include <pthread.h>
+#include <sys/poll.h>
+#include <sys/socket.h>
+#include <ucs/async/async.h>
+#include <ucs/config/types.h>
+#include <ucs/sys/string.h>
 
 #define UCT_TCP_IFACE_NETDEV_DIR "/sys/class/net/tmp"
 
@@ -92,6 +92,20 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
     {"REDIS_PORT", "0",
      "Redis Port\n",
      ucs_offsetof(uct_tcp_iface_config_t, redis_port), UCS_CONFIG_TYPE_INT},
+
+
+    {"ENABLE_REDIS_LOGGING", "n",
+     "enable the use of redis logging ",
+     ucs_offsetof(uct_tcp_iface_config_t, enable_redis_logging), UCS_CONFIG_TYPE_BOOL},
+    {"REDIS_LOG_IP", "",
+     "Redis Logging IP ",
+     ucs_offsetof(uct_tcp_iface_config_t, redis_log_ip_address), UCS_CONFIG_TYPE_STRING},
+    {"REDIS_LOG_PORT", "0",
+     "Redis Logging Port\n",
+     ucs_offsetof(uct_tcp_iface_config_t, redis_log_port), UCS_CONFIG_TYPE_INT},
+
+
+
     {"RENDEZVOUS_IP", "",
      "Rendezvous IP ",
      ucs_offsetof(uct_tcp_iface_config_t, rendezvous_ip_address), UCS_CONFIG_TYPE_STRING},
@@ -773,6 +787,10 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                   config->max_conn_retries, UINT8_MAX);
         return UCS_ERR_INVALID_PARAM;
     }
+
+    redis_log_host = config->redis_log_ip_address;
+    redis_log_port = config->redis_log_port;
+    use_redis_logging = config->enable_redis_logging;
 
     self->config.zcopy.max_hdr     = self->config.tx_seg_size -
                                      self->config.zcopy.hdr_offset;

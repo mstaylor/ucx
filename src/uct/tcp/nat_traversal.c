@@ -3,7 +3,7 @@
 //
 
 #include "nat_traversal.h"
-#include "redis.h"
+#include "ucs/sys/redis.h"
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/in.h>

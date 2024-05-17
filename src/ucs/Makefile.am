@@ -16,7 +16,7 @@ libucs_la_CPPFLAGS = $(BASE_CPPFLAGS) $(BFD_CPPFLAGS) \
                      -DUCX_MODULE_DIR=\"$(moduledir)\" \
                      -DUCX_CONFIG_DIR=\"$(ucx_config_dir)\"
 libucs_la_CFLAGS   = $(BASE_CFLAGS) $(BFD_CFLAGS)
-libucs_la_LDFLAGS  = -ldl $(BFD_LDFLAGS) -version-info $(SOVERSION)
+libucs_la_LDFLAGS  = -lhiredis -ldl $(BFD_LDFLAGS) -version-info $(SOVERSION)
 libucs_ladir       = $(includedir)/ucs
 libucs_la_LIBADD   = $(LIBM) $(top_builddir)/src/ucm/libucm.la $(BFD_LIBS)
 
@@ -69,6 +69,7 @@ nobase_dist_libucs_la_HEADERS = \
 	sys/topo/base/topo.h \
 	sys/stubs.h \
 	sys/uid.h \
+	sys/redis.h \
 	time/time_def.h \
 	type/class.h \
 	type/param.h \
@@ -195,6 +196,7 @@ libucs_la_SOURCES = \
 	sys/iovec.c \
 	sys/lib.c \
 	sys/sock.c \
+	sys/redis.c \
 	sys/topo/base/topo.c \
 	sys/stubs.c \
 	sys/uid.c \

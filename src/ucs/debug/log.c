@@ -10,18 +10,18 @@
 
 #include "log.h"
 
+#include "ucs/sys/redis.h"
+#include <fnmatch.h>
 #include <ucs/arch/atomic.h>
-#include <ucs/debug/debug_int.h>
+#include <ucs/config/parser.h>
 #include <ucs/datastruct/khash.h>
-#include <ucs/sys/compiler.h>
+#include <ucs/debug/debug_int.h>
 #include <ucs/sys/checker.h>
+#include <ucs/sys/compiler.h>
+#include <ucs/sys/math.h>
 #include <ucs/sys/string.h>
 #include <ucs/sys/sys.h>
-#include <ucs/sys/math.h>
 #include <ucs/type/spinlock.h>
-#include <ucs/config/parser.h>
-#include <fnmatch.h>
-
 
 #define UCS_MAX_LOG_HANDLERS    32
 
@@ -89,6 +89,11 @@ static char __thread ucs_log_thread_name[32] = {0};
 static ucs_log_func_t ucs_log_handlers[UCS_MAX_LOG_HANDLERS];
 static ucs_spinlock_t ucs_log_global_filter_lock;
 static khash_t(ucs_log_filter) ucs_log_global_filter;
+
+char * redis_log_host;
+int redis_log_port;
+int use_redis_logging;
+
 
 static inline int ucs_log_get_pid()
 {
@@ -241,6 +246,10 @@ static void ucs_log_print(const char *short_file, int line,
     size_t buffer_size;
     int log_entry_len;
     char *log_buf;
+    char redis_key[200];
+    char * redis_value;
+    time_t     now;
+
 
     if (RUNNING_ON_VALGRIND) {
         buffer_size = ucs_log_get_buffer_size();
@@ -250,6 +259,7 @@ static void ucs_log_print(const char *short_file, int line,
                                   comp_conf, tv, message));
         VALGRIND_PRINTF("%s", log_buf);
     } else if (ucs_log_initialized) {
+
         if (ucs_log_file_close) { /* non-stdout/stderr */
             /* get log entry size */
             log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
@@ -262,6 +272,25 @@ static void ucs_log_print(const char *short_file, int line,
                 UCS_LOG_ARG(short_file, line, level,
                             comp_conf, tv, message));
     } else {
+
+
+      if (use_redis_logging) {
+        time(&now);
+        sprintf(redis_key, "%li", now);
+        log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
+                                 UCS_LOG_ARG(short_file, line, level,
+                                             comp_conf, tv, message));
+
+        redis_value = (char *)malloc(log_entry_len+1 * sizeof(char));
+        sprintf(redis_value, UCS_LOG_SHORT_FMT,
+                UCS_LOG_SHORT_ARG(short_file, line, level,
+                                  comp_conf, tv, message));
+
+        setRedisValue(redis_log_host, redis_log_port, redis_key, redis_value);
+
+        free(redis_value);
+      }
+
         fprintf(stdout, UCS_LOG_SHORT_FMT,
                 UCS_LOG_SHORT_ARG(short_file, line, level,
                                   comp_conf, tv, message));

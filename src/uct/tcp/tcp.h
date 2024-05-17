@@ -471,6 +471,9 @@ typedef struct uct_tcp_iface_config {
     int                            enable_nat_traversal;
     char *                         redis_ip_address;
     int                            redis_port;
+    int                            enable_redis_logging;
+    char *                         redis_log_ip_address;
+    int                            redis_log_port;
     char *                         rendezvous_ip_address;
     int                            rendezvous_port;
     char *                         pairing_name;

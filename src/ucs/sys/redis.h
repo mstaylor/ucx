@@ -8,7 +8,7 @@
 #include "hiredis/hiredis.h"
 
 
-#include "tcp.h"
+#include <uct/tcp/tcp.h>
 
 #define PEER_KEY "peer"
 #define PEER_KEY2 "peer2"

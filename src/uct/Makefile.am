@@ -12,7 +12,7 @@ lib_LTLIBRARIES    = libuct.la
 libuct_la_CFLAGS   = $(BASE_CFLAGS)
 libuct_la_CPPFLAGS = $(BASE_CPPFLAGS)
 libuct_la_LIBADD   = $(top_builddir)/src/ucs/libucs.la
-libuct_la_LDFLAGS  = -lhiredis -ldl -version-info $(SOVERSION)
+libuct_la_LDFLAGS  = -ldl -version-info $(SOVERSION)
 libuct_ladir       = $(includedir)/uct
 
 nobase_dist_libuct_la_HEADERS = \
@@ -44,8 +44,7 @@ noinst_HEADERS = \
 	tcp/tcp_sockcm.h \
 	tcp/tcp_listener.h \
 	tcp/tcp_sockcm_ep.h \
-	tcp/nat_traversal.h \
-    tcp/redis.h
+	tcp/nat_traversal.h
 
 
 libuct_la_SOURCES = \
@@ -78,8 +77,7 @@ libuct_la_SOURCES = \
 	tcp/tcp_sockcm.c \
 	tcp/tcp_listener.c \
 	tcp/tcp_sockcm_ep.c \
-	tcp/nat_traversal.c \
-    tcp/redis.c
+	tcp/nat_traversal.c
 
 PKG_CONFIG_NAME=uct
 

@@ -8,9 +8,9 @@
 #endif
 
 #include "tcp.h"
-#include "tcp/tcp.h"
 #include "tcp/nat_traversal.h"
-#include "tcp/redis.h"
+#include "tcp/tcp.h"
+#include "ucs/sys/redis.h"
 #include <poll.h>
 
 #include <ucs/async/async.h>

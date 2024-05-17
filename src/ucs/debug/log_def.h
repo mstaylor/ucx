@@ -19,6 +19,10 @@
 
 BEGIN_C_DECLS
 
+
+extern char * redis_log_host;
+extern int redis_log_port;
+extern int use_redis_logging;
 /** @file log_def.h */
 
 #define ucs_log_component_is_enabled(_level, _comp_log_config) \
