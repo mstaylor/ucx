@@ -260,39 +260,37 @@ static void ucs_log_print(const char *short_file, int line,
         VALGRIND_PRINTF("%s", log_buf);
     } else if (ucs_log_initialized) {
 
-      fprintf(stdout, "log init");
+
 
         if (ucs_log_file_close) { /* non-stdout/stderr */
             /* get log entry size */
-            fprintf(stdout, "log init2");
+
             log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
                                      UCS_LOG_ARG(short_file, line, level,
                                                  comp_conf, tv, message));
             ucs_log_handle_file_max_size(log_entry_len);
         }
-        fprintf(stdout, "log init3");
+        if (use_redis_logging) {
+          time(&now);
+          sprintf(redis_key, "%li", now);
+          log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
+                                   UCS_LOG_ARG(short_file, line, level,
+                                               comp_conf, tv, message));
+
+          redis_value = (char *)malloc(log_entry_len+1 * sizeof(char));
+          sprintf(redis_value, UCS_LOG_SHORT_FMT,
+                  UCS_LOG_SHORT_ARG(short_file, line, level,
+                                    comp_conf, tv, message));
+
+          setRedisValue(redis_log_host, redis_log_port, redis_key, redis_value);
+
+          free(redis_value);
+        }
         fprintf(ucs_log_file, UCS_LOG_FMT,
                 UCS_LOG_ARG(short_file, line, level,
                             comp_conf, tv, message));
     } else {
 
-
-      if (use_redis_logging) {
-        time(&now);
-        sprintf(redis_key, "%li", now);
-        log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
-                                 UCS_LOG_ARG(short_file, line, level,
-                                             comp_conf, tv, message));
-
-        redis_value = (char *)malloc(log_entry_len+1 * sizeof(char));
-        sprintf(redis_value, UCS_LOG_SHORT_FMT,
-                UCS_LOG_SHORT_ARG(short_file, line, level,
-                                  comp_conf, tv, message));
-
-        setRedisValue(redis_log_host, redis_log_port, redis_key, redis_value);
-
-        free(redis_value);
-      }
 
         fprintf(stdout, UCS_LOG_SHORT_FMT,
                 UCS_LOG_SHORT_ARG(short_file, line, level,
