@@ -94,15 +94,6 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
      ucs_offsetof(uct_tcp_iface_config_t, redis_port), UCS_CONFIG_TYPE_INT},
 
 
-    {"ENABLE_REDIS_LOGGING", "n",
-     "enable the use of redis logging ",
-     ucs_offsetof(uct_tcp_iface_config_t, enable_redis_logging), UCS_CONFIG_TYPE_BOOL},
-    {"REDIS_LOG_IP", "",
-     "Redis Logging IP ",
-     ucs_offsetof(uct_tcp_iface_config_t, redis_log_ip_address), UCS_CONFIG_TYPE_STRING},
-    {"REDIS_LOG_PORT", "0",
-     "Redis Logging Port\n",
-     ucs_offsetof(uct_tcp_iface_config_t, redis_log_port), UCS_CONFIG_TYPE_INT},
 
 
 
@@ -788,12 +779,6 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         return UCS_ERR_INVALID_PARAM;
     }
 
-    if (config->enable_redis_logging) {
-      strcpy(redis_log_host, config->redis_log_ip_address);
-      redis_log_port = config->redis_log_port;
-      use_redis_logging = config->enable_redis_logging;
-    }
-
     self->config.zcopy.max_hdr     = self->config.tx_seg_size -
                                      self->config.zcopy.hdr_offset;
     self->config.prefer_default    = config->prefer_default;
@@ -1030,6 +1015,8 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
     const char *sysfs_path;
     char path_buffer[PATH_MAX];
     ucs_sys_device_t sys_dev;
+
+
 
     dir = opendir(UCT_TCP_IFACE_NETDEV_DIR);
     if (dir == NULL) {

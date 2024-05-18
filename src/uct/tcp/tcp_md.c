@@ -17,6 +17,16 @@ static ucs_config_field_t uct_tcp_md_config_table[] = {
     {"", "", NULL,
      ucs_offsetof(uct_tcp_md_config_t, super), UCS_CONFIG_TYPE_TABLE(uct_md_config_table)},
 
+    {"ENABLE_REDIS_LOGGING", "n",
+     "enable the use of redis logging ",
+     ucs_offsetof(uct_tcp_md_config_t, enable_redis_logging), UCS_CONFIG_TYPE_BOOL},
+    {"REDIS_LOG_IP", "",
+     "Redis Logging IP ",
+     ucs_offsetof(uct_tcp_md_config_t, redis_log_ip_address), UCS_CONFIG_TYPE_STRING},
+    {"REDIS_LOG_PORT", "0",
+     "Redis Logging Port\n",
+     ucs_offsetof(uct_tcp_md_config_t, redis_log_port), UCS_CONFIG_TYPE_INT},
+
     {"AF_PRIO", "inet,inet6",
      "Priority of address families used for socket connections",
      ucs_offsetof(uct_tcp_md_config_t, af_prio), UCS_CONFIG_TYPE_STRING_ARRAY},
@@ -79,6 +89,12 @@ uct_tcp_md_open(uct_component_t *component, const char *md_name,
     tcp_md->super.ops            = &uct_tcp_md_ops;
     tcp_md->super.component      = &uct_tcp_component;
     tcp_md->config.af_prio_count = ucs_min(md_config->af_prio.count, 2);
+
+    if (md_config->enable_redis_logging) {
+      strcpy(redis_log_host, md_config->redis_log_ip_address);
+      redis_log_port = md_config->redis_log_port;
+      use_redis_logging = md_config->enable_redis_logging;
+    }
 
     for (i = 0; i < tcp_md->config.af_prio_count; i++) {
         if (!strcasecmp(md_config->af_prio.af[i], "inet")) {
