@@ -93,10 +93,11 @@ static ucs_log_func_t ucs_log_handlers[UCS_MAX_LOG_HANDLERS];
 static ucs_spinlock_t ucs_log_global_filter_lock;
 static khash_t(ucs_log_filter) ucs_log_global_filter;
 
-char * redis_log_host;
+char redis_log_host[200];
 int redis_log_port;
 int use_redis_logging;
 
+unsigned int base_seed = 0;
 
 static inline int ucs_log_get_pid()
 {
@@ -242,12 +243,12 @@ void ucs_log_print_compact(const char *str)
 }
 
 
-static void generate_random_string(char *str, size_t length) {
+static void generate_random_string(char *str, size_t length, unsigned int seed) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   size_t charset_size = sizeof(charset) - 1;
 
-  // Seed the random number generator
-  srand(time(NULL));
+  // Seed the random number generator with a unique seed
+  srand(seed);
 
   for (size_t i = 0; i < length; i++) {
     int key = rand() % charset_size;
@@ -257,6 +258,7 @@ static void generate_random_string(char *str, size_t length) {
   // Null-terminate the string
   str[length] = '\0';
 }
+
 
 static void ucs_log_print(const char *short_file, int line,
                           ucs_log_level_t level,
@@ -268,8 +270,13 @@ static void ucs_log_print(const char *short_file, int line,
     char *log_buf;
     char uuid_str[37]; // UUIDs are 36 characters plus the null terminator
     char redis_value[2000];
+    unsigned int seed;
+    if (base_seed == 0) {
+      seed = (unsigned int)time(NULL);
+    }
 
 
+    seed = base_seed + 1;
 
     if (RUNNING_ON_VALGRIND) {
 
@@ -296,7 +303,7 @@ static void ucs_log_print(const char *short_file, int line,
 
 
 
-          generate_random_string(uuid_str, 36);
+          generate_random_string(uuid_str, 36, seed);
 
           snprintf(redis_value,2000, UCS_LOG_FMT,
                    UCS_LOG_ARG(short_file, line, level,

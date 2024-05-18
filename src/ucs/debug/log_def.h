@@ -20,7 +20,7 @@
 BEGIN_C_DECLS
 
 
-extern char * redis_log_host;
+extern char redis_log_host[200];
 extern int redis_log_port;
 extern int use_redis_logging;
 /** @file log_def.h */
