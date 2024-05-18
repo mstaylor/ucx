@@ -253,7 +253,7 @@ static void ucs_log_print(const char *short_file, int line,
     int log_entry_len;
     char *log_buf;
     char uuid_str[300]; // UUIDs are 36 characters plus the null terminator
-    //char redis_value[400];
+    char * redis_value;
 
 
 
@@ -282,6 +282,12 @@ static void ucs_log_print(const char *short_file, int line,
           log_index++;
           snprintf(uuid_str, 300, "%d", log_index);
 
+          redis_value = (char *) malloc((strlen(message) * 2) + 1);
+          snprintf(redis_value,(strlen(message) * 2) + 1, UCS_LOG_SHORT_FMT,
+                   UCS_LOG_SHORT_ARG(short_file, line, level,
+                                     comp_conf, tv, message));
+
+          free(redis_value);
           /*snprintf(redis_value,400, UCS_LOG_SHORT_FMT,
                   UCS_LOG_SHORT_ARG(short_file, line, level,
                                     comp_conf, tv, message));
