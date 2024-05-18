@@ -901,8 +901,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     }
 
     if (self->config.enable_nat_traversal) {
-      //assume first address is used by worker as a receiver
-      //and ping peer worker asynchronously
+
       uct_tcp_iface_connect_with_peers(self);
     }
 

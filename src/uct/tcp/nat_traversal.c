@@ -403,6 +403,9 @@ void listen_for_updates_peer(void *p) {
       retries++;
     }
 
+    close(fd);
+    close(peer_fd);
+
   }
 }
 
