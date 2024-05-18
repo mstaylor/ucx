@@ -106,6 +106,65 @@ ucs_status_t deleteRedisKey(const char *hostname, int port, const char *key) {
     return status;
 }
 
+ucs_status_t deleteRedisKeyTransactionalithContext(redisContext *c, const char *key) {
+  ucs_status_t status = UCS_OK;
+
+  redisReply *reply;
+
+  if (c != NULL) {
+
+    reply = redisCommand(c,"WATCH %s", key);
+    if (reply == NULL) {
+      ucs_warn("Failed to execute WATCH command");
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"GET %s", key);
+
+    if (reply == NULL) {
+      //key exists so not updating
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"MULTI");
+    if (reply == NULL) {
+      ucs_warn("could not set redis MULTI");
+      return UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+    ucs_warn("deleting redis key %s", key);
+    reply = redisCommand(c, "DEL %s", key);
+    if (reply->type == REDIS_REPLY_INTEGER) {
+      if (reply->integer == 1) {
+        ucs_warn("Key '%s' deleted successfully.", key);
+      } else {
+        ucs_warn("Key '%s' does not exist.", key);
+      }
+    } else {
+      ucs_warn("Error: %s", c->errstr);
+      status = UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+    reply = redisCommand(c,"EXEC");
+    if (reply->type == REDIS_REPLY_ARRAY) {
+      ucs_warn("Transaction executed, counter delete key: %s ", key);
+      status = UCS_OK;
+    } else {
+      printf("Transaction failed, counter not delete Key: %s ", key);
+      status = UCS_ERR_IO_ERROR;
+    }
+    freeReplyObject(reply);
+
+  }
+
+
+  return status;
+}
+
+
 ucs_status_t deleteRedisKeyTransactional(const char *hostname, int port, const char *key) {
   ucs_status_t status = UCS_OK;
 
@@ -218,6 +277,34 @@ ucs_status_t updateKeyIfMissing(const char *hostname, int port, const char *key,
   return status;
 
 
+}
+
+char * getValueFromRedisWithContext(redisContext *c, const char *key) {
+  redisReply *reply;
+
+  char * result = NULL;
+
+  if (c != NULL) {
+    reply = redisCommand(c, "GET %s", key);
+    if (reply == NULL) {
+      ucs_warn("Error in GET command or key not found");
+    } else {
+      // store the value in a char*
+      if (reply->type == REDIS_REPLY_STRING) {
+        //ucs_warn("The value of '%s' is: %s", key, reply->str);
+        result = (char*) malloc(strlen(reply->str)+1);
+        strcpy(result, reply->str);
+
+      } //else {
+        //ucs_warn("The key '%s' does not exist", key);
+      //}
+      freeReplyObject(reply);
+    }
+
+    // Disconnect from Redis
+
+  }
+  return result;
 }
 char * getValueFromRedis(const char *hostname, int port, const char *key){
     redisReply *reply;

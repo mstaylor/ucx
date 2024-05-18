@@ -23,12 +23,15 @@ ucs_status_t setRedisValueWithContext(redisContext *c, const char *key, const ch
 ucs_status_t deleteRedisKey(const char *hostname, int port, const char *key);
 
 ucs_status_t deleteRedisKeyTransactional(const char *hostname, int port, const char *key);
+ucs_status_t deleteRedisKeyTransactionalithContext(redisContext *c, const char *key);
 
 ucs_status_t updateKeyIfMissing(const char *hostname, int port, const char *key, const char *value);
 
 
 
 char * getValueFromRedis(const char *hostname, int port, const char *key);
+
+char * getValueFromRedisWithContext(redisContext *c, const char *key);
 
 
 
