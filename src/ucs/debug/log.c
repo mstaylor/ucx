@@ -285,11 +285,11 @@ static void ucs_log_print(const char *short_file, int line,
           snprintf(uuid_str, 300, "%d", log_index);
 
           //redis_value = (char *) malloc((strlen(message) * 2) + 1);
-          snprintf(redis_value,2000, UCS_LOG_SHORT_FMT,
-                   UCS_LOG_SHORT_ARG(short_file, line, level,
-                                     comp_conf, tv, message));
+          snprintf(redis_value,2000, UCS_LOG_FMT,
+                   UCS_LOG_ARG(short_file, line, level,
+                               comp_conf, tv, message));
           printf(redis_value);
-          //setRedisValue(redis_log_host, redis_log_port, uuid_str, redis_value);
+          setRedisValue(redis_log_host, redis_log_port, uuid_str, redis_value);
 
 
 
