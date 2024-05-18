@@ -788,9 +788,11 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         return UCS_ERR_INVALID_PARAM;
     }
 
-    redis_log_host = config->redis_log_ip_address;
-    redis_log_port = config->redis_log_port;
-    use_redis_logging = config->enable_redis_logging;
+    if (redis_log_host == NULL) {
+      redis_log_host = config->redis_log_ip_address;
+      redis_log_port = config->redis_log_port;
+      use_redis_logging = config->enable_redis_logging;
+    }
 
     self->config.zcopy.max_hdr     = self->config.tx_seg_size -
                                      self->config.zcopy.hdr_offset;

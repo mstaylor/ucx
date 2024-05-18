@@ -59,7 +59,7 @@
 
 KHASH_MAP_INIT_STR(ucs_log_filter, char);
 
-int log_index = 0;
+
 
 const char *ucs_log_level_names[] = {
     [UCS_LOG_LEVEL_FATAL]        = "FATAL",
@@ -242,7 +242,21 @@ void ucs_log_print_compact(const char *str)
 }
 
 
+static void generate_random_string(char *str, size_t length) {
+  const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  size_t charset_size = sizeof(charset) - 1;
 
+  // Seed the random number generator
+  srand(time(NULL));
+
+  for (size_t i = 0; i < length; i++) {
+    int key = rand() % charset_size;
+    str[i] = charset[key];
+  }
+
+  // Null-terminate the string
+  str[length] = '\0';
+}
 
 static void ucs_log_print(const char *short_file, int line,
                           ucs_log_level_t level,
@@ -252,7 +266,7 @@ static void ucs_log_print(const char *short_file, int line,
     size_t buffer_size;
     int log_entry_len;
     char *log_buf;
-    char uuid_str[300]; // UUIDs are 36 characters plus the null terminator
+    char uuid_str[37]; // UUIDs are 36 characters plus the null terminator
     char redis_value[2000];
 
 
@@ -280,15 +294,15 @@ static void ucs_log_print(const char *short_file, int line,
         }
         if (use_redis_logging) {
 
-          //sprintf
-          log_index++;
-          snprintf(uuid_str, 300, "%d", log_index);
 
-          //redis_value = (char *) malloc((strlen(message) * 2) + 1);
+
+          generate_random_string(uuid_str, 36);
+
           snprintf(redis_value,2000, UCS_LOG_FMT,
                    UCS_LOG_ARG(short_file, line, level,
                                comp_conf, tv, message));
-          printf(redis_value);
+          printf("redis host %s:%i", redis_log_host, redis_log_port);
+          printf("%s-> %s", uuid_str, redis_value);
           setRedisValue(redis_log_host, redis_log_port, uuid_str, redis_value);
 
 
