@@ -610,9 +610,9 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 {
 
-  //int thread_return;
+  int thread_return;
 
-  /*if (redis_update_thread == NULL) {
+  if (redis_update_thread == NULL) {
     ucs_warn("creating %zu pthreads based on UCX max_num_eps ", iface->super.config.max_num_eps);
     redis_update_thread = (pthread_t *)malloc (iface->super.config.max_num_eps * sizeof(pthread_t));
   }
@@ -624,7 +624,7 @@ static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
     ucs_error("Error when creating thread for listening for updated peer");
     return UCS_ERR_IO_ERROR;
   }
-  current_address_count++;*/
+  current_address_count++;
 
   return UCS_OK;
 }
