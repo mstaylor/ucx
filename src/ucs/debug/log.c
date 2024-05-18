@@ -288,7 +288,8 @@ static void ucs_log_print(const char *short_file, int line,
           snprintf(redis_value,2000, UCS_LOG_SHORT_FMT,
                    UCS_LOG_SHORT_ARG(short_file, line, level,
                                      comp_conf, tv, message));
-          setRedisValue(redis_log_host, redis_log_port, uuid_str, redis_value);
+          printf(redis_value);
+          //setRedisValue(redis_log_host, redis_log_port, uuid_str, redis_value);
 
 
 
