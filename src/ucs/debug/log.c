@@ -272,7 +272,7 @@ static void ucs_log_print(const char *short_file, int line,
         }
         if (use_redis_logging) {
           clock_gettime(CLOCK_REALTIME, &now);
-          sprintf(redis_key, "%li", now.tv_nsec);
+          sprintf(redis_key, "%lu", now.tv_nsec);
           log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
                                    UCS_LOG_ARG(short_file, line, level,
                                                comp_conf, tv, message));
