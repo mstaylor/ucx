@@ -22,6 +22,7 @@
 #include <ucs/sys/string.h>
 #include <ucs/sys/sys.h>
 #include <ucs/type/spinlock.h>
+#include <uuid/uuid.h>
 
 #define UCS_MAX_LOG_HANDLERS    32
 
@@ -238,6 +239,13 @@ void ucs_log_print_compact(const char *str)
     }
 }
 
+static void generate_uuid(char *uuid_str) {
+  uuid_t uuid;
+  uuid_generate(uuid);
+  uuid_unparse(uuid, uuid_str);
+}
+
+
 static void ucs_log_print(const char *short_file, int line,
                           ucs_log_level_t level,
                           const ucs_log_component_config_t *comp_conf,
@@ -246,9 +254,9 @@ static void ucs_log_print(const char *short_file, int line,
     size_t buffer_size;
     int log_entry_len;
     char *log_buf;
-    char redis_key[200];
+    char uuid_str[37]; // UUIDs are 36 characters plus the null terminator
     char * redis_value;
-    struct timespec now;
+
 
 
     if (RUNNING_ON_VALGRIND) {
@@ -271,18 +279,21 @@ static void ucs_log_print(const char *short_file, int line,
             ucs_log_handle_file_max_size(log_entry_len);
         }
         if (use_redis_logging) {
-          clock_gettime(CLOCK_REALTIME, &now);
-          sprintf(redis_key, "%lu", now.tv_nsec);
+
+          generate_uuid(uuid_str);
+
+
           log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
-                                   UCS_LOG_ARG(short_file, line, level,
-                                               comp_conf, tv, message));
+                                  UCS_LOG_ARG(short_file, line, level,
+                                              comp_conf, tv, message));
+
 
           redis_value = (char *)malloc(log_entry_len+1 * sizeof(char));
-          sprintf(redis_value, UCS_LOG_SHORT_FMT,
+          snprintf(redis_value,log_entry_len, UCS_LOG_SHORT_FMT,
                   UCS_LOG_SHORT_ARG(short_file, line, level,
                                     comp_conf, tv, message));
 
-          setRedisValue(redis_log_host, redis_log_port, redis_key, redis_value);
+          setRedisValue(redis_log_host, redis_log_port, uuid_str, redis_value);
 
           free(redis_value);
         }
