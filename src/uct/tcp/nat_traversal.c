@@ -90,7 +90,7 @@ void listen_for_updates_peer(void *p) {
 
   uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
 
-  msleep(5000);
+
 
   ucs_sockaddr_str((struct sockaddr *)&iface->config.ifaddr,
                    src_str, sizeof(src_str));
