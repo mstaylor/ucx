@@ -243,22 +243,6 @@ void ucs_log_print_compact(const char *str)
 }
 
 
-static void generate_random_string(char *str, size_t length, unsigned int seed) {
-  const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  size_t charset_size = sizeof(charset) - 1;
-
-  // Seed the random number generator with a unique seed
-  srand(seed);
-
-  for (size_t i = 0; i < length; i++) {
-    int key = rand() % charset_size;
-    str[i] = charset[key];
-  }
-
-  // Null-terminate the string
-  str[length] = '\0';
-}
-
 
 static void ucs_log_print(const char *short_file, int line,
                           ucs_log_level_t level,
@@ -270,15 +254,10 @@ static void ucs_log_print(const char *short_file, int line,
     char *log_buf;
     char uuid_str[37]; // UUIDs are 36 characters plus the null terminator
     char redis_value[2000];
-    unsigned int seed;
-    if (base_seed == 0) {
-      seed = (unsigned int)time(NULL);
-    }
 
+    long nanoseconds = 0;
 
-    seed = base_seed + 1;
-
-    base_seed = seed;
+    struct timespec ts;
 
     if (RUNNING_ON_VALGRIND) {
 
@@ -304,14 +283,18 @@ static void ucs_log_print(const char *short_file, int line,
         if (use_redis_logging) {
 
 
+          if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+            printf("clock_gettime failed");
 
-          generate_random_string(uuid_str, 36, seed);
+          } else {
+            nanoseconds = ts.tv_sec * 1000000000L + ts.tv_nsec;
+            snprintf(uuid_str, 36, "%ld", nanoseconds);
+          }
 
           snprintf(redis_value,2000, UCS_LOG_FMT,
                    UCS_LOG_ARG(short_file, line, level,
                                comp_conf, tv, message));
-          printf("redis host %s:%i", redis_log_host, redis_log_port);
-          printf("%s-> %s", uuid_str, redis_value);
+
           setRedisValue(redis_log_host, redis_log_port, uuid_str, redis_value);
 
 
