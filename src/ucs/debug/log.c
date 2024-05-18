@@ -252,12 +252,12 @@ static void ucs_log_print(const char *short_file, int line,
     size_t buffer_size;
     int log_entry_len;
     char *log_buf;
-    char uuid_str[37]; // UUIDs are 36 characters plus the null terminator
-    char redis_value[2000];
+    //char uuid_str[37]; // UUIDs are 36 characters plus the null terminator
+    //char redis_value[2000];
 
-    long nanoseconds = 0;
+    //long nanoseconds = 0;
 
-    struct timespec ts;
+    //struct timespec ts;
 
     if (RUNNING_ON_VALGRIND) {
 
@@ -280,7 +280,7 @@ static void ucs_log_print(const char *short_file, int line,
                                                  comp_conf, tv, message));
             ucs_log_handle_file_max_size(log_entry_len);
         }
-        if (use_redis_logging) {
+        /*if (use_redis_logging) {
 
 
           if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
@@ -299,7 +299,7 @@ static void ucs_log_print(const char *short_file, int line,
 
 
 
-        }
+        }*/
 
         fprintf(ucs_log_file, UCS_LOG_FMT,
                 UCS_LOG_ARG(short_file, line, level,
