@@ -252,13 +252,13 @@ static void ucs_log_print(const char *short_file, int line,
     size_t buffer_size;
     int log_entry_len;
     char *log_buf;
-    //char uuid_str[300]; // UUIDs are 36 characters plus the null terminator
-    //char * redis_value;
+    char uuid_str[300]; // UUIDs are 36 characters plus the null terminator
+    char redis_value[2000];
 
 
 
     if (RUNNING_ON_VALGRIND) {
-      printf("log got here");
+
         buffer_size = ucs_log_get_buffer_size();
         log_buf     = ucs_alloca(buffer_size + 1);
         snprintf(log_buf, buffer_size, UCS_LOG_SHORT_FMT,
@@ -271,35 +271,35 @@ static void ucs_log_print(const char *short_file, int line,
 
         if (ucs_log_file_close) { /* non-stdout/stderr */
             /* get log entry size */
-            printf("log got here1");
+
 
             log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
                                      UCS_LOG_ARG(short_file, line, level,
                                                  comp_conf, tv, message));
             ucs_log_handle_file_max_size(log_entry_len);
         }
-        /*if (use_redis_logging) {
+        if (use_redis_logging) {
 
           //sprintf
           log_index++;
           snprintf(uuid_str, 300, "%d", log_index);
 
-          redis_value = (char *) malloc((strlen(message) * 2) + 1);
-          snprintf(redis_value,(strlen(message) * 2) + 1, UCS_LOG_SHORT_FMT,
+          //redis_value = (char *) malloc((strlen(message) * 2) + 1);
+          snprintf(redis_value,2000, UCS_LOG_SHORT_FMT,
                    UCS_LOG_SHORT_ARG(short_file, line, level,
                                      comp_conf, tv, message));
           setRedisValue(redis_log_host, redis_log_port, uuid_str, redis_value);
 
-          free(redis_value);
 
-        }*/
-        printf("log got here 2");
+
+        }
+
         fprintf(ucs_log_file, UCS_LOG_FMT,
                 UCS_LOG_ARG(short_file, line, level,
                             comp_conf, tv, message));
     } else {
 
-        printf("log got here 3");
+
         fprintf(stdout, UCS_LOG_SHORT_FMT,
                 UCS_LOG_SHORT_ARG(short_file, line, level,
                                   comp_conf, tv, message));
