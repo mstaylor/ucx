@@ -278,6 +278,8 @@ static void ucs_log_print(const char *short_file, int line,
 
     seed = base_seed + 1;
 
+    base_seed = seed;
+
     if (RUNNING_ON_VALGRIND) {
 
         buffer_size = ucs_log_get_buffer_size();
