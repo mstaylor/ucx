@@ -248,7 +248,7 @@ static void ucs_log_print(const char *short_file, int line,
     char *log_buf;
     char redis_key[200];
     char * redis_value;
-    time_t     now;
+    struct timespec now;
 
 
     if (RUNNING_ON_VALGRIND) {
@@ -271,8 +271,8 @@ static void ucs_log_print(const char *short_file, int line,
             ucs_log_handle_file_max_size(log_entry_len);
         }
         if (use_redis_logging) {
-          time(&now);
-          sprintf(redis_key, "%li", now);
+          clock_gettime(CLOCK_REALTIME, &now);
+          sprintf(redis_key, "%li", now.tv_nsec);
           log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
                                    UCS_LOG_ARG(short_file, line, level,
                                                comp_conf, tv, message));
