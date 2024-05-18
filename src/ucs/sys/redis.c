@@ -28,6 +28,28 @@ redisContext * redisLogin(const char *hostname, int port) {
 
 
 
+ucs_status_t setRedisValueWithContext(redisContext *c, const char *key, const char *value) {
+  redisReply *reply;
+  ucs_status_t status = UCS_OK;
+
+
+  if (c != NULL) {
+    // Set the key
+    reply = redisCommand(c, "SET %s %s", key, value);
+    if (reply == NULL) {
+      ucs_warn("Error in SET command\n");
+      status = UCS_ERR_IO_ERROR;
+    } else {
+      // Print the reply
+      //ucs_warn("%s\n", reply->str);
+      // Free the reply object
+      freeReplyObject(reply);
+    }
+
+  }
+
+  return status;
+}
 
 ucs_status_t  setRedisValue(const char *hostname, int port, const char *key, const char *value) {
 
@@ -48,6 +70,8 @@ ucs_status_t  setRedisValue(const char *hostname, int port, const char *key, con
             // Free the reply object
             freeReplyObject(reply);
         }
+
+
 
         // Disconnect from Redis
         redisFree(c);

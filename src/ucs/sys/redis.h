@@ -18,6 +18,8 @@ redisContext * redisLogin(const char *hostname, int port);
 
 ucs_status_t setRedisValue(const char *hostname, int port, const char *key, const char *value);
 
+ucs_status_t setRedisValueWithContext(redisContext *c, const char *key, const char *value);
+
 ucs_status_t deleteRedisKey(const char *hostname, int port, const char *key);
 
 ucs_status_t deleteRedisKeyTransactional(const char *hostname, int port, const char *key);

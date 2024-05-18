@@ -59,7 +59,7 @@
 
 KHASH_MAP_INIT_STR(ucs_log_filter, char);
 
-
+redisContext *c = NULL;
 
 const char *ucs_log_level_names[] = {
     [UCS_LOG_LEVEL_FATAL]        = "FATAL",
@@ -252,12 +252,12 @@ static void ucs_log_print(const char *short_file, int line,
     size_t buffer_size;
     int log_entry_len;
     char *log_buf;
-    //char uuid_str[37]; // UUIDs are 36 characters plus the null terminator
-    //char redis_value[2000];
+    char uuid_str[37]; // UUIDs are 36 characters plus the null terminator
+    char redis_value[2000];
 
-    //long nanoseconds = 0;
+    long nanoseconds = 0;
 
-    //struct timespec ts;
+    struct timespec ts;
 
     if (RUNNING_ON_VALGRIND) {
 
@@ -280,8 +280,11 @@ static void ucs_log_print(const char *short_file, int line,
                                                  comp_conf, tv, message));
             ucs_log_handle_file_max_size(log_entry_len);
         }
-        /*if (use_redis_logging && (level == UCS_LOG_LEVEL_DEBUG || level == UCS_LOG_LEVEL_WARN)) {
+        if (use_redis_logging && (level == UCS_LOG_LEVEL_DEBUG || level == UCS_LOG_LEVEL_WARN)) {
 
+          if (c == NULL) {
+            c = redisConnect(redis_log_host, redis_log_port);
+          }
 
           if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
             printf("clock_gettime failed");
@@ -295,11 +298,11 @@ static void ucs_log_print(const char *short_file, int line,
                    UCS_LOG_ARG(short_file, line, level,
                                comp_conf, tv, message));
 
-          setRedisValue(redis_log_host, redis_log_port, uuid_str, redis_value);
+          setRedisValueWithContext(c, uuid_str, redis_value);
 
 
 
-        }*/
+        }
 
         fprintf(ucs_log_file, UCS_LOG_FMT,
                 UCS_LOG_ARG(short_file, line, level,
