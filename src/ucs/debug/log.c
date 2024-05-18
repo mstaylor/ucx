@@ -22,7 +22,7 @@
 #include <ucs/sys/string.h>
 #include <ucs/sys/sys.h>
 #include <ucs/type/spinlock.h>
-#include <uuid/uuid.h>
+
 
 #define UCS_MAX_LOG_HANDLERS    32
 
@@ -58,6 +58,8 @@
     UCS_LOG_METADATA_ARG(_short_file, _line, _level, _comp_conf), (_message)
 
 KHASH_MAP_INIT_STR(ucs_log_filter, char);
+
+int log_index = 0;
 
 const char *ucs_log_level_names[] = {
     [UCS_LOG_LEVEL_FATAL]        = "FATAL",
@@ -239,11 +241,7 @@ void ucs_log_print_compact(const char *str)
     }
 }
 
-static void generate_uuid(char *uuid_str) {
-  uuid_t uuid;
-  uuid_generate(uuid);
-  uuid_unparse(uuid, uuid_str);
-}
+
 
 
 static void ucs_log_print(const char *short_file, int line,
@@ -254,7 +252,7 @@ static void ucs_log_print(const char *short_file, int line,
     size_t buffer_size;
     int log_entry_len;
     char *log_buf;
-    char uuid_str[37]; // UUIDs are 36 characters plus the null terminator
+    char uuid_str[300]; // UUIDs are 36 characters plus the null terminator
     char * redis_value;
 
 
@@ -280,8 +278,9 @@ static void ucs_log_print(const char *short_file, int line,
         }
         if (use_redis_logging) {
 
-          generate_uuid(uuid_str);
-
+          //sprintf
+          log_index++;
+          snprintf(uuid_str, 300, "%d", log_index);
 
           log_entry_len = snprintf(NULL, 0, UCS_LOG_FMT,
                                   UCS_LOG_ARG(short_file, line, level,
