@@ -67,7 +67,7 @@ void listen_for_updates_peer(void *p) {
   char publicAddressPort[UCS_SOCKADDR_STRING_LEN*2];
   int publicPort = 0;
   ucs_status_t redis_write_status;
-  ucs_status_t connect_status;
+  ucs_status_t connect_status = UCS_ERR_IO_ERROR;
 
   struct sockaddr_storage connect_addr;
   struct sockaddr* addr = NULL;
