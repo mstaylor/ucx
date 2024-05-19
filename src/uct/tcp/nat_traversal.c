@@ -46,7 +46,7 @@ int msleep(long msec)
 void listen_for_updates_peer(void *p) {
   char* remote_address = NULL;
   char src_str[UCS_SOCKADDR_STRING_LEN];
-  //char src_str2[UCS_SOCKADDR_STRING_LEN];
+  char src_str2[UCS_SOCKADDR_STRING_LEN];
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
   char peer_redis_key2[UCS_SOCKADDR_STRING_LEN*2];
   int fd = -1, ret;
@@ -67,26 +67,27 @@ void listen_for_updates_peer(void *p) {
   char publicAddressPort[UCS_SOCKADDR_STRING_LEN*2];
   int publicPort = 0;
   ucs_status_t redis_write_status;
+  ucs_status_t connect_status;
 
-  //struct sockaddr_storage connect_addr;
-  //struct sockaddr* addr = NULL;
+  struct sockaddr_storage connect_addr;
+  struct sockaddr* addr = NULL;
   //char src_str2[UCS_SOCKADDR_STRING_LEN];
-  //size_t addrlen;
+  size_t addrlen;
   //size_t addr_len;
 
-  //int peer_fd;
-  //struct timeval timeout;
-  //int retries = 0;
-  //int result = 0;
-  //int result_opt;
-  //fd_set set;
-  //int so_error;
+  int peer_fd;
+  struct timeval timeout;
+  int retries = 0;
+  int result = 0;
+  int result_opt;
+  fd_set set;
+  int so_error;
   int idx = 0;
   redisContext *c = NULL;
   const char * peer_str = NULL;
-  //socklen_t len = sizeof(so_error);
+  socklen_t len = sizeof(so_error);
 
-  //ucs_status_t status;
+  ucs_status_t status;
 
 
   uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
@@ -248,19 +249,9 @@ void listen_for_updates_peer(void *p) {
 
     ucs_warn("setting peer_redis_key2 to %s", peer_redis_key2);
 
-    /*if (ntohs(public_info.port) != mapped_port) {
-      ucs_warn("public port %i does not match private port %i",
-               ntohs(public_info.port), sa_in->sin_port);
-    }*/
 
     sprintf(publicAddressPort, "%s:%i", public_ipadd,
             ntohs(public_info.port));
-
-
-
-    /*sprintf(publicAddressPort, "%s:%i", iface->config.public_ip_address,
-            ntohs(local_port_addr.sin_port));*/
-
 
 
     //write redis value (private->public and public->public)
@@ -281,11 +272,9 @@ void listen_for_updates_peer(void *p) {
     }
 
 
-    ucs_warn("deleting redis key: %s", peer_redis_key);
-    //delete redis key
-    deleteRedisKeyTransactionalithContext(c, peer_redis_key);
 
-    /*set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
+
+    set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
     addr = (struct sockaddr*)&connect_addr;
 
@@ -339,7 +328,7 @@ void listen_for_updates_peer(void *p) {
       result = connect(peer_fd, addr, addrlen);
 
       if (result == 0) {
-        status = UCS_OK;
+        connect_status = UCS_OK;
         break;
       }
 
@@ -362,7 +351,7 @@ void listen_for_updates_peer(void *p) {
                    strerror(so_error), peer_fd, src_str2);
         } else {
           ucs_warn("Connected on attempt %d peer socket %i peer address %s", retries + 1, peer_fd, src_str2);
-          status = UCS_OK;
+          connect_status = UCS_OK;
           //close(fd);//close the rendezvous socket
           break;
         }
@@ -406,7 +395,14 @@ void listen_for_updates_peer(void *p) {
       }
 
       retries++;
-    }*/
+    }
+
+    if (connect_status == UCS_OK) {
+      //remove peer
+      ucs_warn("deleting redis key: %s", peer_redis_key);
+      //delete redis key
+      deleteRedisKeyTransactionalithContext(c, peer_redis_key);
+    }
 
     /*close(fd);
     close(peer_fd);*/
