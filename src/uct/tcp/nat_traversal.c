@@ -409,10 +409,7 @@ void listen_for_updates_peer(void *p) {
       deleteRedisKeyTransactionalithContext(c, peer_redis_key);
     }
 
-
-
-    /*close(fd);
-    close(peer_fd);*/
+    close(peer_fd);
 
   }
 }
