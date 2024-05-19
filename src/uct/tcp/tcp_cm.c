@@ -1262,6 +1262,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       }
 
+
+
       //delete peer2 since we should have connected
       /*ucs_warn("deleting redis peer key since connected to peer: %s", peer_redis_key2);
       deleteRedisKeyTransactional(iface->config.redis_ip_address, iface->config.redis_port,
@@ -1270,16 +1272,21 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       //Do we need to switch the fd?
       if(atomic_load(&connection_established)) {
-        pthread_join(peer_listen_thread, NULL);
+        ucs_warn("connection established via listen thread");
+        pthread_cancel(peer_listen_thread);
+
+        ucs_warn("thread cancelled...");
+        //pthread_join(peer_listen_thread, NULL);
         ep->fd = atomic_load(&accepting_socket);
         ucs_warn("switched ep->fd to listen socket - socket fd: %d host %s", ep->fd, src_str2);
         atomic_store(&accepting_socket, -1);
         atomic_store(&connection_established, false);
       } else {
+        ucs_warn("canceling endpoint listen thread...");
         // Cancel the thread
         pthread_cancel(peer_listen_thread);
 
-
+        ucs_warn("joining thread...");
         pthread_join(peer_listen_thread, NULL);
 
         ucs_warn("destroyed thread...");
