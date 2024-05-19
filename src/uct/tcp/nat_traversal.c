@@ -411,6 +411,8 @@ void listen_for_updates_peer(void *p) {
 
     close(peer_fd);
 
+    retries = 0;
+
   }
 }
 
