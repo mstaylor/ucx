@@ -74,7 +74,7 @@ void listen_for_updates_peer(void *p) {
   //char src_str2[UCS_SOCKADDR_STRING_LEN];
   size_t addrlen;
   //size_t addr_len;
-
+  int public_port = -1;
   int peer_fd;
   struct timeval timeout;
   int retries = 0;
@@ -164,94 +164,99 @@ void listen_for_updates_peer(void *p) {
     free(remote_address);
     remote_address = NULL;
 
+    if (public_port == -1) {
 
-    ucs_warn("calling rendezvous within nat_traversal");
-    fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd == -1) {
-      ucs_error("Could not create socket for rendezvous server: ");
-      continue;
+      ucs_warn("calling rendezvous within nat_traversal");
+      fd = socket(AF_INET, SOCK_STREAM, 0);
+      if (fd == -1) {
+        ucs_error("Could not create socket for rendezvous server: ");
+        continue;
+      }
+
+      if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) <
+              0 ||
+          setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) <
+              0) {
+        ucs_error("Setting REUSE options failed: ");
+        continue;
+      }
+
+      if (getsockname(iface->listen_fd, (struct sockaddr *)&local_port_addr,
+                      &local_addr_len) < 0) {
+        ucs_warn("getsockname failed");
+        continue;
+      }
+
+      local_port_addr2.sin_family = AF_INET;
+      local_port_addr2.sin_addr.s_addr = INADDR_ANY;
+      local_port_addr2.sin_port = local_port_addr.sin_port;
+
+      if (bind(fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
+        ucs_error("error binding to rendezvous socket %s", strerror(errno));
+        continue;
+      }
+
+      ret = getsockname(fd, (struct sockaddr *)&local_port_addr2,
+                        &local_addr_len2);
+      if (ret < 0) {
+        ucs_error("getsockname(fd=%d) failed: %m", fd);
+      }
+
+      if (ucs_sockaddr_get_port((struct sockaddr *)&local_port_addr2,
+                                &mapped_port) != UCS_OK) {
+        ucs_error("ucs_sockaddr_get_port failed");
+        continue;
+      }
+
+      ucs_warn("local address used to bind for rendezvous %s",
+               ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
+                                source_ipadd, sizeof(source_ipadd)));
+
+      server_data.sin_family = AF_INET;
+      server_data.sin_addr.s_addr =
+          inet_addr(iface->config.rendezvous_ip_address);
+      server_data.sin_port = htons(iface->config.rendezvous_port);
+
+      while (connect(fd, (struct sockaddr *)&server_data,
+                     sizeof(server_data)) != 0) {
+        ucs_error("Connection with the rendezvous server failed: %s",
+                  strerror(errno));
+        msleep(1000);
+      }
+
+      if (send(fd, iface->config.pairing_name,
+               strlen(iface->config.pairing_name), MSG_DONTWAIT) == -1) {
+        ucs_error("Failed to send data to rendezvous server: ");
+        continue;
+      }
+
+      bytes = recv(fd, &public_info, sizeof(public_info), MSG_WAITALL);
+      if (bytes == -1) {
+        ucs_error("Failed to get data from rendezvous server: ");
+        continue;
+      } else if (bytes == 0) {
+        ucs_error("Server has disconnected");
+        continue;
+      }
+
+      // close(fd);
+
+      public_port = ntohs(public_info.port);
+
+      ucs_warn("client data returned from rendezvous: %s:%i",
+               ip_to_string(&public_info.ip.s_addr, public_ipadd,
+                            sizeof(public_ipadd)),
+               public_port);
     }
 
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) <
-            0 ||
-        setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) <
-            0) {
-      ucs_error("Setting REUSE options failed: ");
-      continue;
-    }
 
-    if (getsockname(iface->listen_fd, (struct sockaddr *)&local_port_addr,
-                    &local_addr_len) < 0) {
-      ucs_warn("getsockname failed");
-      continue;
-    }
-
-    local_port_addr2.sin_family = AF_INET;
-    local_port_addr2.sin_addr.s_addr = INADDR_ANY;
-    local_port_addr2.sin_port = local_port_addr.sin_port;
-
-    if (bind(fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
-      ucs_error("error binding to rendezvous socket %s", strerror(errno));
-      continue;
-    }
-
-    ret = getsockname(fd, (struct sockaddr *)&local_port_addr2,
-                      &local_addr_len2);
-    if (ret < 0) {
-      ucs_error("getsockname(fd=%d) failed: %m", fd);
-    }
-
-    if (ucs_sockaddr_get_port((struct sockaddr *)&local_port_addr2,
-                              &mapped_port) != UCS_OK) {
-      ucs_error("ucs_sockaddr_get_port failed");
-      continue;
-    }
-
-    ucs_warn("local address used to bind for rendezvous %s",
-             ucs_sockaddr_str((struct sockaddr *)&local_port_addr2,
-                              source_ipadd, sizeof(source_ipadd)));
-
-    server_data.sin_family = AF_INET;
-    server_data.sin_addr.s_addr =
-        inet_addr(iface->config.rendezvous_ip_address);
-    server_data.sin_port = htons(iface->config.rendezvous_port);
-
-    while (connect(fd, (struct sockaddr *)&server_data,
-                   sizeof(server_data)) != 0) {
-      ucs_error("Connection with the rendezvous server failed: %s",
-                strerror(errno));
-      msleep(1000);
-    }
-
-    if (send(fd, iface->config.pairing_name,
-             strlen(iface->config.pairing_name), MSG_DONTWAIT) == -1) {
-      ucs_error("Failed to send data to rendezvous server: ");
-      continue;
-    }
-
-    bytes = recv(fd, &public_info, sizeof(public_info), MSG_WAITALL);
-    if (bytes == -1) {
-      ucs_error("Failed to get data from rendezvous server: ");
-      continue;
-    } else if (bytes == 0) {
-      ucs_error("Server has disconnected");
-      continue;
-    }
-
-    //close(fd);
-
-    ucs_warn("client data returned from rendezvous: %s:%i",
-             ip_to_string(&public_info.ip.s_addr, public_ipadd,
-                          sizeof(public_ipadd)),
-             ntohs(public_info.port));
-
-    sprintf(peer_redis_key2, "%s:%s:%d", PEER_KEY2, public_ipadd, ntohs(local_port_addr.sin_port));
+    sprintf(peer_redis_key2, "%s:%s:%d", PEER_KEY2, public_ipadd, public_port);
 
     ucs_warn("setting peer_redis_key2 to %s", peer_redis_key2);
 
 
     sprintf(publicAddressPort, "%s:%i", public_ipadd,
-            ntohs(public_info.port));
+            public_port);
 
 
     //write redis value (private->public and public->public)
@@ -403,6 +408,8 @@ void listen_for_updates_peer(void *p) {
       //delete redis key
       deleteRedisKeyTransactionalithContext(c, peer_redis_key);
     }
+
+
 
     /*close(fd);
     close(peer_fd);*/
