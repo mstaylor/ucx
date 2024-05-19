@@ -27,7 +27,7 @@ ucs_status_t deleteRedisKeyTransactionalithContext(redisContext *c, const char *
 
 ucs_status_t updateKeyIfMissing(const char *hostname, int port, const char *key, const char *value);
 
-
+ucs_status_t updateKeyIfMissingWithContext(redisContext *c, const char *key, const char *value);
 
 char * getValueFromRedis(const char *hostname, int port, const char *key);
 

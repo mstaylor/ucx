@@ -46,7 +46,7 @@ int msleep(long msec)
 void listen_for_updates_peer(void *p) {
   char* remote_address = NULL;
   char src_str[UCS_SOCKADDR_STRING_LEN];
-  char src_str2[UCS_SOCKADDR_STRING_LEN];
+  //char src_str2[UCS_SOCKADDR_STRING_LEN];
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN*2];
   char peer_redis_key2[UCS_SOCKADDR_STRING_LEN*2];
   int fd = -1, ret;
@@ -68,25 +68,25 @@ void listen_for_updates_peer(void *p) {
   int publicPort = 0;
   ucs_status_t redis_write_status;
 
-  struct sockaddr_storage connect_addr;
-  struct sockaddr* addr = NULL;
+  //struct sockaddr_storage connect_addr;
+  //struct sockaddr* addr = NULL;
   //char src_str2[UCS_SOCKADDR_STRING_LEN];
-  size_t addrlen;
+  //size_t addrlen;
   //size_t addr_len;
 
-  int peer_fd;
-  struct timeval timeout;
-  int retries = 0;
-  int result = 0;
-  int result_opt;
-  fd_set set;
-  int so_error;
+  //int peer_fd;
+  //struct timeval timeout;
+  //int retries = 0;
+  //int result = 0;
+  //int result_opt;
+  //fd_set set;
+  //int so_error;
   int idx = 0;
   redisContext *c = NULL;
   const char * peer_str = NULL;
-  socklen_t len = sizeof(so_error);
+  //socklen_t len = sizeof(so_error);
 
-  ucs_status_t status;
+  //ucs_status_t status;
 
 
   uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
@@ -285,7 +285,7 @@ void listen_for_updates_peer(void *p) {
     //delete redis key
     deleteRedisKeyTransactionalithContext(c, peer_redis_key);
 
-    set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
+    /*set_sock_addr(publicAddress, &connect_addr, AF_INET, publicPort);
 
     addr = (struct sockaddr*)&connect_addr;
 
@@ -406,10 +406,10 @@ void listen_for_updates_peer(void *p) {
       }
 
       retries++;
-    }
+    }*/
 
-    close(fd);
-    close(peer_fd);
+    /*close(fd);
+    close(peer_fd);*/
 
   }
 }

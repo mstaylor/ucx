@@ -97,7 +97,7 @@ char redis_log_host[200];
 int redis_log_port;
 int use_redis_logging;
 
-unsigned int base_seed = 0;
+
 
 static inline int ucs_log_get_pid()
 {
@@ -299,8 +299,6 @@ static void ucs_log_print(const char *short_file, int line,
                                comp_conf, tv, message));
 
           setRedisValueWithContext(c, uuid_str, redis_value);
-
-
 
         }
 
