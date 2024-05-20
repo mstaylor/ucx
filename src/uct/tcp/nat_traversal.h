@@ -21,6 +21,13 @@ typedef struct {
     in_port_t      port;
 } PeerConnectionData;
 
+typedef struct {
+  struct in_addr ip;
+  in_port_t      port;
+  atomic_int accepting_socket;
+  atomic_bool connection_established;
+} PeerConnectionData2;
+
 int msleep(long msec);
 
 const char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size);
