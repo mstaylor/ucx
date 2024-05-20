@@ -54,7 +54,7 @@ ucs_status_t peer_listen(void* p) {
   local_port_data.sin_addr.s_addr = INADDR_ANY;
   local_port_data.sin_port = info->port;
 
-  set_sock_addr(NULL, (struct sockaddr_storage *)&local_port_data, AF_INET, info->port);
+  set_sock_addr(NULL, (struct sockaddr_storage *)&local_port_data, AF_INET, ntohs(info->port));
 
   if (bind(info->accepting_socket, (const struct sockaddr *)&local_port_data, sizeof(local_port_data)) < 0) {
     ucs_error("Could not bind to local port: ");
