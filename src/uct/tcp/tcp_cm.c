@@ -30,21 +30,21 @@ ucs_status_t peer_listen(void* p) {
   PeerConnectionData2* info = (PeerConnectionData2*)p;
 
 
+
   // Create socket on the port that was previously used to contact the rendezvous server
-  int listen_socket = socket(AF_INET, SOCK_STREAM, 0);
-
-  info->accepting_socket = ATOMIC_VAR_INIT(-1);
-  info->connection_established = ATOMIC_VAR_INIT(false);
+  info->accepting_socket = socket(AF_INET, SOCK_STREAM, 0);
 
 
 
-  if (listen_socket == -1) {
+
+
+  if (info->accepting_socket == -1) {
     ucs_error("Socket creation failed: ");
     return UCS_ERR_IO_ERROR;
   }
 
-  if (setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
-      setsockopt(listen_socket, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
+  if (setsockopt(info->accepting_socket, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) < 0 ||
+      setsockopt(info->accepting_socket, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) < 0) {
     ucs_error("Setting REUSE options failed: ");
     return UCS_ERR_IO_ERROR;
   }
@@ -56,38 +56,39 @@ ucs_status_t peer_listen(void* p) {
 
   set_sock_addr(NULL, (struct sockaddr_storage *)&local_port_data, AF_INET, info->port);
 
-  if (bind(listen_socket, (const struct sockaddr *)&local_port_data, sizeof(local_port_data)) < 0) {
+  if (bind(info->accepting_socket, (const struct sockaddr *)&local_port_data, sizeof(local_port_data)) < 0) {
     ucs_error("Could not bind to local port: ");
     return UCS_ERR_IO_ERROR;
   } else {
-    ucs_warn("bound peer listen socket %d", listen_socket);
+    ucs_warn("bound peer listen socket %d", info->accepting_socket);
   }
 
-  ucs_socket_getname_str(listen_socket, src_str, UCS_SOCKADDR_STRING_LEN);
+  ucs_socket_getname_str(info->accepting_socket, src_str, UCS_SOCKADDR_STRING_LEN);
 
   ucs_warn("bound to source address: %s", src_str);
 
 
 
-  if (listen(listen_socket, 1) == -1) {
+  if (listen(info->accepting_socket, 1) == -1) {
     ucs_error("Listening on local port failed: ");
     return UCS_ERR_IO_ERROR;
   } else {
-    ucs_warn("peer listen_socket %d listening ", listen_socket);
+    ucs_warn("peer listen_socket %d listening ", info->accepting_socket);
   }
 
   ucs_warn("peer listen_socket listening on %s", src_str);
 
   len = sizeof(peer_info);
 
-  while(true && !atomic_load(&info->connection_established)) {
-    peer = accept(listen_socket, (struct sockaddr*)&peer_info, &len);
+  while(true && !info->connection_established) {
+    peer = accept(info->accepting_socket, (struct sockaddr*)&peer_info, &len);
     if (peer == -1) {
       ucs_warn("Error when connecting to peer %s", strerror(errno));
+      return UCS_OK;
     } else {
       ucs_warn("Succesfully connected to peer, accepting");
-      atomic_store(&info->accepting_socket, peer);
-      atomic_store(&info->connection_established, true);
+      info->accepting_socket = peer;
+      info->connection_established = true;
       return UCS_OK;
     }
   }
@@ -1143,6 +1144,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       peerConnectionData.port = endpoint_src_port;
       peerConnectionData.ip = endpoint_local_port_addr.sin_addr;
+      peerConnectionData.port = -1;
+      peerConnectionData.accepting_socket = -1;
+      peerConnectionData.connection_established = 0;
 
 
       thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen,
@@ -1152,7 +1156,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return UCS_ERR_IO_ERROR;
       }
 
-      while (!atomic_load(&peerConnectionData.connection_established)) {
+      while (!peerConnectionData.connection_established) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
         status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr, &peer_addr_len);
@@ -1194,10 +1198,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
               } else {
                 ucs_warn("Connected on attempt %d host %s", retries + 1, src_str2);
                 status = UCS_OK;
-                if (atomic_load(&peerConnectionData.connection_established)) {
+                /*if (atomic_load(&peerConnectionData.connection_established)) {
                   break;
-                }
-                continue;
+                }*/
+                break;
                 //close(fd);//close the rendezvous socket
 
               }
@@ -1276,25 +1280,29 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 */
       ucs_warn("checking the fd which connected...");
       //Do we need to switch the fd?
-      if(atomic_load(&peerConnectionData.connection_established)) {
+      ucs_warn("value of connection_established: %i value of socket %i",
+               peerConnectionData.connection_established,
+               peerConnectionData.accepting_socket);
+      if(peerConnectionData.connection_established == 1) {
         ucs_warn("connection established via listen thread");
-        pthread_cancel(peer_listen_thread);
+        //pthread_cancel(peer_listen_thread);
 
         ucs_warn("thread cancelled...");
         //pthread_join(peer_listen_thread, NULL);
-        ep->fd = atomic_load(&peerConnectionData.accepting_socket);
+        ep->fd = peerConnectionData.accepting_socket;
         ucs_warn("switched ep->fd to listen socket - socket fd: %d host %s", ep->fd, src_str2);
         /*atomic_store(&accepting_socket, -1);
         atomic_store(&peerConnectionData.connection_established, false);*/
       } else {
         ucs_warn("canceling endpoint listen thread...");
+        if (peerConnectionData.accepting_socket != -1) {
+          ucs_warn("cancelling socket %i", peerConnectionData.accepting_socket);
+          close(peerConnectionData.accepting_socket);
+        }
         // Cancel the thread
-        pthread_cancel(peer_listen_thread);
+        //pthread_cancel(peer_listen_thread);
 
-        ucs_warn("joining thread...");
-        pthread_join(peer_listen_thread, NULL);
-
-        ucs_warn("destroyed thread...");
+        ucs_warn("cancelled thread...");
 
         //atomic_store(&accepting_socket, -1);
         //atomic_store(&connection_established, false);
