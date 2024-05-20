@@ -50,9 +50,9 @@ ucs_status_t peer_listen(void* p) {
   }
 
 
-  /*local_port_data.sin_family = AF_INET;
+  local_port_data.sin_family = AF_INET;
   local_port_data.sin_addr.s_addr = INADDR_ANY;
-  local_port_data.sin_port = info->port;*/
+  local_port_data.sin_port = info->port;
 
   set_sock_addr(NULL, (struct sockaddr_storage *)&local_port_data, AF_INET, info->port);
 
