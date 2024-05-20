@@ -297,14 +297,16 @@ static void ucs_log_print(const char *short_file, int line,
           snprintf(redis_value,2000, UCS_LOG_FMT,
                    UCS_LOG_ARG(short_file, line, level,
                                comp_conf, tv, message));
+          fprintf(ucs_log_file, UCS_LOG_FMT,
+                  UCS_LOG_ARG(short_file, line, level, comp_conf, tv, message));
 
           setRedisValueWithContext(c, uuid_str, redis_value);
 
-        }
+        } else {
 
-        fprintf(ucs_log_file, UCS_LOG_FMT,
-                UCS_LOG_ARG(short_file, line, level,
-                            comp_conf, tv, message));
+          fprintf(ucs_log_file, UCS_LOG_FMT,
+                  UCS_LOG_ARG(short_file, line, level, comp_conf, tv, message));
+        }
     } else {
 
 
