@@ -1154,7 +1154,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       peerConnectionData.port = endpoint_src_port;
       peerConnectionData.ip = endpoint_local_port_addr.sin_addr;
-      peerConnectionData.port = -1;
       peerConnectionData.accepting_socket = -1;
       peerConnectionData.connection_established = 0;
 
