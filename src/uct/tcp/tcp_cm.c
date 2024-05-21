@@ -55,7 +55,7 @@ ucs_status_t peer_listen(void* p) {
   local_port_data.sin_addr.s_addr = INADDR_ANY;
 
 
-  bind_port = ntohs(info->port);
+  bind_port = info->port;
 
   ucs_warn("bind port provided by info is %i", bind_port);
 
@@ -1152,7 +1152,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //next we need to create a thread to listen for the peer to only connect
       //try to reconnect until listen connection succeeds and switch file descriptor
 
-      peerConnectionData.port = htonl(endpoint_src_port);
+      peerConnectionData.port = endpoint_src_port;
       peerConnectionData.ip = endpoint_local_port_addr.sin_addr;
       peerConnectionData.port = -1;
       peerConnectionData.accepting_socket = -1;
