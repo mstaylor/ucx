@@ -23,7 +23,7 @@ typedef struct {
 
 typedef struct {
   struct in_addr ip;
-  in_port_t      port;
+  int      port;
   int accepting_socket;
   int connection_established;
 } PeerConnectionData2;
