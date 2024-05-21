@@ -328,7 +328,7 @@ void listen_for_updates_peer(void *p) {
       ucs_sockaddr_str(addr,
                        src_str2, sizeof(src_str2));
 
-      ucs_warn("connecting to peer address socket ip: %s", src_str2);
+      ucs_warn("connecting to peer address socket ip: %s source str: %s", src_str2, peer_str);
 
       result = connect(peer_fd, addr, addrlen);
 
@@ -345,17 +345,19 @@ void listen_for_updates_peer(void *p) {
       result = select(peer_fd + 1, NULL, &set, NULL, &timeout);
       if (result < 0 && errno != EINTR) {
         // select() failed or connection timed out
-        ucs_warn("select failed/connect timeout on peer socket %i peer address %s", peer_fd, src_str2);
+        ucs_warn("select failed/connect timeout on peer socket %i peer address %s source %s",
+                 peer_fd, src_str2, peer_str);
       }  else if (result > 0) {
         result_opt = getsockopt(peer_fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
         if (result_opt < 0) {
-          ucs_warn("Connection failed: %s and continuing peer socket %i peer address %s",
-                   strerror(so_error), peer_fd, src_str2);
+          ucs_warn("Connection failed: %s and continuing peer socket %i peer address %s source %s",
+                   strerror(so_error), peer_fd, src_str2, peer_str);
         } else if (so_error) {
-          ucs_warn("Error in delayed connection() %d - %s peer socket %i peer address %s", so_error,
-                   strerror(so_error), peer_fd, src_str2);
+          ucs_warn("Error in delayed connection() %d - %s peer socket %i peer address %s source str %s", so_error,
+                   strerror(so_error), peer_fd, src_str2, peer_str);
         } else {
-          ucs_warn("Connected on attempt %d peer socket %i peer address %s", retries + 1, peer_fd, src_str2);
+          ucs_warn("Connected on attempt %d peer socket %i peer address %s source str %s",
+                   retries + 1, peer_fd, src_str2, peer_str);
           connect_status = UCS_OK;
           //close(fd);//close the rendezvous socket
           break;
@@ -404,7 +406,7 @@ void listen_for_updates_peer(void *p) {
 
     if (connect_status == UCS_OK) {
       //remove peer
-      ucs_warn("deleting redis key: %s", peer_redis_key);
+      ucs_warn("deleting redis key: %s for source %s", peer_redis_key, peer_str);
       //delete redis key
       deleteRedisKeyTransactionalithContext(c, peer_redis_key);
     }
