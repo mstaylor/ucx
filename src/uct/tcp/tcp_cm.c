@@ -1152,13 +1152,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //next we need to create a thread to listen for the peer to only connect
       //try to reconnect until listen connection succeeds and switch file descriptor
 
-      peerConnectionData.port = endpoint_local_port_addr.sin_port;
+      peerConnectionData.port = htonl(endpoint_src_port);
       peerConnectionData.ip = endpoint_local_port_addr.sin_addr;
       peerConnectionData.port = -1;
       peerConnectionData.accepting_socket = -1;
       peerConnectionData.connection_established = 0;
 
-      ucs_warn("sending thread port %i", ntohs(peerConnectionData.port));
+      ucs_warn("sending thread port %i", endpoint_src_port);
 
       thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen,
                                      (void*) &peerConnectionData);
