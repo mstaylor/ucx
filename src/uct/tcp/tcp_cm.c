@@ -24,6 +24,7 @@ ucs_status_t peer_listen(void* p) {
   struct sockaddr_in local_port_data;
   int peer;
   char src_str[UCS_SOCKADDR_STRING_LEN*2];
+  int bind_port = -1;
 
   unsigned int len;
   int enable_flag = 1;
@@ -54,7 +55,11 @@ ucs_status_t peer_listen(void* p) {
   local_port_data.sin_addr.s_addr = INADDR_ANY;
   local_port_data.sin_port = info->port;
 
-  set_sock_addr(NULL, (struct sockaddr_storage *)&local_port_data, AF_INET, ntohs(info->port));
+  bind_port = ntohs(info->port);
+
+  ucs_warn("bind port provided by info is %i", bind_port);
+
+  set_sock_addr(NULL, (struct sockaddr_storage *)&local_port_data, AF_INET, bind_port);
 
   if (bind(info->accepting_socket, (const struct sockaddr *)&local_port_data, sizeof(local_port_data)) < 0) {
     ucs_error("Could not bind to local port: ");
@@ -63,9 +68,14 @@ ucs_status_t peer_listen(void* p) {
     ucs_warn("bound peer listen socket %d", info->accepting_socket);
   }
 
-  ucs_socket_getname_str(info->accepting_socket, src_str, UCS_SOCKADDR_STRING_LEN);
 
-  ucs_warn("bound to source address: %s", src_str);
+
+  ucs_sockaddr_str((const struct sockaddr *)&local_port_data,
+                   src_str, sizeof(src_str));
+
+
+
+  ucs_warn("bound socket to to source address: %s", src_str);
 
 
 
@@ -1148,6 +1158,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       peerConnectionData.accepting_socket = -1;
       peerConnectionData.connection_established = 0;
 
+      ucs_info("sending thread port %i", ntohs(public_info.port));
 
       thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen,
                                      (void*) &peerConnectionData);
