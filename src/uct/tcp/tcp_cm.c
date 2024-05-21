@@ -679,6 +679,7 @@ uct_tcp_cm_handle_conn_req(uct_tcp_ep_t **ep_p,
     uct_tcp_ep_add_ctx_cap(ep, UCT_TCP_EP_FLAG_CTX_TYPE_RX);
 
     if (ep->conn_state == UCT_TCP_EP_CONN_STATE_CONNECTED) {
+      ucs_warn("calling send_ack - current state UCT_TCP_EP_CONN_STATE_CONNECTED");
         goto send_ack;
     }
 
@@ -740,7 +741,7 @@ send_ack:
             goto out_destroy_ep;
         }
     } else {
-      ucs_warn("not sending ack")
+      ucs_warn("not sending ack");
     }
 
     return 1;
