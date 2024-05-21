@@ -730,12 +730,17 @@ accept_conn:
     uct_tcp_cm_change_conn_state(ep, UCT_TCP_EP_CONN_STATE_CONNECTED);
 
 send_ack:
+    ucs_warn("calling send_ack");
     /* Just accept this connection and make it operational for RX events */
     if (!(cm_req_pkt->flags & UCT_TCP_CM_CONN_REQ_PKT_FLAG_CONNECT_TO_EP)) {
+      ucs_warn("sending UCT_TCP_CM_CONN_ACK");
         status = uct_tcp_cm_send_event(ep, UCT_TCP_CM_CONN_ACK, 1);
         if (status != UCS_OK) {
+          ucs_warn("sending UCT_TCP_CM_CONN_ACK failed");
             goto out_destroy_ep;
         }
+    } else {
+      ucs_warn("not sending ack")
     }
 
     return 1;
