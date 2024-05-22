@@ -898,8 +898,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int so_error;
     socklen_t len = sizeof(so_error);
 
-    //pthread_t peer_listen_thread;
-    //int thread_return;
+    pthread_t peer_listen_thread;
+    int thread_return;
     PeerConnectionData2 peerConnectionData;
 
     //rendezvous variables
@@ -1189,13 +1189,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       ucs_warn("sending thread port %i", endpoint_src_port);
 
-      /*thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen,
+      thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen,
                                      (void*) &peerConnectionData);
       if(thread_return) {
         ucs_error("Error when creating thread for listening to endpoint src address ");
         return UCS_ERR_IO_ERROR;
       }
-*/
+
       while (!peerConnectionData.connection_established) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
