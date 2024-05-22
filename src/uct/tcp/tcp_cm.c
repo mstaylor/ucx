@@ -1146,7 +1146,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //connection attempts if necessary
 
 
-      set_sock_addr(local_ip, (struct sockaddr_storage *)&endpoint_local_port_addr,
+      set_sock_addr(NULL, (struct sockaddr_storage *)&endpoint_local_port_addr,
                     AF_INET, local_port);
 
       /*endpoint_local_port_addr.sin_family = AF_INET;

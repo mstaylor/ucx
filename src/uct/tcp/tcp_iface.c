@@ -834,7 +834,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                  ntohs(public_info.port));
 
 
-        set_sock_addr(local_ip, &connect_addr, af, local_port);
+        set_sock_addr(NULL, &connect_addr, af, local_port);
 
 
         addr = (struct sockaddr*)&connect_addr;
