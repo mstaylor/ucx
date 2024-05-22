@@ -913,7 +913,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     struct sockaddr_in local_addr;
     socklen_t local_addr_len = sizeof(local_addr);
-    char local_ip[INET_ADDRSTRLEN];
+    char local_ip[UCS_SOCKADDR_STRING_LEN];
+    uint16_t local_port;
 
 
 
@@ -993,11 +994,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
             return UCS_ERR_IO_ERROR;
           }
 
-          // Convert the IP address to a string
-          ucs_sockaddr_str((const struct sockaddr *)&local_addr,
-                           local_ip, sizeof(local_ip));
+          ucs_sockaddr_get_ipstr((const struct sockaddr *)&local_addr, local_ip, sizeof(local_ip));
 
-          ucs_warn("Local IP address bound: %s", local_ip);
+          ucs_sockaddr_get_port((const struct sockaddr *)&local_addr, &local_port);
+
+          ucs_warn("Local IP address bound: %s:%d", local_ip, local_port);
 
 
           ucs_warn("sending to rendezvous");
@@ -1145,11 +1146,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //connection attempts if necessary
 
 
+      set_sock_addr(local_ip, (struct sockaddr_storage *)&endpoint_local_port_addr,
+                    AF_INET, local_port);
 
-
-      endpoint_local_port_addr.sin_family = AF_INET;
+      /*endpoint_local_port_addr.sin_family = AF_INET;
       endpoint_local_port_addr.sin_addr.s_addr = local_addr.sin_addr.s_addr;
-      endpoint_local_port_addr.sin_port = local_addr.sin_port;
+      endpoint_local_port_addr.sin_port = local_addr.sin_port;*/
 
 
       ///bind the endpoint to the newly created socket
