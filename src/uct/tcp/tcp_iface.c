@@ -848,7 +848,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
           memcpy(saddr, addr, addrlen);
         }
 
-
+        close(fd);
       }
 
       else if ((self->config.override_ip_address != NULL && strlen(self->config.override_ip_address) > 0) ) {
