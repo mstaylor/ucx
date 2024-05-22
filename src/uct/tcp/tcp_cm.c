@@ -1148,8 +1148,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
 
       endpoint_local_port_addr.sin_family = AF_INET;
-      endpoint_local_port_addr.sin_addr.s_addr = INADDR_ANY;
-      endpoint_local_port_addr.sin_port = public_info.port;
+      endpoint_local_port_addr.sin_addr.s_addr = local_addr.sin_addr.s_addr;
+      endpoint_local_port_addr.sin_port = local_addr.sin_port;
 
 
       ///bind the endpoint to the newly created socket
