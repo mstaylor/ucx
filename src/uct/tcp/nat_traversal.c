@@ -188,7 +188,7 @@ void listen_for_updates_peer(void *p) {
       }
 
       local_port_addr2.sin_family = AF_INET;
-      local_port_addr2.sin_addr.s_addr = INADDR_ANY;
+      local_port_addr2.sin_addr.s_addr = INADDR_LOOPBACK;
       local_port_addr2.sin_port = local_port_addr.sin_port;
 
       if (bind(fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
@@ -309,7 +309,7 @@ void listen_for_updates_peer(void *p) {
     }
 
     local_port_addr2.sin_family = AF_INET;
-    local_port_addr2.sin_addr.s_addr = INADDR_ANY;
+    local_port_addr2.sin_addr.s_addr = INADDR_LOOPBACK;
     local_port_addr2.sin_port = local_port_addr.sin_port;
 
     if (bind(peer_fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) < 0) {
