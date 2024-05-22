@@ -994,11 +994,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
           }
 
           // Convert the IP address to a string
-          if (inet_ntop(AF_INET, &local_addr.sin_addr, local_ip, sizeof(local_ip)) == NULL) {
-            ucs_warn("could not call inet_ntop");
-            close(fd);
-            return UCS_ERR_IO_ERROR;
-          }
+          ucs_sockaddr_str((const struct sockaddr *)&local_addr,
+                           local_ip, sizeof(local_ip));
 
           ucs_warn("Local IP address bound: %s", local_ip);
 
