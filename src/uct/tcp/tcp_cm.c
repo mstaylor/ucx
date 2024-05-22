@@ -909,6 +909,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     //char source_ipadd[UCS_SOCKADDR_STRING_LEN];
     char public_ipadd[UCS_SOCKADDR_STRING_LEN];
 
+
+
+    struct sockaddr_in local_addr;
+    socklen_t local_addr_len = sizeof(local_addr);
+    char local_ip[INET_ADDRSTRLEN];
+
+
+
     int fd;
 
     uct_tcp_iface_t *iface = ucs_derived_of(ep->super.super.iface,
@@ -973,11 +981,28 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
           server_data.sin_port = htons(iface->config.rendezvous_port);
 
           ucs_warn("connecting to rendezvous");
-          while(connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
-            ucs_error("Connection with the rendezvous server failed: %s", strerror(errno));
+          if(connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
+            ucs_warn("Connection with the rendezvous server failed: %s", strerror(errno));
             //return UCS_ERR_IO_ERROR;
-            msleep(1000);
+            return UCS_ERR_IO_ERROR;
           }
+
+          // Get the local address the socket is bound to
+          if (getsockname(fd, (struct sockaddr *)&local_addr, &local_addr_len) < 0) {
+            ucs_warn("could not retrieve rendezvous ip");
+            return UCS_ERR_IO_ERROR;
+          }
+
+          // Convert the IP address to a string
+          if (inet_ntop(AF_INET, &local_addr.sin_addr, local_ip, sizeof(local_ip)) == NULL) {
+            ucs_warn("could not call inet_ntop");
+            close(fd);
+            return UCS_ERR_IO_ERROR;
+          }
+
+          ucs_warn("Local IP address bound: %s", local_ip);
+
+
           ucs_warn("sending to rendezvous");
           if(send(fd, iface->config.pairing_name, strlen(iface->config.pairing_name), MSG_DONTWAIT) == -1) {
             ucs_error("Failed to send data to rendezvous server: ");
