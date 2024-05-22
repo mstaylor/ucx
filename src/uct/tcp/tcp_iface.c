@@ -735,6 +735,9 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
   socklen_t local_addr_len = sizeof(local_addr);
   char local_ip[UCS_SOCKADDR_STRING_LEN];
   uint16_t local_port;
+  ssize_t bytes;
+  PeerConnectionData public_info;
+  char public_ipadd[UCS_SOCKADDR_STRING_LEN];
 
 
   if (getifaddrs(&ifaddrs)) {
@@ -807,6 +810,29 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
         ucs_sockaddr_get_port((const struct sockaddr *)&local_addr, &local_port);
 
         ucs_warn("Local IP address returned from rendezvous: %s:%d", local_ip, local_port);
+
+
+        if(send(fd, self->config.pairing_name, strlen(self->config.pairing_name), MSG_DONTWAIT) == -1) {
+          ucs_error("Failed to send data to rendezvous server: ");
+          return UCS_ERR_IO_ERROR;
+        }
+        ucs_warn("receiving from rendezvous");
+
+        bytes = recv(fd, &public_info, sizeof(public_info), MSG_WAITALL);
+        if (bytes == -1) {
+          ucs_error("Failed to get data from rendezvous server: ");
+          return UCS_ERR_IO_ERROR;
+        } else if(bytes == 0) {
+          ucs_error("Server has disconnected");
+          return UCS_ERR_IO_ERROR;
+        }
+        //close(fd);
+        ucs_warn("client data returned from rendezvous: %s:%i",
+                 ip_to_string(&public_info.ip.s_addr,
+                              public_ipadd,
+                              sizeof(public_ipadd)),
+                 ntohs(public_info.port));
+
 
         set_sock_addr(local_ip, &connect_addr, af, local_port);
 
