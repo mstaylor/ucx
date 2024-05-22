@@ -14,6 +14,7 @@
 #include "ucs/sys/redis.h"
 #include <dirent.h>
 #include <float.h>
+#include <ifaddrs.h>
 #include <netinet/tcp.h>
 #include <pthread.h>
 #include <sys/poll.h>
@@ -570,8 +571,15 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     size_t addr_len;
     int port, retry = -1;
 
+    if (iface->config.enable_nat_traversal) {
+      status = ucs_socket_server_init(
+          (struct sockaddr *)&iface->config.ifaddr, addr_len,
+          ucs_socket_max_conn(), retry, iface->config.enable_nat_traversal,
+          &iface->listen_fd);
 
-    /* retry is 1 for a range of ports or when port value is zero.
+    } else {
+
+      /* retry is 1 for a range of ports or when port value is zero.
      * retry is 0 for a single value port that is not zero */
 
       retry = (port_range_start == 0) || (port_range_start < port_range_end);
@@ -586,24 +594,25 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
           port = 0; /* let the operating system choose the port */
         }
 
-        status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr, port);
+        status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr,
+                                       port);
         if (status != UCS_OK) {
           break;
         }
 
-
-        status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr, &addr_len);
+        status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr,
+                                     &addr_len);
         if (status != UCS_OK) {
           return status;
         }
 
-          status = ucs_socket_server_init(
-              (struct sockaddr *)&iface->config.ifaddr, addr_len,
-              ucs_socket_max_conn(), retry, iface->config.enable_nat_traversal,
+        status = ucs_socket_server_init(
+            (struct sockaddr *)&iface->config.ifaddr, addr_len,
+            ucs_socket_max_conn(), retry, iface->config.enable_nat_traversal,
             &iface->listen_fd);
 
       } while (retry && (status == UCS_ERR_BUSY));
-
+    }
     return status;
 }
 
@@ -707,6 +716,159 @@ static uct_iface_internal_ops_t uct_tcp_iface_internal_ops = {
     .iface_is_reachable_v2 = uct_tcp_iface_is_reachable_v2,
     .ep_is_connected       = uct_tcp_ep_is_connected
 };
+
+ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
+                                 struct sockaddr *saddr,
+                                 struct sockaddr *netmask, uct_tcp_iface_t * self)
+{
+  ucs_status_t status = UCS_ERR_NO_DEVICE;
+  struct ifaddrs *ifa;
+  struct ifaddrs *ifaddrs;
+  const struct sockaddr_in6 *saddr6;
+  struct sockaddr* addr;
+  size_t addrlen;
+  struct sockaddr_storage connect_addr;
+  int enable_flag = 1;
+  int fd;
+  struct sockaddr_in server_data;
+  struct sockaddr_in local_addr;
+  socklen_t local_addr_len = sizeof(local_addr);
+  char local_ip[UCS_SOCKADDR_STRING_LEN];
+  uint16_t local_port;
+
+
+  if (getifaddrs(&ifaddrs)) {
+    ucs_warn("getifaddrs error: %m");
+    status = UCS_ERR_IO_ERROR;
+    goto out;
+  }
+
+  for (ifa = ifaddrs; ifa != NULL; ifa = ifa->ifa_next) {
+    if ((if_name != NULL) && (0 != strcmp(if_name, ifa->ifa_name)) && !self->config.ignore_ifname) {
+      continue;
+    }
+
+    if ((ifa->ifa_addr == NULL) ||
+        ((ifa->ifa_addr->sa_family != AF_INET) &&
+         (ifa->ifa_addr->sa_family != AF_INET6))) {
+      continue;
+    }
+
+    if (!ucs_netif_flags_is_active(ifa->ifa_flags)) {
+      continue;
+    }
+
+    if (ifa->ifa_addr->sa_family == AF_INET6) {
+      saddr6 = (const struct sockaddr_in6*)ifa->ifa_addr;
+      if (IN6_IS_ADDR_LINKLOCAL(&saddr6->sin6_addr)) {
+        continue;
+      }
+    }
+
+    if ((af == AF_UNSPEC) || (ifa->ifa_addr->sa_family == af)) {
+
+      if (self->config.enable_nat_traversal) {
+        //call rendezvous and use private address and port
+        ucs_warn("creating rendezvous socket");
+        fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (fd == -1) {
+          ucs_error("Could not create socket for rendezvous server: ");
+          return UCS_ERR_IO_ERROR;
+        }
+
+        ucs_warn("updating rendezvous socket options");
+        if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) <
+                0 ||
+            setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) <
+                0) {
+          ucs_error("Setting REUSE options failed: ");
+          return UCS_ERR_IO_ERROR;
+        }
+
+        server_data.sin_family = AF_INET;
+        server_data.sin_addr.s_addr = inet_addr(self->config.rendezvous_ip_address);
+        server_data.sin_port = htons(self->config.rendezvous_port);
+
+        ucs_warn("connecting to rendezvous");
+        if(connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
+          ucs_warn("Connection with the rendezvous server failed: %s", strerror(errno));
+          //return UCS_ERR_IO_ERROR;
+          return UCS_ERR_IO_ERROR;
+        }
+
+        // Get the local address the socket is bound to
+        if (getsockname(fd, (struct sockaddr *)&local_addr, &local_addr_len) < 0) {
+          ucs_warn("could not retrieve rendezvous ip");
+          return UCS_ERR_IO_ERROR;
+        }
+
+        ucs_sockaddr_get_ipstr((const struct sockaddr *)&local_addr, local_ip, sizeof(local_ip));
+
+        ucs_sockaddr_get_port((const struct sockaddr *)&local_addr, &local_port);
+
+        ucs_warn("Local IP address returned from rendezvous: %s:%d", local_ip, local_port);
+
+        set_sock_addr(local_ip, &connect_addr, af, local_port);
+
+
+        addr = (struct sockaddr*)&connect_addr;
+
+        status = ucs_sockaddr_sizeof(addr, &addrlen);
+        if (status != UCS_OK) {
+          goto out_free_ifaddr;
+        }
+
+        if (saddr != NULL) {
+          memcpy(saddr, addr, addrlen);
+        }
+
+
+      }
+
+      else if ((self->config.override_ip_address != NULL && strlen(self->config.override_ip_address) > 0) ) {
+
+        ucs_warn("configuring with override address %s for ifname %s",
+                 self->config.override_ip_address, if_name);
+
+        set_sock_addr(self->config.override_ip_address, &connect_addr, af, 0);
+
+
+        addr = (struct sockaddr*)&connect_addr;
+
+        status = ucs_sockaddr_sizeof(addr, &addrlen);
+        if (status != UCS_OK) {
+          goto out_free_ifaddr;
+        }
+
+        if (saddr != NULL) {
+          memcpy(saddr, addr, addrlen);
+        }
+
+      } else {
+        status = ucs_sockaddr_sizeof(ifa->ifa_addr, &addrlen);
+        if (status != UCS_OK) {
+          goto out_free_ifaddr;
+        }
+
+        if (saddr != NULL) {
+          memcpy(saddr, ifa->ifa_addr, addrlen);
+        }
+      }
+
+      if (netmask != NULL) {
+        memcpy(netmask, ifa->ifa_netmask, addrlen);
+      }
+
+      status = UCS_OK;
+      break;
+    }
+  }
+
+out_free_ifaddr:
+  freeifaddrs(ifaddrs);
+out:
+  return status;
+}
 
 static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                            const uct_iface_params_t *params,
@@ -864,8 +1026,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
                                     tcp_md->config.af_prio_list[i],
                                     (struct sockaddr*)&self->config.ifaddr,
                                     (struct sockaddr*)&self->config.netmask,
-                                     self->config.override_ip_address,
-                                   self->config.ignore_ifname, self->config.enable_nat_traversal);
+                                    self);
         if (status == UCS_OK) {
           ucs_warn("UCS_OK so breaking in address iteration");
             break;

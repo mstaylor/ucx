@@ -702,4 +702,18 @@ ucs_status_t uct_tcp_query_devices(uct_md_h md,
 int uct_tcp_ep_is_connected(uct_ep_h tl_ep,
                             const uct_ep_is_connected_params_t *params);
 
+/**
+ * Get address and netmask for a given interface.
+ *
+ * @param [in]  if_name      Interface name to check.
+ * @param [in]  af           Address family.
+ * @param [out] addr         Interface address.
+ * @param [out] netmask      Interface address.
+ *
+ * @return UCS_OK on success or an error code on failure.
+ */
+ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
+                                 struct sockaddr *saddr,
+                                 struct sockaddr *netmask, uct_tcp_iface_t * self);
+
 #endif
