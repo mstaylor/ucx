@@ -900,7 +900,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
     //pthread_t peer_listen_thread;
     //int thread_return;
-    PeerConnectionData2 peerConnectionData;
+    //PeerConnectionData2 peerConnectionData;
 
     //rendezvous variables
     struct sockaddr_in server_data;
@@ -1182,10 +1182,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       //next we need to create a thread to listen for the peer to only connect
       //try to reconnect until listen connection succeeds and switch file descriptor
 
-      peerConnectionData.port = endpoint_src_port;
-      peerConnectionData.ip = endpoint_local_port_addr.sin_addr;
-      peerConnectionData.accepting_socket = -1;
-      peerConnectionData.connection_established = 0;
+      //peerConnectionData.port = endpoint_src_port;
+      //peerConnectionData.ip = endpoint_local_port_addr.sin_addr;
+      //peerConnectionData.accepting_socket = -1;
+      //peerConnectionData.connection_established = 0;
 
       ucs_warn("sending thread port %i", endpoint_src_port);
 
@@ -1196,7 +1196,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         return UCS_ERR_IO_ERROR;
       }
 */
-      while (!peerConnectionData.connection_established) {
+      while (true) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
         status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr, &peer_addr_len);
