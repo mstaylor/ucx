@@ -898,8 +898,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
     int so_error;
     socklen_t len = sizeof(so_error);
 
-    pthread_t peer_listen_thread;
-    int thread_return;
+    //pthread_t peer_listen_thread;
+    //int thread_return;
     PeerConnectionData2 peerConnectionData;
 
     //rendezvous variables
@@ -1189,13 +1189,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       ucs_warn("sending thread port %i", endpoint_src_port);
 
-      thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen,
+      /*thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen,
                                      (void*) &peerConnectionData);
       if(thread_return) {
         ucs_error("Error when creating thread for listening to endpoint src address ");
         return UCS_ERR_IO_ERROR;
       }
-
+*/
       while (!peerConnectionData.connection_established) {
         ucs_warn("retrying connection - current retry: %i", retries);
 
@@ -1318,7 +1318,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       deleteRedisKeyTransactional(iface->config.redis_ip_address, iface->config.redis_port,
                                   peer_redis_key2);
 */
-      ucs_warn("checking the fd which connected...");
+      /*ucs_warn("checking the fd which connected...");
       //Do we need to switch the fd?
       ucs_warn("value of connection_established: %i value of socket %i",
                peerConnectionData.connection_established,
@@ -1331,8 +1331,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
         //pthread_join(peer_listen_thread, NULL);
         ep->fd = peerConnectionData.accepting_socket;
         ucs_warn("switched ep->fd to listen socket - socket fd: %d host %s", ep->fd, src_str2);
-        /*atomic_store(&accepting_socket, -1);
-        atomic_store(&peerConnectionData.connection_established, false);*/
+
       } else {
         ucs_warn("canceling endpoint listen thread...");
         if (peerConnectionData.accepting_socket != -1) {
@@ -1346,7 +1345,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
         //atomic_store(&accepting_socket, -1);
         //atomic_store(&connection_established, false);
-      }
+      }*/
 
       //atomic_store(&connection_established, true);//stop listening
 
