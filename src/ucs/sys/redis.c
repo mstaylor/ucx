@@ -51,12 +51,17 @@ ucs_status_t setRedisValueWithContext(redisContext *c, const char *key, const ch
   return status;
 }
 
+pthread_mutex_t redis_set_mutex;
+
 ucs_status_t  setRedisValue(const char *hostname, int port, const char *key, const char *value) {
+
+
 
     redisReply *reply;
     ucs_status_t status = UCS_OK;
-
-    redisContext *c = redisLogin(hostname, port);
+    redisContext *c = NULL;
+    pthread_mutex_lock(&redis_set_mutex);
+    c = redisLogin(hostname, port);
 
     if (c != NULL) {
         // Set the key
@@ -76,6 +81,8 @@ ucs_status_t  setRedisValue(const char *hostname, int port, const char *key, con
         // Disconnect from Redis
         redisFree(c);
     }
+
+    pthread_mutex_unlock(&redis_set_mutex);
 
     return status;
 }

@@ -1050,7 +1050,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
           //now write public->public because we will receive an endpoint src that can be a public
           //address as well
-          status = setRedisValueWithContext(context,
+          status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                                  publicAddressPort, publicAddressPort);
           if (status == UCS_OK) {
             ucs_warn("wrote redis public to public key:value %s->%s", publicAddressPort, publicAddressPort);
@@ -1062,7 +1062,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       // this will be used by the peer to send connect requests
 
       sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
-      setRedisValueWithContext(context,
+      setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                       peer_redis_key, publicAddressPort);
       ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key, publicAddressPort);
 
@@ -1077,7 +1077,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       ucs_warn("writing peer2 key/value to redis - key: %s value: %s", peer_redis_key2, publicAddressPort2);
       //run this redis in a transaction to prevent race conditions
-      status = updateKeyIfMissingWithContext(context,
+      status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                          peer_redis_key2, publicAddressPort2);
 
       if (status != UCS_OK) {

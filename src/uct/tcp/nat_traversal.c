@@ -16,6 +16,8 @@
 #include <sys/socket.h>
 #include <time.h>
 
+pthread_mutex_t nat_trav_mutex;
+
 const char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size) {
     return inet_ntop(AF_INET, ip, buffer, max_size);
 
@@ -83,7 +85,7 @@ void listen_for_updates_peer(void *p) {
   fd_set set;
   int so_error;
   int idx = 0;
-  redisContext *c = NULL;
+
   const char * peer_str = NULL;
   socklen_t len = sizeof(so_error);
 
@@ -111,13 +113,12 @@ void listen_for_updates_peer(void *p) {
 
   strcpy(peer_redis_key2, "");
 
-  if (c == NULL) {
-    c= redisConnect(iface->config.redis_ip_address,
-                     iface->config.redis_port);
-  }
+
 
   while(true) { //loop throughout the lifetime of the ucx process
     //1. poll redis for the
+    pthread_mutex_lock(&nat_trav_mutex);
+
 
     if (idx % 2 == 0){
       peer_str = peer_redis_key;
@@ -126,7 +127,8 @@ void listen_for_updates_peer(void *p) {
     }
     idx++;
 
-    remote_address = getValueFromRedisWithContext(c, peer_str);
+    remote_address = getValueFromRedis(iface->config.redis_ip_address,
+                                       iface->config.redis_port, peer_str);
 
     while (remote_address == NULL) {
       msleep(1000);
@@ -141,7 +143,7 @@ void listen_for_updates_peer(void *p) {
       //ucs_warn("trying remote address %s", peer_str);
       // ucs_warn("sleeping waiting for remote address from redis...");
       remote_address =
-          getValueFromRedisWithContext(c, peer_str);
+          getValueFromRedis(iface->config.redis_ip_address, iface->config.redis_port, peer_str);
     }
 
     ucs_warn("received remote address: %s for peer %s", remote_address, peer_str);
@@ -260,7 +262,7 @@ void listen_for_updates_peer(void *p) {
 
 
     //write redis value (private->public and public->public)
-    redis_write_status = setRedisValueWithContext(c,
+    redis_write_status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                                        src_str, publicAddressPort);
     if (redis_write_status == UCS_OK) {
       ucs_warn("wrote redis private to public key:value %s->%s", src_str, publicAddressPort);
@@ -268,7 +270,7 @@ void listen_for_updates_peer(void *p) {
       ucs_warn("could not write redis private to public key:value %s->%s", src_str, publicAddressPort);
     }
 
-    redis_write_status = setRedisValueWithContext(c,
+    redis_write_status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                                        publicAddressPort, publicAddressPort);
     if (redis_write_status == UCS_OK) {
       ucs_warn("wrote redis public to public key:value %s->%s", publicAddressPort, publicAddressPort);
@@ -408,13 +410,13 @@ void listen_for_updates_peer(void *p) {
       //remove peer
       ucs_warn("deleting redis key: %s for source %s", peer_redis_key, peer_str);
       //delete redis key
-      deleteRedisKeyTransactionalithContext(c, peer_redis_key);
+      deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
     }
 
     //close(peer_fd);
 
     retries = 0;
-
+    pthread_mutex_unlock(&nat_trav_mutex);
   }
 }
 

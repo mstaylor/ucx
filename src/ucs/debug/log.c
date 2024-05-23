@@ -61,6 +61,8 @@ KHASH_MAP_INIT_STR(ucs_log_filter, char);
 
 redisContext *c = NULL;
 
+pthread_mutex_t redis_logging_mutex;
+
 const char *ucs_log_level_names[] = {
     [UCS_LOG_LEVEL_FATAL]        = "FATAL",
     [UCS_LOG_LEVEL_ERROR]        = "ERROR",
@@ -282,6 +284,8 @@ static void ucs_log_print(const char *short_file, int line,
         }
         if (use_redis_logging && (level == UCS_LOG_LEVEL_DEBUG || level == UCS_LOG_LEVEL_WARN)) {
 
+          pthread_mutex_lock(&redis_logging_mutex);
+
           if (c == NULL) {
             c = redisConnect(redis_log_host, redis_log_port);
           }
@@ -302,6 +306,7 @@ static void ucs_log_print(const char *short_file, int line,
 
           setRedisValueWithContext(c, uuid_str, redis_value);
 
+          pthread_mutex_unlock(&redis_logging_mutex);
         } else {
 
           fprintf(ucs_log_file, UCS_LOG_FMT,
