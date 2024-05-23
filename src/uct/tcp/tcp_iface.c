@@ -831,7 +831,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
                  ntohs(public_info.port));
 
 
-        set_sock_addr(NULL, &connect_addr, af, local_port);
+        set_sock_addr(NULL, &connect_addr, AF_INET, local_port);
 
 
         addr = (struct sockaddr*)&connect_addr;
@@ -845,7 +845,7 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
           memcpy(saddr, addr, addrlen);
         }
 
-        close(fd);
+        //close(fd);
       }
 
       else if ((self->config.override_ip_address != NULL && strlen(self->config.override_ip_address) > 0) ) {
