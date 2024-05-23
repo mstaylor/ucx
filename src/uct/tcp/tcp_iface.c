@@ -29,7 +29,7 @@ extern ucs_class_t UCS_CLASS_DECL_NAME(uct_tcp_iface_t);
 
 int current_address_count = 0;
 
-pthread_t * redis_update_thread = NULL;
+pthread_t redis_update_thread[256];
 
 
 static ucs_config_field_t uct_tcp_iface_config_table[] = {
@@ -621,10 +621,7 @@ static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 
   int thread_return;
 
-  if (redis_update_thread == NULL) {
-    ucs_warn("creating %zu pthreads based on UCX max_num_eps ", iface->super.config.max_num_eps);
-    redis_update_thread = (pthread_t *)malloc (iface->super.config.max_num_eps * sizeof(pthread_t));
-  }
+  //TODO: check for thread bound
   //first peer update thread
   ucs_warn("creating thread %d", current_address_count);
   thread_return = pthread_create(&redis_update_thread[current_address_count], NULL,
@@ -1152,14 +1149,14 @@ static UCS_CLASS_CLEANUP_FUNC(uct_tcp_iface_t)
 
     ucs_debug("tcp_iface %p: destroying", self);
 
-    if (current_address_count >= 0 && self->config.enable_nat_traversal) {
+    /*if (current_address_count >= 0 && self->config.enable_nat_traversal) {
       for (int i = 0; i < current_address_count; i++) {
         pthread_join(redis_update_thread[i], NULL);
       }
 
       free(redis_update_thread);
 
-    }
+    }*/
 
     uct_base_iface_progress_disable(&self->super.super,
                                     UCT_PROGRESS_SEND |
