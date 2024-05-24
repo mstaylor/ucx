@@ -546,6 +546,7 @@ ucs_status_t ucs_socket_server_init(const struct sockaddr *saddr, socklen_t sock
     }
 
       if (listen(fd, backlog) < 0) {
+        perror("bind");
         ucs_error("listen(fd=%d addr=%s backlog=%d) failed: %m", fd,
                   ucs_sockaddr_str(saddr, ip_port_str, sizeof(ip_port_str)),
                   backlog);
