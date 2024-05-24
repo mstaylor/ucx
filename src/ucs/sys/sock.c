@@ -122,9 +122,9 @@ void set_sock_addr(const char *address_str, struct sockaddr_storage *saddr, sa_f
     sa_in->sin_family = AF_INET;
     if (port != 0) {
       sa_in->sin_port = htons(port);
-    } /*else {
-      sa_in->sin_port = htons(INADDR_ANY);
-    }*/
+    } else {
+      sa_in->sin_port = htons(0);
+    }
     break;
   case AF_INET6:
     sa_in6 = (struct sockaddr_in6*)saddr;
