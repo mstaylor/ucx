@@ -585,10 +585,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     char public_ipadd[UCS_SOCKADDR_STRING_LEN];
 
     if (iface->config.enable_nat_traversal) {
-      status = ucs_socket_server_init(
-          (struct sockaddr *)&iface->config.ifaddr, addr_len,
-          ucs_socket_max_conn(), retry, iface->config.enable_nat_traversal,
-          &iface->listen_fd);
+
 
 
 
@@ -617,20 +614,20 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
       //bind to listen fd
 
 
-      // Get the local address the socket is bound to
+     /* // Get the local address the socket is bound to
       if (getsockname(iface->listen_fd, (struct sockaddr *)&rend_local_addr, &rend_local_addr_len) < 0) {
         ucs_warn("could not retrieve listen ip");
         return UCS_ERR_IO_ERROR;
-      }
+      }*/
 
-      local_addr.sin_family = AF_INET;
+     /* local_addr.sin_family = AF_INET;
       local_addr.sin_addr.s_addr = INADDR_ANY;
-      local_addr.sin_port = rend_local_addr.sin_port;
+      local_addr.sin_port = rend_local_addr.sin_port;*/
 
-      if (bind(fd, (struct sockaddr *)&rend_local_addr, rend_local_addr_len) < 0) {
+     /* if (bind(fd, (struct sockaddr *)&rend_local_addr, rend_local_addr_len) < 0) {
         ucs_error("error binding to rendezvous socket %s", strerror(errno));
         return UCS_ERR_IO_ERROR;
-      }
+      }*/
 
 
       ucs_warn("connecting to rendezvous");
@@ -674,8 +671,30 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
                             sizeof(public_ipadd)),
                ntohs(public_info.port));
 
+      if (getsockname(fd, (struct sockaddr *)&rend_local_addr, &rend_local_addr_len) < 0) {
+        ucs_warn("could not retrieve listen ip");
+        return UCS_ERR_IO_ERROR;
+      }
 
 
+      status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr,
+                                     ntohs(rend_local_addr.sin_port));
+      if (status != UCS_OK) {
+
+        return status;
+      }
+
+      status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr,
+                                   &addr_len);
+      if (status != UCS_OK) {
+        return status;
+      }
+
+
+      status = ucs_socket_server_init(
+          (struct sockaddr *)&iface->config.ifaddr, addr_len,
+          ucs_socket_max_conn(), retry, iface->config.enable_nat_traversal,
+          &iface->listen_fd);
 
 
     } else {
@@ -885,87 +904,6 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
           memcpy(saddr, addr, addrlen);
         }
 
-      /*if (self->config.enable_nat_traversal) {
-        //call rendezvous and use private address and port
-        ucs_warn("creating rendezvous socket");
-        fd = socket(AF_INET, SOCK_STREAM, 0);
-        if (fd == -1) {
-          ucs_error("Could not create socket for rendezvous server: ");
-          return UCS_ERR_IO_ERROR;
-        }
-
-        ucs_warn("updating rendezvous socket options");
-        if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) <
-                0 ||
-            setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) <
-                0) {
-          ucs_error("Setting REUSE options failed: ");
-          return UCS_ERR_IO_ERROR;
-        }
-
-        server_data.sin_family = AF_INET;
-        server_data.sin_addr.s_addr = inet_addr(self->config.rendezvous_ip_address);
-        server_data.sin_port = htons(self->config.rendezvous_port);
-
-        ucs_warn("connecting to rendezvous");
-        if(connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
-          ucs_warn("Connection with the rendezvous server failed: %s", strerror(errno));
-          //return UCS_ERR_IO_ERROR;
-          return UCS_ERR_IO_ERROR;
-        }
-
-        // Get the local address the socket is bound to
-        if (getsockname(fd, (struct sockaddr *)&local_addr, &local_addr_len) < 0) {
-          ucs_warn("could not retrieve rendezvous ip");
-          return UCS_ERR_IO_ERROR;
-        }
-
-        ucs_sockaddr_get_ipstr((const struct sockaddr *)&local_addr, local_ip, sizeof(local_ip));
-
-        ucs_sockaddr_get_port((const struct sockaddr *)&local_addr, &local_port);
-
-        ucs_warn("Local IP address returned from rendezvous: %s:%d", local_ip, local_port);
-
-
-        if(send(fd, self->config.pairing_name, strlen(self->config.pairing_name), MSG_DONTWAIT) == -1) {
-          ucs_error("Failed to send data to rendezvous server: ");
-          return UCS_ERR_IO_ERROR;
-        }
-        ucs_warn("receiving from rendezvous");
-
-        bytes = recv(fd, &public_info, sizeof(public_info), MSG_WAITALL);
-        if (bytes == -1) {
-          ucs_error("Failed to get data from rendezvous server: ");
-          return UCS_ERR_IO_ERROR;
-        } else if(bytes == 0) {
-          ucs_error("Server has disconnected");
-          return UCS_ERR_IO_ERROR;
-        }
-        //close(fd);
-        ucs_warn("client data returned from rendezvous: %s:%i",
-                 ip_to_string(&public_info.ip.s_addr,
-                              public_ipadd,
-                              sizeof(public_ipadd)),
-                 ntohs(public_info.port));
-
-
-        set_sock_addr(NULL, &connect_addr, AF_INET, local_port);
-
-
-        addr = (struct sockaddr*)&connect_addr;
-
-        status = ucs_sockaddr_sizeof(addr, &addrlen);
-        if (status != UCS_OK) {
-          goto out_free_ifaddr;
-        }
-
-        if (saddr != NULL) {
-          memcpy(saddr, addr, addrlen);
-        }
-
-        //close(fd);
-      }
-*/
        } else if ((self->config.override_ip_address != NULL && strlen(self->config.override_ip_address) > 0) ) {
 
         ucs_warn("configuring with override address %s for ifname %s",
