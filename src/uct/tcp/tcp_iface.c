@@ -570,6 +570,9 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     ucs_status_t status;
     size_t addr_len;
     int port, retry = -1;
+    char redisKeyBuf[200];
+
+    uint16_t port_p;
 
     //int enable_flag = 1;
     //int fd;
@@ -714,6 +717,29 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
             (struct sockaddr *)&iface->config.ifaddr, addr_len,
             ucs_socket_max_conn(), retry, iface->config.enable_nat_traversal,
             &iface->listen_fd);
+
+        if (status == UCS_OK && iface->config.enable_nat_traversal) {
+          //check if port exists
+          status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &port_p);
+
+          if (status == UCS_OK) {
+            //call redis
+            sprintf(redisKeyBuf,"%i", port_p);
+            ucs_warn("writing port key to redis %i", port_p);
+            if (redisHashKeyExists(iface->config.redis_ip_address,
+                                   iface->config.redis_port, "port_map",
+                                   redisKeyBuf)) {
+              //keep searching for an available port
+              status = UCS_ERR_BUSY;
+            } else {
+              writeRedisHashValue(iface->config.redis_ip_address,
+                                  iface->config.redis_port, "port_map",
+                                  redisKeyBuf, "true");
+              //write new key
+            }
+          }
+
+        }
 
       } while (retry && (status == UCS_ERR_BUSY));
 

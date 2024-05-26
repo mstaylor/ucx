@@ -6,7 +6,7 @@
 #define UCX_REDIS_H
 
 #include "hiredis/hiredis.h"
-
+#include <stdbool.h>
 
 #include <uct/tcp/tcp.h>
 
@@ -30,6 +30,9 @@ ucs_status_t updateKeyIfMissing(const char *hostname, int port, const char *key,
 ucs_status_t updateKeyIfMissingWithContext(redisContext *c, const char *key, const char *value);
 
 char * getValueFromRedis(const char *hostname, int port, const char *key);
+
+bool redisHashKeyExists(const char * hostname, int port, const char *hash, const char* key);
+ucs_status_t writeRedisHashValue(const char * hostname, int port, const char *hash, const char* key, const char* value);
 
 char * getValueFromRedisWithContext(redisContext *c, const char *key);
 

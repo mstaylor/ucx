@@ -2,9 +2,8 @@
 // Created by parallels on 3/29/24.
 //
 
-
 #include "redis.h"
-
+#include <stdbool.h>
 
 redisContext * redisLogin(const char *hostname, int port) {
     redisContext *c;
@@ -53,10 +52,41 @@ ucs_status_t setRedisValueWithContext(redisContext *c, const char *key, const ch
 
 pthread_mutex_t redis_set_mutex;
 
+ucs_status_t writeRedisHashValue(const char * hostname, int port, const char *hash, const char* key, const char* value) {
+  redisReply *reply;
+  ucs_status_t status = UCS_OK;
+  redisContext *c = NULL;
+  pthread_mutex_lock(&redis_set_mutex);
+  c = redisLogin(hostname, port);
+
+  if (c != NULL) {
+    // Set the key
+    reply = redisCommand(c, "HSET %s %s %s", hash, key, value);
+    if (reply == NULL) {
+      ucs_warn("Error in SET command");
+      status = UCS_ERR_IO_ERROR;
+    } else {
+      // Print the reply
+      //ucs_warn("%s\n", reply->str);
+      // Free the reply object
+      freeReplyObject(reply);
+    }
+
+
+
+    // Disconnect from Redis
+    redisFree(c);
+    return status;
+  }
+
+  pthread_mutex_unlock(&redis_set_mutex);
+
+  return status;
+}
+
+
+
 ucs_status_t  setRedisValue(const char *hostname, int port, const char *key, const char *value) {
-
-
-
     redisReply *reply;
     ucs_status_t status = UCS_OK;
     redisContext *c = NULL;
@@ -366,6 +396,40 @@ char * getValueFromRedisWithContext(redisContext *c, const char *key) {
   }
   return result;
 }
+
+bool redisHashKeyExists(const char * hostname, int port, const char *hash, const char* key) {
+
+  bool result = false;
+  redisReply *reply;
+
+  //char * result = NULL;
+
+  redisContext *c = redisLogin(hostname, port);
+
+  if (c != NULL) {
+    reply = redisCommand(c, "HGET %s %s", hash, key);
+    if (reply == NULL) {
+      ucs_warn("Error in HGET command or key not found");
+    } else {
+      // store the value in a char*
+      if (reply->type == REDIS_REPLY_STRING) {
+        result = true;
+        //ucs_warn("The value of '%s' is: %s", key, reply->str);
+        //result = (char*) malloc(strlen(reply->str)+1);
+        //strcpy(result, reply->str);
+
+      } //else {
+        //ucs_warn("The key '%s' does not exist", key);
+      //}
+      freeReplyObject(reply);
+    }
+
+    // Disconnect from Redis
+    redisFree(c);
+  }
+  return result;
+}
+
 char * getValueFromRedis(const char *hostname, int port, const char *key){
     redisReply *reply;
 
