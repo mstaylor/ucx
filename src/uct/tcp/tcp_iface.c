@@ -571,20 +571,20 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     size_t addr_len;
     int port, retry = -1;
 
-    int enable_flag = 1;
-    int fd;
-    struct sockaddr_in server_data;
-    struct sockaddr_in rend_local_addr;
-    socklen_t rend_local_addr_len = sizeof(rend_local_addr);
-    struct sockaddr_in local_addr;
-    socklen_t local_addr_len = sizeof(local_addr);
-    char local_ip[UCS_SOCKADDR_STRING_LEN];
-    uint16_t local_port;
-    ssize_t bytes;
-    PeerConnectionData public_info;
-    char public_ipadd[UCS_SOCKADDR_STRING_LEN];
+    //int enable_flag = 1;
+    //int fd;
+    //struct sockaddr_in server_data;
+    //struct sockaddr_in rend_local_addr;
+    //socklen_t rend_local_addr_len = sizeof(rend_local_addr);
+    //struct sockaddr_in local_addr;
+    //socklen_t local_addr_len = sizeof(local_addr);
+    //char local_ip[UCS_SOCKADDR_STRING_LEN];
+    //uint16_t local_port;
+    //ssize_t bytes;
+    //PeerConnectionData public_info;
+    //char public_ipadd[UCS_SOCKADDR_STRING_LEN];
 
-    if (iface->config.enable_nat_traversal) {
+    /*if (iface->config.enable_nat_traversal) {
 
 
 
@@ -681,7 +681,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
       close(fd);
 
-    } else {
+   */
 
       /* retry is 1 for a range of ports or when port value is zero.
      * retry is 0 for a single value port that is not zero */
@@ -716,7 +716,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
             &iface->listen_fd);
 
       } while (retry && (status == UCS_ERR_BUSY));
-    }
+
     return status;
 }
 
