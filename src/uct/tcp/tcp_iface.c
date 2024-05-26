@@ -611,24 +611,6 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
       server_data.sin_addr.s_addr = inet_addr(iface->config.rendezvous_ip_address);
       server_data.sin_port = htons(iface->config.rendezvous_port);
 
-      //bind to listen fd
-
-
-     /* // Get the local address the socket is bound to
-      if (getsockname(iface->listen_fd, (struct sockaddr *)&rend_local_addr, &rend_local_addr_len) < 0) {
-        ucs_warn("could not retrieve listen ip");
-        return UCS_ERR_IO_ERROR;
-      }*/
-
-     /* local_addr.sin_family = AF_INET;
-      local_addr.sin_addr.s_addr = INADDR_ANY;
-      local_addr.sin_port = rend_local_addr.sin_port;*/
-
-     /* if (bind(fd, (struct sockaddr *)&rend_local_addr, rend_local_addr_len) < 0) {
-        ucs_error("error binding to rendezvous socket %s", strerror(errno));
-        return UCS_ERR_IO_ERROR;
-      }*/
-
 
       ucs_warn("connecting to rendezvous");
       if(connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) != 0) {
@@ -680,13 +662,14 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
       status = ucs_sockaddr_set_port((struct sockaddr *)&iface->config.ifaddr,
                                      ntohs(rend_local_addr.sin_port));
       if (status != UCS_OK) {
-
+        ucs_warn("unable to set port %i", ntohs(rend_local_addr.sin_port));
         return status;
       }
 
       status = ucs_sockaddr_sizeof((struct sockaddr *)&iface->config.ifaddr,
                                    &addr_len);
       if (status != UCS_OK) {
+        ucs_warn("unable to get sockadd_sizeof");
         return status;
       }
 
@@ -696,6 +679,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
           ucs_socket_max_conn(), retry, iface->config.enable_nat_traversal,
           &iface->listen_fd);
 
+      close(fd);
 
     } else {
 

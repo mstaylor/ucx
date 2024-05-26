@@ -1157,6 +1157,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       ///bind the endpoint to the newly created socket
       if (bind(ep->fd, (struct sockaddr *)&endpoint_local_port_addr, endpoint_local_addr_len) < 0) {
         ucs_error("error binding to rendezvous socket %s", strerror(errno));
+        return UCS_ERR_IO_ERROR;
       }
 
       //find the local port used to bind this endpoint
@@ -1165,13 +1166,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
 
       if (getsockname(ep->fd, (struct sockaddr *)&endpoint_local_port_addr, &endpoint_local_addr_len) == -1) {
         ucs_warn("getsockname failed for ep->fd");
-
+        return UCS_ERR_IO_ERROR;
       }
 
       ucs_sockaddr_str((const struct sockaddr *)&endpoint_local_port_addr,
                        endpoint_src_address, sizeof(endpoint_src_address));
 
       ucs_warn("Assigned port: ep->fd %d src address: %s ", endpoint_src_port, endpoint_src_address);
+
+
 
       if(fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
         ucs_warn("Setting O_NONBLOCK failed: ");
@@ -1354,6 +1357,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep)
       flags &= ~(O_NONBLOCK);
       fcntl(ep->fd, F_SETFL, flags);
 
+      close(fd);
       if (UCS_STATUS_IS_ERR(status)) {
         return status;
       } else if (status == UCS_INPROGRESS) {
