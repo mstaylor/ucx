@@ -572,13 +572,13 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     int port, retry = -1;
     char redisKeyBuf[200];
 
-    uint16_t port_p;
+
 
     //int enable_flag = 1;
     //int fd;
     //struct sockaddr_in server_data;
-    //struct sockaddr_in rend_local_addr;
-    //socklen_t rend_local_addr_len = sizeof(rend_local_addr);
+    struct sockaddr_in local_addr;
+    socklen_t local_addr_len = sizeof(local_addr);
     //struct sockaddr_in local_addr;
     //socklen_t local_addr_len = sizeof(local_addr);
     //char local_ip[UCS_SOCKADDR_STRING_LEN];
@@ -720,12 +720,15 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
 
         if (status == UCS_OK && iface->config.enable_nat_traversal) {
           //check if port exists
-          status = ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr, &port_p);
+          if (getsockname(iface->listen_fd, (struct sockaddr *)&local_addr, &local_addr_len) < 0) {
+            ucs_warn("could not retrieve listen ip");
+            return UCS_ERR_IO_ERROR;
+          }
 
           if (status == UCS_OK) {
             //call redis
-            sprintf(redisKeyBuf,"%i", port_p);
-            ucs_warn("writing port key to redis %i", port_p);
+            sprintf(redisKeyBuf,"%i", ntohs(local_addr.sin_port));
+            ucs_warn("writing port key to redis %i", ntohs(local_addr.sin_port));
             if (redisHashKeyExists(iface->config.redis_ip_address,
                                    iface->config.redis_port, "port_map",
                                    redisKeyBuf)) {
