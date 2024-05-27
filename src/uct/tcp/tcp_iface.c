@@ -91,6 +91,10 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
     "Upper bound to TCP iface bandwidth. 'auto' means BW is unlimited.",
     ucs_offsetof(uct_tcp_iface_config_t, max_bw), UCS_CONFIG_TYPE_BW},
 
+    {UCT_TCP_CONFIG_REMOTE_ADDRESS_OVERRIDE, "",
+     "Override the remote address IP ",
+     ucs_offsetof(uct_tcp_iface_config_t, override_ip_address), UCS_CONFIG_TYPE_STRING},
+
 #ifdef UCT_TCP_EP_KEEPALIVE
   {"KEEPIDLE", UCS_PP_MAKE_STRING(UCT_TCP_EP_DEFAULT_KEEPALIVE_IDLE) "s",
    "The time the connection needs to remain idle before TCP starts sending "
@@ -692,6 +696,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->config.keepalive.intvl   = config->keepalive.intvl;
     self->port_range.first         = config->port_range.first;
     self->port_range.last          = config->port_range.last;
+    self->config.override_ip_address = config->override_ip_address;
 
     if (config->keepalive.idle != UCS_MEMUNITS_AUTO) {
         /* TCP iface configuration sets the keepalive interval */
@@ -741,10 +746,15 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     }
 
     for (i = 0; i < tcp_md->config.af_prio_count; i++) {
-        status = ucs_netif_get_addr(self->if_name,
+        /*status = ucs_netif_get_addr(self->if_name,
                                     tcp_md->config.af_prio_list[i],
                                     (struct sockaddr*)&self->config.ifaddr,
-                                    (struct sockaddr*)&self->config.netmask);
+                                    (struct sockaddr*)&self->config.netmask);*/
+          status = ucs_netif_get_addr2(self->if_name,
+                                       tcp_md->config.af_prio_list[i],
+                                       (struct sockaddr*)&self->config.ifaddr,
+                                       (struct sockaddr*)&self->config.netmask,
+                                       self->config.override_ip_address);
         if (status == UCS_OK) {
             break;
         }
