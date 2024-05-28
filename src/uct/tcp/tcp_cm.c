@@ -17,7 +17,7 @@
 
 /*atomic_int accepting_socket = ATOMIC_VAR_INIT(-1);
 atomic_bool connection_established = ATOMIC_VAR_INIT(false);*/
-redisContext *context = NULL;
+//redisContext *context = NULL;
 
 ucs_status_t peer_listen(void *p) {
   struct sockaddr_in peer_info;
@@ -1114,11 +1114,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     ucs_warn("looking for public address %s", dest_str);
     // Now retrieve the remote address which should be written to redis by the
     // peer
-    remote_address = getValueFromRedisWithContext(context, dest_str);
+    remote_address = getValueFromRedis(iface->config.redis_ip_address,
+                                       iface->config.redis_port, dest_str);
 
     while (remote_address == NULL) {
       msleep(1000);
-      remote_address = getValueFromRedisWithContext(context, dest_str);
+      remote_address = getValueFromRedis(iface->config.redis_ip_address,
+                                         iface->config.redis_port, dest_str);
     }
 
     ucs_warn("remote address returned from redis: %s", remote_address);
