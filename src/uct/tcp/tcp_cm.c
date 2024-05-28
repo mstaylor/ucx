@@ -1206,6 +1206,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     ucs_warn("Assigned port: ep->fd %d src address: %s ", endpoint_src_port,
              endpoint_src_address);
 
+    writeRedisHashValue(iface->config.redis_ip_address,
+                        iface->config.redis_port, "endpoint_connect_status",
+                        endpoint_src_address, "false");
+
     if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
       ucs_warn("Setting O_NONBLOCK failed: ");
     }
@@ -1346,6 +1350,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
         }
       }
     }
+
+    writeRedisHashValue(iface->config.redis_ip_address,
+                        iface->config.redis_port, "endpoint_connect_status",
+                        endpoint_src_address, "true");
 
     // delete peer2 since we should have connected
     /*ucs_warn("deleting redis peer key since connected to peer: %s",
