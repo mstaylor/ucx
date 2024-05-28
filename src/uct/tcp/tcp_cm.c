@@ -940,7 +940,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
 
 
+    rend_local_port_addr.sin_family = AF_INET;
+    rend_local_port_addr.sin_addr.s_addr = INADDR_ANY;
+
     do {
+
       status = ucs_sockaddr_set_port((struct sockaddr *)&rend_local_port_addr,
                                      0);
       if (status != UCS_OK) {
