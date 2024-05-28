@@ -629,7 +629,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
               ucs_warn("writing port key to redis %i", ntohs(local_addr.sin_port));
               writeRedisHashValue(iface->config.redis_ip_address,
                                   iface->config.redis_port, "port_map",
-                                  redisKeyBuf, "true");
+                                  redisKeyBuf, "listener");
               status = UCS_OK;
               //write new key
             }
