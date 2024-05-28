@@ -618,16 +618,19 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
           if (status == UCS_OK) {
             //call redis
             sprintf(redisKeyBuf,"%i", ntohs(local_addr.sin_port));
-            ucs_warn("writing port key to redis %i", ntohs(local_addr.sin_port));
+            ucs_warn("checking if redis hash key exists: %s", redisKeyBuf);
             if (redisHashKeyExists(iface->config.redis_ip_address,
                                    iface->config.redis_port, "port_map",
                                    redisKeyBuf)) {
+              ucs_warn("redis key %s exist so trying another...", redisKeyBuf);
               //keep searching for an available port
               status = UCS_ERR_BUSY;
             } else {
+              ucs_warn("writing port key to redis %i", ntohs(local_addr.sin_port));
               writeRedisHashValue(iface->config.redis_ip_address,
                                   iface->config.redis_port, "port_map",
                                   redisKeyBuf, "true");
+              status = UCS_OK;
               //write new key
             }
           }
