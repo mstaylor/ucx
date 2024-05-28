@@ -76,7 +76,6 @@ ucs_status_t writeRedisHashValue(const char * hostname, int port, const char *ha
 
     // Disconnect from Redis
     redisFree(c);
-    return status;
   }
 
   pthread_mutex_unlock(&redis_set_mutex);
