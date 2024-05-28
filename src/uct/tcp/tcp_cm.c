@@ -967,16 +967,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
         }
         //success, now check if port has been taken by another process
         sprintf(redisPortKeyBuf,"%i", ntohs(rend_local_port_addr.sin_port));
-        ucs_warn("writing port key to redis %i", ntohs(rend_local_port_addr.sin_port));
+        ucs_warn("checking to see if port %s exist", redisPortKeyBuf);
         if (redisHashKeyExists(iface->config.redis_ip_address,
                                iface->config.redis_port, "port_map",
                                redisPortKeyBuf)) {
           //keep searching for an available port
+          ucs_warn("redis port %s exists so trying another port...", redisPortKeyBuf);
           status = UCS_ERR_BUSY;
         } else {
+          ucs_warn("writing port key to redis %s", redisPortKeyBuf);
           writeRedisHashValue(iface->config.redis_ip_address,
                               iface->config.redis_port, "port_map",
-                              redisPortKeyBuf, "true");
+                              redisPortKeyBuf, "endpoint");
           //write new key
           status = UCS_OK;
         }
@@ -1044,17 +1046,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
     sprintf(publicAddressPort, "%s:%i", public_ipadd, listen_port);
 
-    if (context == NULL) {
+    /*if (context == NULL) {
       context =
           redisLogin(iface->config.redis_ip_address, iface->config.redis_port);
-    }
+    }*/
 
-    if (context == NULL) {
+    /*if (context == NULL) {
       ucs_warn("redis context not initialized");
       return UCS_ERR_IO_ERROR;
-    }
+    }*/
 
-    status = setRedisValueWithContext(context, src_str, publicAddressPort);
+    status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                           src_str, publicAddressPort);
     if (status == UCS_OK) {
       ucs_warn("wrote redis private to public key:value %s->%s", src_str,
                publicAddressPort);
