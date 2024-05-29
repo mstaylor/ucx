@@ -140,8 +140,6 @@ void listen_for_updates_peer(void *p) {
       }
       idx++;
 
-      printf("checking remote address: %s", peer_str);
-
       //ucs_warn("trying remote address %s", peer_str);
       // ucs_warn("sleeping waiting for remote address from redis...");
       remote_address =
