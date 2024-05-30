@@ -16,7 +16,6 @@
 #include <sys/socket.h>
 #include <time.h>
 
-pthread_mutex_t nat_trav_mutex;
 
 const char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size) {
     return inet_ntop(AF_INET, ip, buffer, max_size);
@@ -117,8 +116,6 @@ void listen_for_updates_peer(void *p) {
 
   while(true) { //loop throughout the lifetime of the ucx process
     //1. poll redis for the
-    pthread_mutex_lock(&nat_trav_mutex);
-
 
     if (idx % 2 == 0){
       peer_str = peer_redis_key;
@@ -273,9 +270,11 @@ void listen_for_updates_peer(void *p) {
     redis_write_status = setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                                        publicAddressPort, publicAddressPort);
     if (redis_write_status == UCS_OK) {
-      ucs_warn("wrote redis public to public key:value %s->%s", publicAddressPort, publicAddressPort);
+      ucs_warn("wrote redis public to public key:value %s->%s for %s", publicAddressPort,
+               publicAddressPort, src_str);
     } else {
-      ucs_warn("could not write redis public to public key:value %s->%s", publicAddressPort, publicAddressPort);
+      ucs_warn("could not write redis public to public key:value %s->%s for %s",
+               publicAddressPort, publicAddressPort, src_str);
     }
 
 
@@ -325,12 +324,12 @@ void listen_for_updates_peer(void *p) {
     timeout.tv_sec = NAT_CONNECT_TO_SEC;
     timeout.tv_usec = 0;
     while (retries < NAT_RETRIES) {
-      ucs_warn("retrying connection - current retry: %i", retries);
+      ucs_warn("retrying connection - current retry: %i for %s", retries, src_str);
 
       ucs_sockaddr_str(addr,
                        src_str2, sizeof(src_str2));
 
-      ucs_warn("connecting to peer address socket ip: %s source str: %s", src_str2, peer_str);
+      ucs_warn("connecting to peer address socket ip: %s source str: %s for %s", src_str2, peer_str, src_str);
 
       result = connect(peer_fd, addr, addrlen);
 
@@ -347,25 +346,25 @@ void listen_for_updates_peer(void *p) {
       result = select(peer_fd + 1, NULL, &set, NULL, &timeout);
       if (result < 0 && errno != EINTR) {
         // select() failed or connection timed out
-        ucs_warn("select failed/connect timeout on peer socket %i peer address %s source %s",
-                 peer_fd, src_str2, peer_str);
+        ucs_warn("select failed/connect timeout on peer socket %i peer address %s source %s for %s",
+                 peer_fd, src_str2, peer_str, src_str);
       }  else if (result > 0) {
         result_opt = getsockopt(peer_fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
         if (result_opt < 0) {
-          ucs_warn("Connection failed: %s and continuing peer socket %i peer address %s source %s",
-                   strerror(so_error), peer_fd, src_str2, peer_str);
+          ucs_warn("Connection failed: %s and continuing peer socket %i peer address %s source %s for %s",
+                   strerror(so_error), peer_fd, src_str2, peer_str, src_str);
         } else if (so_error) {
-          ucs_warn("Error in delayed connection() %d - %s peer socket %i peer address %s source str %s", so_error,
-                   strerror(so_error), peer_fd, src_str2, peer_str);
+          ucs_warn("Error in delayed connection() %d - %s peer socket %i peer address %s source str %s for %s", so_error,
+                   strerror(so_error), peer_fd, src_str2, peer_str, src_str);
         } else {
-          ucs_warn("Connected on attempt %d peer socket %i peer address %s source str %s",
-                   retries + 1, peer_fd, src_str2, peer_str);
+          ucs_warn("Connected on attempt %d peer socket %i peer address %s source str %s for %s",
+                   retries + 1, peer_fd, src_str2, peer_str, src_str);
           connect_status = UCS_OK;
           //close(fd);//close the rendezvous socket
           break;
         }
       } else {
-        ucs_warn("Timeout or error. peer socket %i peer address %s", peer_fd, src_str2);
+        ucs_warn("Timeout or error. peer socket %i peer address %s for %s", peer_fd, src_str2, src_str);
       }
 
       close(peer_fd);
@@ -408,7 +407,7 @@ void listen_for_updates_peer(void *p) {
 
     if (connect_status == UCS_OK) {
       //remove peer
-      ucs_warn("deleting redis key: %s for source %s", peer_redis_key, peer_str);
+      ucs_warn("deleting redis key: %s for source %s for %s", peer_redis_key, peer_str, src_str);
       //delete redis key
       deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
     }
@@ -416,7 +415,7 @@ void listen_for_updates_peer(void *p) {
     //close(peer_fd);
 
     retries = 0;
-    pthread_mutex_unlock(&nat_trav_mutex);
+
   }
 }
 
