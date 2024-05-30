@@ -884,6 +884,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   uct_tcp_iface_t *iface =
       ucs_derived_of(ep->super.super.iface, uct_tcp_iface_t);
   ucs_status_t status;
+  int connect_count = 0;
 
   ep->conn_retries++;
   if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -1280,7 +1281,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
             } else if (so_error) {
               ucs_warn("Error in delayed connection() %d - %s host %s",
                        so_error, strerror(so_error), src_str2);
-            } else {
+            } else if (connect_count > 0){
+
+
               ucs_warn("Connected on attempt %d host %s", retries + 1,
                        src_str2);
               status = UCS_OK;
@@ -1293,6 +1296,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
           } else {
             ucs_warn("Timeout or error on fd %d host %s", ep->fd, src_str2);
           }
+          connect_count++;
 
           close(ep->fd);
 
