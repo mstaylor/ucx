@@ -1302,7 +1302,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
           close(ep->fd);
 
           status =
-              ucs_socket_create(((struct sockaddr *)ep->peer_addr)->sa_family,
+              ucs_socket_create(AF_INET,
                                 SOCK_STREAM, &ep->fd);
           if (status != UCS_OK) {
             ucs_warn("could not create socket");
@@ -1322,6 +1322,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
             ucs_warn("could NOT configure to reuse socket address");
             return status;
           }
+
+
+
+          set_sock_addr(NULL, (struct sockaddr_storage *)&endpoint_local_port_addr,
+                        AF_INET, local_port);
 
           status = ucs_sockaddr_sizeof(
               (struct sockaddr *)&endpoint_local_port_addr, &addr_len);
