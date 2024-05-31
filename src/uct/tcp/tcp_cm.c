@@ -836,7 +836,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   socklen_t endpoint_local_addr_len = sizeof(endpoint_local_port_addr);
   int enable_flag = 1;
   struct sockaddr_storage connect_addr;
-  int retries = 0;
+
   int result = 0;
   int result_opt = 0;
   uint16_t port = 0;
@@ -847,7 +847,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
   size_t addrlen;
 
-  int flags;
+  //int flags;
   struct timeval timeout;
   size_t addr_len;
   size_t peer_addr_len;
@@ -883,8 +883,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   size_t rend_addr_len;
   uct_tcp_iface_t *iface =
       ucs_derived_of(ep->super.super.iface, uct_tcp_iface_t);
+  ucs_status_t connect_status = UCS_INPROGRESS;
   ucs_status_t status;
-  int connect_count = 0;
+
 
   ep->conn_retries++;
   if (ep->conn_retries > iface->config.max_conn_retries) {
@@ -1238,7 +1239,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     }
 */
     while (true) {
-      ucs_warn("retrying connection - current retry: %i", retries);
+
 
       status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr,
                                    &peer_addr_len);
@@ -1257,8 +1258,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
       if (result == 0) {
         ucs_warn("connected to %s", src_str2);
-        status = UCS_OK;
-        break;
+        connect_status = UCS_OK;
+        /*break;*/
 
       } else {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -1281,22 +1282,22 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
             } else if (so_error) {
               ucs_warn("Error in delayed connection() %d - %s host %s",
                        so_error, strerror(so_error), src_str2);
-            } else if (connect_count > 0){
+            } else {
 
 
-              ucs_warn("Connected on attempt %d host %s", retries + 1,
-                       src_str2);
-              status = UCS_OK;
+              ucs_warn("Connected to host %s",src_str2);
+              connect_status = UCS_OK;
               /*if (atomic_load(&peerConnectionData.connection_established)) {
                 break;
               }*/
-              break;
+              //break;
               // close(fd);//close the rendezvous socket
             }
           } else {
             ucs_warn("Timeout or error on fd %d host %s", ep->fd, src_str2);
           }
-          connect_count++;
+
+
 
           close(ep->fd);
 
@@ -1339,11 +1340,16 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
           ucs_warn("bound endpoint socket ip: %s", src_str2);
 
-          if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
-            ucs_warn("Setting O_NONBLOCK failed: ");
+          if (connect_status != UCS_OK) {
+            if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+              ucs_warn("Setting O_NONBLOCK failed: ");
+            }
           }
 
-          retries++;
+
+          if (connect_status == UCS_OK) {
+            break;
+          }
           continue;
         } else if (errno == EISCONN) {
 
@@ -1352,11 +1358,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
           break;
         } else {
           msleep(100);
-          retries++;
+
           // continue;
         }
       }
     }
+
+
+
 
     writeRedisHashValue(iface->config.redis_ip_address,
                         iface->config.redis_port, "endpoint_connect_status",
@@ -1401,11 +1410,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     // atomic_store(&connection_established, true);//stop listening
 
     // 8. renable blocking on fd amd continue
-    flags = fcntl(ep->fd, F_GETFL, 0);
+    /*flags = fcntl(ep->fd, F_GETFL, 0);
     flags &= ~(O_NONBLOCK);
-    fcntl(ep->fd, F_SETFL, flags);
+    fcntl(ep->fd, F_SETFL, flags);*/
 
-    close(fd);
+    //close(fd);
+    ucs_warn("connecting again to peer: %s from src: %s", src_str2, src_str);
+    status =
+        ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+
     if (UCS_STATUS_IS_ERR(status)) {
       return status;
     } else if (status == UCS_INPROGRESS) {
