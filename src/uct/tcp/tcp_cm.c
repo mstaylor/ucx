@@ -1425,6 +1425,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     } else if (status == UCS_INPROGRESS) {
       ucs_warn("status is in progress peer %s src %s", src_str2, src_str);
       ucs_assert(iface->config.conn_nb);
+      ucs_warn("connection is conn_nb %d peer %s src %s", iface->config.conn_nb, src_str2, src_str);
       uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
       return UCS_OK;
     }
@@ -1434,6 +1435,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     ucs_assert(status == UCS_OK);
 
     if (!iface->config.conn_nb) {
+      ucs_warn("connection is non blocking  peer %s src %s", src_str2, src_str);
       status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
       if (status != UCS_OK) {
         ucs_warn("ucs_sys_fcntl_modfl failed peer %s src %s", src_str2, src_str);
