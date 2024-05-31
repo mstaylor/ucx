@@ -1420,8 +1420,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
         ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
 
     if (UCS_STATUS_IS_ERR(status)) {
+      ucs_warn("returning error status - peer %s src %s", src_str2, src_str);
       return status;
     } else if (status == UCS_INPROGRESS) {
+      ucs_warn("status is in progress peer %s src %s", src_str2, src_str);
       ucs_assert(iface->config.conn_nb);
       uct_tcp_ep_mod_events(ep, UCS_EVENT_SET_EVWRITE, 0);
       return UCS_OK;
@@ -1434,10 +1436,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     if (!iface->config.conn_nb) {
       status = ucs_sys_fcntl_modfl(ep->fd, O_NONBLOCK, 0);
       if (status != UCS_OK) {
+        ucs_warn("ucs_sys_fcntl_modfl failed peer %s src %s", src_str2, src_str);
         return status;
       }
     }
 
+    ucs_warn("writing redis hash peer %s src %s", src_str2, src_str);
     writeRedisHashValue(iface->config.redis_ip_address,
                         iface->config.redis_port, "endpoint_connect_status",
                         redisHashConnectStatus, "true");
