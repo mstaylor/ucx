@@ -1215,9 +1215,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                         iface->config.redis_port, "endpoint_connect_status",
                         redisHashConnectStatus, "false");
 
-    if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+    /*if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
       ucs_warn("Setting O_NONBLOCK failed: ");
-    }
+    }*/
     //timeout.tv_sec = NAT_CONNECT_TO_SEC;
     //timeout.tv_usec = 0;
 
