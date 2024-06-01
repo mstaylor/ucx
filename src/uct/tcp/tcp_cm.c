@@ -497,13 +497,20 @@ int uct_tcp_cm_ep_accept_conn(uct_tcp_ep_t *ep) {
   int cmp;
   ucs_status_t status;
 
+  ucs_warn("in uct_tcp_cm_ep_accept_conn");
   if (ep->conn_state == UCT_TCP_EP_CONN_STATE_CONNECTED) {
+    ucs_warn("in UCT_TCP_EP_CONN_STATE_CONNECTED so returning");
     return 0;
   }
+
+
+
 
   cmp =
       ucs_sockaddr_cmp((const struct sockaddr *)&ep->peer_addr,
                        (const struct sockaddr *)&iface->config.ifaddr, &status);
+
+  ucs_warn("result of ucs_sockaddr_cmp %i", cmp);
   ucs_assertv_always(
       status == UCS_OK, "ucs_sockaddr_cmp(%s, %s) failed",
       ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr, str_remote_addr,
@@ -834,6 +841,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   char publicAddressPort2[UCS_SOCKADDR_STRING_LEN * 2];
   struct sockaddr_in endpoint_local_port_addr;
   socklen_t endpoint_local_addr_len = sizeof(endpoint_local_port_addr);
+
+  //struct sockaddr_in public_peer_addr;
+  //socklen_t public_peer_addr_len = sizeof(public_peer_addr_len);
+
   int enable_flag = 1;
   struct sockaddr_storage connect_addr;
 
@@ -850,7 +861,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   int flags;
   struct timeval timeout;
   size_t addr_len;
-  size_t peer_addr_len;
+  //size_t peer_addr_len;
 
   fd_set set;
 
@@ -885,6 +896,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
       ucs_derived_of(ep->super.super.iface, uct_tcp_iface_t);
   //ucs_status_t connect_status = UCS_INPROGRESS;
   ucs_status_t status;
+
 
 
   ep->conn_retries++;
@@ -1165,14 +1177,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
       return status;
     }
 
-    if ((struct sockaddr *)&ep->peer_addr != NULL) {
+
+
+    //memcpy(old_peer_addr[0], (struct sockaddr *)&ep->peer_addr, iface->config.sockaddr_len);
+
+    /*if ((struct sockaddr *)&ep->peer_addr != NULL) {
       memcpy((struct sockaddr *)&ep->peer_addr, addr, addrlen);
     }
 
     ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr, src_str2,
                      sizeof(src_str2));
 
-    ucs_warn("connecting to peer address socket ip: %s from src: %s", src_str2, src_str);
+    ucs_warn("connecting to peer address socket ip: %s from src: %s", src_str2, src_str);*/
     /*status =
         ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);*/
 
@@ -1241,20 +1257,20 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     while (true) {
 
 
-      status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr,
-                                   &peer_addr_len);
+      status = ucs_sockaddr_sizeof(addr,
+                                   &addrlen);
       if (status != UCS_OK) {
         ucs_warn("ucs_sockaddr_sizeof failed ");
         return status;
       }
 
-      ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr, src_str2,
+      ucs_sockaddr_str(addr, src_str2,
                        sizeof(src_str2));
 
       ucs_warn("connecting to peer address socket ip: %s src: %s", src_str2, src_str);
 
-      result = connect(ep->fd, (const struct sockaddr *)&ep->peer_addr,
-                       peer_addr_len);
+      result = connect(ep->fd, addr,
+                       addrlen);
 
       if (result == 0) {
         ucs_warn("connected to %s src %s", src_str2, src_str);
@@ -1403,6 +1419,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     flags = fcntl(ep->fd, F_GETFL, 0);
     flags &= ~(O_NONBLOCK);
     fcntl(ep->fd, F_SETFL, flags);
+
+    //memcpy(ep->peer_addr, old_peer_addr, iface->config.sockaddr_len);
 
     //close(fd);
     /*ucs_warn("connecting to peer: %s from src: %s", src_str2, src_str);
