@@ -837,8 +837,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   int enable_flag = 1;
   struct sockaddr_storage connect_addr;
 
-  //int result = 0;
-  //int result_opt = 0;
+  int result = 0;
+  int result_opt = 0;
   uint16_t port = 0;
   uint16_t listen_port = 0;
   int endpoint_src_port = 0;
@@ -847,15 +847,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
   size_t addrlen;
 
-  //int flags;
-  //struct timeval timeout;
-  //size_t addr_len;
-  //size_t peer_addr_len;
+  int flags;
+  struct timeval timeout;
+  size_t addr_len;
+  size_t peer_addr_len;
 
-  //fd_set set;
+  fd_set set;
 
-  //int so_error;
-  //socklen_t len = sizeof(so_error);
+  int so_error;
+  socklen_t len = sizeof(so_error);
 
   // pthread_t peer_listen_thread;
   // int thread_return;
@@ -1172,7 +1172,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr, src_str2,
                      sizeof(src_str2));
 
-    ucs_warn("connecting to peer address socket ip: %s", src_str2);
+    ucs_warn("connecting to peer address socket ip: %s from src: %s", src_str2, src_str);
     /*status =
         ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);*/
 
@@ -1215,11 +1215,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                         iface->config.redis_port, "endpoint_connect_status",
                         redisHashConnectStatus, "false");
 
-    /*if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+    if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
       ucs_warn("Setting O_NONBLOCK failed: ");
-    }*/
-    //timeout.tv_sec = NAT_CONNECT_TO_SEC;
-    //timeout.tv_usec = 0;
+    }
+    timeout.tv_sec = NAT_CONNECT_TO_SEC;
+    timeout.tv_usec = 0;
 
     // next we need to create a thread to listen for the peer to only connect
     // try to reconnect until listen connection succeeds and switch file
@@ -1230,7 +1230,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     // peerConnectionData.accepting_socket = -1;
     // peerConnectionData.connection_established = 0;
 
-    ucs_warn("sending thread port %i", endpoint_src_port);
+    //ucs_warn("sending thread port %i", endpoint_src_port);
 
     /*thread_return = pthread_create(&peer_listen_thread, NULL, (void
     *)peer_listen, (void*) &peerConnectionData); if(thread_return) {
@@ -1238,7 +1238,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     address "); return UCS_ERR_IO_ERROR;
     }
 */
-    /*while (true) {
+    while (true) {
 
 
       status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr,
@@ -1251,15 +1251,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
       ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr, src_str2,
                        sizeof(src_str2));
 
-      ucs_warn("connecting to peer address socket ip: %s", src_str2);
+      ucs_warn("connecting to peer address socket ip: %s src: %s", src_str2, src_str);
 
       result = connect(ep->fd, (const struct sockaddr *)&ep->peer_addr,
                        peer_addr_len);
 
       if (result == 0) {
-        ucs_warn("connected to %s", src_str2);
-        connect_status = UCS_OK;
-        *//*break;*//*
+        ucs_warn("connected to %s src %s", src_str2, src_str);
+        status = UCS_OK;
+        break;
 
       } else {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -1271,30 +1271,24 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
           result = select(ep->fd + 1, NULL, &set, NULL, &timeout);
           if (result < 0 && errno != EINTR) {
             // select() failed or connection timed out
-            ucs_warn("select failed/connect timeout on peer socket %d host %s",
-                     ep->fd, src_str2);
+            ucs_warn("select failed/connect timeout on peer socket %d host %s src: %s",
+                     ep->fd, src_str2, src_str);
           } else if (result > 0) {
             result_opt =
                 getsockopt(ep->fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
             if (result_opt < 0) {
-              ucs_warn("Connection failed: %s and continuing host %s",
-                       strerror(so_error), src_str2);
+              ucs_warn("Connection failed: %s and continuing host %s src: %s",
+                       strerror(so_error), src_str2, src_str);
             } else if (so_error) {
-              ucs_warn("Error in delayed connection() %d - %s host %s",
-                       so_error, strerror(so_error), src_str2);
+              ucs_warn("Error in delayed connection() %d - %s host %s src: %s",
+                       so_error, strerror(so_error), src_str2, src_str);
             } else {
-
-
-              ucs_warn("Connected to host %s",src_str2);
-              connect_status = UCS_OK;
-              *//*if (atomic_load(&peerConnectionData.connection_established)) {
-                break;
-              }*//*
-              //break;
-              // close(fd);//close the rendezvous socket
+              ucs_warn("Connected to host %s src: %s",src_str2, src_str);
+              status = UCS_OK;
+              break;
             }
           } else {
-            ucs_warn("Timeout or error on fd %d host %s", ep->fd, src_str2);
+            ucs_warn("Timeout or error on fd %d host %s src: %s", ep->fd, src_str2, src_str);
           }
 
 
@@ -1337,29 +1331,25 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
           if (bind(ep->fd, (struct sockaddr *)&endpoint_local_port_addr,
                    endpoint_local_addr_len) < 0) {
-            ucs_error("error binding to rendezvous socket %s", strerror(errno));
+            ucs_error("error binding to rendezvous socket %s src: %s", strerror(errno), src_str);
           }
 
           ucs_sockaddr_str((struct sockaddr *)&endpoint_local_port_addr,
                            src_str2, sizeof(src_str2));
 
-          ucs_warn("bound endpoint socket ip: %s", src_str2);
+          ucs_warn("bound endpoint socket ip: %s src: %s", src_str2, src_str);
 
-          if (connect_status != UCS_OK) {
+
             if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
               ucs_warn("Setting O_NONBLOCK failed: ");
             }
-          }
 
 
-          if (connect_status == UCS_OK) {
-            break;
-          }
           continue;
         } else if (errno == EISCONN) {
 
-          ucs_warn("Succesfully connected to peer, EISCONN");
-
+          ucs_warn("Succesfully connected to peer, EISCONN peer: %s, src: %s", src_str2, src_str);
+          status = UCS_OK;
           break;
         } else {
           msleep(100);
@@ -1367,7 +1357,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
           // continue;
         }
       }
-    }*/
+    }
 
 
 
@@ -1410,14 +1400,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     // atomic_store(&connection_established, true);//stop listening
 
     // 8. renable blocking on fd amd continue
-    /*flags = fcntl(ep->fd, F_GETFL, 0);
+    flags = fcntl(ep->fd, F_GETFL, 0);
     flags &= ~(O_NONBLOCK);
-    fcntl(ep->fd, F_SETFL, flags);*/
+    fcntl(ep->fd, F_SETFL, flags);
 
     //close(fd);
-    ucs_warn("connecting to peer: %s from src: %s", src_str2, src_str);
+    /*ucs_warn("connecting to peer: %s from src: %s", src_str2, src_str);
     status =
-        ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);
+        ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);*/
 
     if (UCS_STATUS_IS_ERR(status)) {
       ucs_warn("returning error status - peer %s src %s", src_str2, src_str);
