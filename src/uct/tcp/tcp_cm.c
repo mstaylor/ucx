@@ -1177,6 +1177,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
       return status;
     }
 
+    ucs_sockaddr_str(addr, src_str2,
+                     sizeof(src_str2));
+
 
 
     //memcpy(old_peer_addr[0], (struct sockaddr *)&ep->peer_addr, iface->config.sockaddr_len);
