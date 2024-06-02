@@ -896,6 +896,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
       ucs_derived_of(ep->super.super.iface, uct_tcp_iface_t);
   //ucs_status_t connect_status = UCS_INPROGRESS;
   ucs_status_t status;
+  int connect_count = 0;
 
 
 
@@ -1276,10 +1277,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                        addrlen);
 
       if (result == 0) {
-        ucs_warn("connected to %s src %s", src_str2, src_str);
-        status = UCS_OK;
-        break;
+        ucs_warn("connected to %s src %s connect count %i", src_str2, src_str, connect_count);
 
+        if (connect_count > 0) {
+          status = UCS_OK;
+          break;
+        }
+        connect_count++;
       } else {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
           FD_ZERO(&set);
@@ -1302,9 +1306,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
               ucs_warn("Error in delayed connection() %d - %s host %s src: %s",
                        so_error, strerror(so_error), src_str2, src_str);
             } else {
-              ucs_warn("Connected to host %s src: %s",src_str2, src_str);
-              status = UCS_OK;
-              break;
+              ucs_warn("Connected to host %s src: %s connect count: %i",src_str2, src_str, connect_count);
+
+              if (connect_count > 0) {
+                status = UCS_OK;
+                break;
+              }
+              connect_count++;
             }
           } else {
             ucs_warn("Timeout or error on fd %d host %s src: %s", ep->fd, src_str2, src_str);
@@ -1367,9 +1375,15 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
           continue;
         } else if (errno == EISCONN) {
 
-          ucs_warn("Succesfully connected to peer, EISCONN peer: %s, src: %s", src_str2, src_str);
-          status = UCS_OK;
-          break;
+          ucs_warn("Succesfully connected to peer, EISCONN peer: %s, src: %s connect count: %i",
+                   src_str2, src_str, connect_count);
+          if (connect_count > 0) {
+
+            status = UCS_OK;
+            break;
+          }
+          connect_count++;
+
         } else {
           msleep(100);
 

@@ -68,7 +68,7 @@ void listen_for_updates_peer(void *p) {
   char publicAddressPort[UCS_SOCKADDR_STRING_LEN*2];
   int publicPort = 0;
   ucs_status_t redis_write_status;
-  ucs_status_t connect_status = UCS_ERR_IO_ERROR;
+
 
   struct sockaddr_storage connect_addr;
   struct sockaddr* addr = NULL;
@@ -334,7 +334,6 @@ void listen_for_updates_peer(void *p) {
       result = connect(peer_fd, addr, addrlen);
 
       if (result == 0) {
-        connect_status = UCS_OK;
         break;
       }
 
@@ -359,7 +358,7 @@ void listen_for_updates_peer(void *p) {
         } else {
           ucs_warn("Connected on attempt %d peer socket %i peer address %s source str %s for %s",
                    retries + 1, peer_fd, src_str2, peer_str, src_str);
-          connect_status = UCS_OK;
+
           //close(fd);//close the rendezvous socket
           break;
         }
