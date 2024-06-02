@@ -1283,6 +1283,17 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
           status = UCS_OK;
           break;
         }
+        status =
+            setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                          peer_redis_key2, publicAddressPort2);
+
+        if (status != UCS_OK) {
+          ucs_warn("unable to update peer redis key 2");
+          return status;
+        }
+
+        ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key2,
+                 publicAddressPort2);
         connect_count++;
       } else {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -1312,6 +1323,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                 status = UCS_OK;
                 break;
               }
+
+              status =
+                  setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                                peer_redis_key2, publicAddressPort2);
+
+              if (status != UCS_OK) {
+                ucs_warn("unable to update peer redis key 2");
+                return status;
+              }
+
+              ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key2,
+                       publicAddressPort2);
               connect_count++;
             }
           } else {
@@ -1382,6 +1405,17 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
             status = UCS_OK;
             break;
           }
+          status =
+              setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                            peer_redis_key2, publicAddressPort2);
+
+          if (status != UCS_OK) {
+            ucs_warn("unable to update peer redis key 2");
+            return status;
+          }
+
+          ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key2,
+                   publicAddressPort2);
           connect_count++;
 
         } else {
