@@ -1261,13 +1261,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     while (true) {
 
 
-      status = ucs_sockaddr_sizeof(addr,
-                                   &addrlen);
-      if (status != UCS_OK) {
-        ucs_warn("ucs_sockaddr_sizeof failed ");
-        return status;
-      }
-
       ucs_sockaddr_str(addr, src_str2,
                        sizeof(src_str2));
 
