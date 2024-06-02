@@ -405,12 +405,10 @@ void listen_for_updates_peer(void *p) {
       retries++;
     }
 
-    if (connect_status == UCS_OK) {
-      //remove peer
-      ucs_warn("deleting redis key: %s for source %s for %s", peer_redis_key, peer_str, src_str);
+    ucs_warn("deleting redis key: %s for source %s for %s", peer_redis_key, peer_str, src_str);
       //delete redis key
-      deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
-    }
+    deleteRedisKey(iface->config.redis_ip_address, iface->config.redis_port, peer_redis_key);
+
 
     //close(peer_fd);
 
