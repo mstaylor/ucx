@@ -1357,6 +1357,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                 connect_count++;
                 continue;
               } else {
+                connect_count = 0;
                 break;
               }
 
