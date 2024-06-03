@@ -323,7 +323,7 @@ ucs_status_t uct_tcp_cm_send_event(uct_tcp_ep_t *ep,
     pkt_event = (uct_tcp_cm_conn_event_t *)(pkt_hdr + 1);
     *pkt_event = event;
   }
-
+  ucs_warn("about to send...");
   status = ucs_socket_send(ep->fd, pkt_buf, pkt_length);
   if (status == UCS_OK) {
     ucs_warn("ucs_socket_send");
@@ -1274,8 +1274,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
       if (result == 0) {
         ucs_warn("connected to %s src %s connect count %i", src_str2, src_str, connect_count);
         status = UCS_OK;
-        sendTestMessage(ep->fd);
-        sendTestMessage(ep->fd);
+
         break;
       } else {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -1301,9 +1300,98 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
             } else {
               ucs_warn("Connected to host %s src: %s connect count: %i",src_str2, src_str, connect_count);
               status = UCS_OK;
-              sendTestMessage(ep->fd);
-              sendTestMessage(ep->fd);
-              break;
+
+              if (connect_count == 1) {
+                sendTestMessage(ep->fd);
+                close(ep->fd);
+
+                status =
+                    ucs_socket_create(AF_INET,
+                                      SOCK_STREAM, &ep->fd);
+                if (status != UCS_OK) {
+                  ucs_warn("could not create socket");
+                  return status;
+                }
+
+                status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                                           &enable_flag, sizeof(int));
+                if (status != UCS_OK) {
+                  ucs_warn("could NOT configure to reuse socket port");
+                  return status;
+                }
+
+                status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+                                           &enable_flag, sizeof(int));
+                if (status != UCS_OK) {
+                  ucs_warn("could NOT configure to reuse socket address");
+                  return status;
+                }
+
+                // Get the local address the socket is bound to
+                if (getsockname(fd, (struct sockaddr *)&local_addr, &local_addr_len) < 0) {
+                  ucs_warn("could not retrieve rendezvous ip");
+                  return UCS_ERR_IO_ERROR;
+                }
+
+                ucs_sockaddr_get_ipstr((const struct sockaddr *)&local_addr, local_ip,
+                                       sizeof(local_ip));
+
+                ucs_sockaddr_get_port((const struct sockaddr *)&local_addr, &local_port);
+
+                ucs_warn("Local IP address bound: %s:%d", local_ip, local_port);
+
+                ucs_warn("sending to rendezvous");
+                if (send(fd, iface->config.pairing_name, strlen(iface->config.pairing_name),
+                         MSG_DONTWAIT) == -1) {
+                  ucs_error("Failed to send data to rendezvous server: ");
+                  return UCS_ERR_IO_ERROR;
+                }
+                ucs_warn("receiving from rendezvous");
+
+                bytes = recv(fd, &public_info, sizeof(public_info), MSG_WAITALL);
+                if (bytes == -1) {
+                  ucs_error("Failed to get data from rendezvous server: ");
+                  return UCS_ERR_IO_ERROR;
+                } else if (bytes == 0) {
+                  ucs_error("Server has disconnected");
+                  return UCS_ERR_IO_ERROR;
+                }
+                // close(fd);
+                ucs_warn("client data returned from rendezvous: %s:%i",
+                         ip_to_string(&public_info.ip.s_addr, public_ipadd,
+                                      sizeof(public_ipadd)),
+                         ntohs(public_info.port));
+
+
+                set_sock_addr(NULL, (struct sockaddr_storage *)&endpoint_local_port_addr,
+                              AF_INET, ntohs(public_info.port));
+
+
+                status = ucs_sockaddr_sizeof(
+                    (struct sockaddr *)&endpoint_local_port_addr, &addr_len);
+                if (status != UCS_OK) {
+                  ucs_warn("ucs_sockaddr_sizeof failed ");
+                  return status;
+                }
+
+                if (bind(ep->fd, (struct sockaddr *)&endpoint_local_port_addr,
+                         endpoint_local_addr_len) < 0) {
+                  ucs_error("error binding to rendezvous socket %s src: %s", strerror(errno), src_str);
+                }
+
+                ucs_sockaddr_str((struct sockaddr *)&endpoint_local_port_addr,
+                                 src_str2, sizeof(src_str2));
+
+                ucs_warn("bound endpoint socket ip: %s src: %s", src_str2, src_str);
+
+
+                if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+                  ucs_warn("Setting O_NONBLOCK failed: ");
+                }
+                continue;
+              } else {
+                break;
+              }
 
             }
           } else {
