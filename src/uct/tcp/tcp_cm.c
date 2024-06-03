@@ -825,27 +825,7 @@ err:
   return 0;
 }
 
-void sendTestMessage(int fd) {
-  char buffer[200] = "Hello, server!";
-  ssize_t bytes_sent;
 
-  bytes_sent = send(fd, buffer, strlen(buffer), 0);
-  if (bytes_sent < 0) {
-    if (errno == EPIPE) {
-      perror("Broken pipe error");
-      ucs_warn("could not send message");
-      if (fd < 0) {
-        return;
-      }
-    } else {
-      perror("Send error");
-      ucs_warn("unable to send test message");
-      return;
-    }
-  } else {
-    ucs_warn("Message sent: %s", buffer);
-  }
-}
 
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   char dest_str[UCS_SOCKADDR_STRING_LEN];

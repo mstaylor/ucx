@@ -39,7 +39,7 @@ const char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size);
  */
 void listen_for_updates_peer(void *p);
 
-
+void sendTestMessage(int fd);
 
 
 #endif //UCX_NAT_TRAVERSAL_H

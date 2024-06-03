@@ -334,6 +334,7 @@ void listen_for_updates_peer(void *p) {
       result = connect(peer_fd, addr, addrlen);
 
       if (result == 0) {
+        sendTestMessage(peer_fd);
         break;
       }
 
@@ -358,7 +359,7 @@ void listen_for_updates_peer(void *p) {
         } else {
           ucs_warn("Connected on attempt %d peer socket %i peer address %s source str %s for %s",
                    retries + 1, peer_fd, src_str2, peer_str, src_str);
-
+          sendTestMessage(peer_fd);
           //close(fd);//close the rendezvous socket
           break;
         }
@@ -417,7 +418,27 @@ void listen_for_updates_peer(void *p) {
 }
 
 
+void sendTestMessage(int fd) {
+  char buffer[200] = "Hello, server!";
+  ssize_t bytes_sent;
 
+  bytes_sent = send(fd, buffer, strlen(buffer), 0);
+  if (bytes_sent < 0) {
+    if (errno == EPIPE) {
+      perror("Broken pipe error");
+      ucs_warn("could not send message");
+      if (fd < 0) {
+        return;
+      }
+    } else {
+      perror("Send error");
+      ucs_warn("unable to send test message");
+      return;
+    }
+  } else {
+    ucs_warn("Message sent: %s", buffer);
+  }
+}
 
 
 
