@@ -1327,48 +1327,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                   return status;
                 }
 
-                // Get the local address the socket is bound to
-                if (getsockname(fd, (struct sockaddr *)&local_addr, &local_addr_len) < 0) {
-                  ucs_warn("could not retrieve rendezvous ip");
-                  return UCS_ERR_IO_ERROR;
-                }
-
-                ucs_sockaddr_get_ipstr((const struct sockaddr *)&local_addr, local_ip,
-                                       sizeof(local_ip));
-
-                ucs_sockaddr_get_port((const struct sockaddr *)&local_addr, &local_port);
-
-                ucs_warn("Local IP address bound: %s:%d", local_ip, local_port);
-
-                if (connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) !=
-                    0) {
-                  ucs_warn("Connection with the rendezvous server failed: %s",
-                           strerror(errno));
-                  // return UCS_ERR_IO_ERROR;
-                  return UCS_ERR_IO_ERROR;
-                }
-
-                ucs_warn("sending to rendezvous");
-                if (send(fd, iface->config.pairing_name, strlen(iface->config.pairing_name),
-                         MSG_DONTWAIT) == -1) {
-                  ucs_error("Failed to send data to rendezvous server: ");
-                  return UCS_ERR_IO_ERROR;
-                }
-                ucs_warn("receiving from rendezvous");
-
-                bytes = recv(fd, &public_info, sizeof(public_info), MSG_WAITALL);
-                if (bytes == -1) {
-                  ucs_error("Failed to get data from rendezvous server: ");
-                  return UCS_ERR_IO_ERROR;
-                } else if (bytes == 0) {
-                  ucs_error("Server has disconnected");
-                  return UCS_ERR_IO_ERROR;
-                }
-                // close(fd);
-                ucs_warn("client data returned from rendezvous: %s:%i",
-                         ip_to_string(&public_info.ip.s_addr, public_ipadd,
-                                      sizeof(public_ipadd)),
-                         ntohs(public_info.port));
 
 
                 set_sock_addr(NULL, (struct sockaddr_storage *)&endpoint_local_port_addr,
