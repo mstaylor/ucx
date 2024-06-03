@@ -1261,7 +1261,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     }
 */
     while (true) {
-      connect_count++;
+
 
       ucs_sockaddr_str((struct sockaddr *)&connect_addr, src_str2,
                        sizeof(src_str2));
@@ -1301,7 +1301,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
               ucs_warn("Connected to host %s src: %s connect count: %i",src_str2, src_str, connect_count);
               status = UCS_OK;
 
-              if (connect_count == 1) {
+              if (connect_count == 0) {
                 sendTestMessage(ep->fd);
                 close(ep->fd);
 
@@ -1354,6 +1354,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                 if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
                   ucs_warn("Setting O_NONBLOCK failed: ");
                 }
+                connect_count++;
                 continue;
               } else {
                 break;
