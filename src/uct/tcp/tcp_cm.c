@@ -1340,6 +1340,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
                 ucs_warn("Local IP address bound: %s:%d", local_ip, local_port);
 
+                if (connect(fd, (struct sockaddr *)&server_data, sizeof(server_data)) !=
+                    0) {
+                  ucs_warn("Connection with the rendezvous server failed: %s",
+                           strerror(errno));
+                  // return UCS_ERR_IO_ERROR;
+                  return UCS_ERR_IO_ERROR;
+                }
+
                 ucs_warn("sending to rendezvous");
                 if (send(fd, iface->config.pairing_name, strlen(iface->config.pairing_name),
                          MSG_DONTWAIT) == -1) {
@@ -1459,7 +1467,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                    src_str2, src_str, connect_count);
           status = UCS_OK;
 
-          sendTestMessage(ep->fd);
+
           sendTestMessage(ep->fd);
           break;
 
