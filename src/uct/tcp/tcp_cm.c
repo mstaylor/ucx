@@ -1355,6 +1355,23 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                   ucs_warn("Setting O_NONBLOCK failed: ");
                 }
                 connect_count++;
+
+                ucs_warn("writing peer2 key/value to redis - key: %s value: %s",
+                         peer_redis_key2, publicAddressPort2);
+                // run this redis in a transaction to prevent race conditions
+                status =
+                    setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                                  peer_redis_key2, publicAddressPort2);
+
+                if (status != UCS_OK) {
+                  ucs_warn("unable to update peer redis key 2");
+
+                } else {
+                  ucs_warn("wrote redis peer address: key %s, value %s",
+                           peer_redis_key2, publicAddressPort2);
+                }
+
+
                 continue;
               } else {
                 connect_count = 0;
