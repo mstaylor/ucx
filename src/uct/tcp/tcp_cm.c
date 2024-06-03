@@ -825,6 +825,28 @@ err:
   return 0;
 }
 
+void sendTestMessage(int fd) {
+  char buffer[200] = "Hello, server!";
+  ssize_t bytes_sent;
+
+  bytes_sent = send(fd, buffer, strlen(buffer), 0);
+  if (bytes_sent < 0) {
+    if (errno == EPIPE) {
+      perror("Broken pipe error");
+      ucs_warn("could not send message");
+      if (fd < 0) {
+        return;
+      }
+    } else {
+      perror("Send error");
+      ucs_warn("unable to send test message");
+      return;
+    }
+  } else {
+    ucs_warn("Message sent: %s", buffer);
+  }
+}
+
 ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   char dest_str[UCS_SOCKADDR_STRING_LEN];
   char src_str[UCS_SOCKADDR_STRING_LEN];
@@ -1259,7 +1281,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     }
 */
     while (true) {
-
+      connect_count++;
 
       ucs_sockaddr_str((struct sockaddr *)&connect_addr, src_str2,
                        sizeof(src_str2));
@@ -1271,23 +1293,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
       if (result == 0) {
         ucs_warn("connected to %s src %s connect count %i", src_str2, src_str, connect_count);
-
-        if (connect_count > 0) {
-          status = UCS_OK;
-          break;
-        }
-        /*status =
-            setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                          peer_redis_key2, publicAddressPort2);
-
-        if (status != UCS_OK) {
-          ucs_warn("unable to update peer redis key 2");
-          return status;
-        }
-
-        ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key2,
-                 publicAddressPort2);*/
-        connect_count++;
+        status = UCS_OK;
+        sendTestMessage(ep->fd);
+        break;
       } else {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
           FD_ZERO(&set);
@@ -1311,24 +1319,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                        so_error, strerror(so_error), src_str2, src_str);
             } else {
               ucs_warn("Connected to host %s src: %s connect count: %i",src_str2, src_str, connect_count);
+              status = UCS_OK;
+              sendTestMessage(ep->fd);
+              break;
 
-              if (connect_count > 0) {
-                status = UCS_OK;
-                break;
-              }
-
-              /*status =
-                  setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                                peer_redis_key2, publicAddressPort2);
-
-              if (status != UCS_OK) {
-                ucs_warn("unable to update peer redis key 2");
-                return status;
-              }
-
-              ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key2,
-                       publicAddressPort2);*/
-              connect_count++;
             }
           } else {
             ucs_warn("Timeout or error on fd %d host %s src: %s", ep->fd, src_str2, src_str);
@@ -1393,23 +1387,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
           ucs_warn("Succesfully connected to peer, EISCONN peer: %s, src: %s connect count: %i",
                    src_str2, src_str, connect_count);
-          if (connect_count > 0) {
+          status = UCS_OK;
 
-            status = UCS_OK;
-            break;
-          }
-          /*status =
-              setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                            peer_redis_key2, publicAddressPort2);
+          sendTestMessage(ep->fd);
 
-          if (status != UCS_OK) {
-            ucs_warn("unable to update peer redis key 2");
-            return status;
-          }
+          break;
 
-          ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key2,
-                   publicAddressPort2);*/
-          connect_count++;
 
         } else {
           msleep(100);
