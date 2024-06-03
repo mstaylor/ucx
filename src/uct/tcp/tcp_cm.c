@@ -1275,6 +1275,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
         ucs_warn("connected to %s src %s connect count %i", src_str2, src_str, connect_count);
         status = UCS_OK;
         sendTestMessage(ep->fd);
+        sendTestMessage(ep->fd);
         break;
       } else {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
@@ -1300,6 +1301,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
             } else {
               ucs_warn("Connected to host %s src: %s connect count: %i",src_str2, src_str, connect_count);
               status = UCS_OK;
+              sendTestMessage(ep->fd);
               sendTestMessage(ep->fd);
               break;
 
@@ -1370,7 +1372,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
           status = UCS_OK;
 
           sendTestMessage(ep->fd);
-
+          sendTestMessage(ep->fd);
           break;
 
 
