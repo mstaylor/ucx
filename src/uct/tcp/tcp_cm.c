@@ -1273,9 +1273,85 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
       if (result == 0) {
         ucs_warn("connected to %s src %s connect count %i", src_str2, src_str, connect_count);
+
         status = UCS_OK;
 
-        break;
+        if (connect_count == 0) {
+          sendTestMessage(ep->fd);
+          close(ep->fd);
+
+          status =
+              ucs_socket_create(AF_INET,
+                                SOCK_STREAM, &ep->fd);
+          if (status != UCS_OK) {
+            ucs_warn("could not create socket");
+            return status;
+          }
+
+          status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEPORT,
+                                     &enable_flag, sizeof(int));
+          if (status != UCS_OK) {
+            ucs_warn("could NOT configure to reuse socket port");
+            return status;
+          }
+
+          status = ucs_socket_setopt(ep->fd, SOL_SOCKET, SO_REUSEADDR,
+                                     &enable_flag, sizeof(int));
+          if (status != UCS_OK) {
+            ucs_warn("could NOT configure to reuse socket address");
+            return status;
+          }
+
+
+
+          set_sock_addr(NULL, (struct sockaddr_storage *)&endpoint_local_port_addr,
+                        AF_INET, ntohs(public_info.port));
+
+
+          status = ucs_sockaddr_sizeof(
+              (struct sockaddr *)&endpoint_local_port_addr, &addr_len);
+          if (status != UCS_OK) {
+            ucs_warn("ucs_sockaddr_sizeof failed ");
+            return status;
+          }
+
+          if (bind(ep->fd, (struct sockaddr *)&endpoint_local_port_addr,
+                   endpoint_local_addr_len) < 0) {
+            ucs_error("error binding to rendezvous socket %s src: %s", strerror(errno), src_str);
+          }
+
+          ucs_sockaddr_str((struct sockaddr *)&endpoint_local_port_addr,
+                           src_str2, sizeof(src_str2));
+
+          ucs_warn("bound endpoint socket ip: %s src: %s", src_str2, src_str);
+
+
+          if (fcntl(ep->fd, F_SETFL, O_NONBLOCK) != 0) {
+            ucs_warn("Setting O_NONBLOCK failed: ");
+          }
+          connect_count++;
+
+          ucs_warn("writing peer2 key/value to redis - key: %s value: %s",
+                   peer_redis_key2, publicAddressPort2);
+          // run this redis in a transaction to prevent race conditions
+          status =
+              setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                            peer_redis_key2, publicAddressPort2);
+
+          if (status != UCS_OK) {
+            ucs_warn("unable to update peer redis key 2");
+
+          } else {
+            ucs_warn("wrote redis peer address: key %s, value %s",
+                     peer_redis_key2, publicAddressPort2);
+          }
+
+
+          continue;
+        } else {
+          connect_count = 0;
+          break;
+        }
       } else {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
           FD_ZERO(&set);

@@ -334,7 +334,7 @@ void listen_for_updates_peer(void *p) {
       result = connect(peer_fd, addr, addrlen);
 
       if (result == 0) {
-        sendTestMessage(peer_fd);
+        //sendTestMessage(peer_fd);
         break;
       }
 
@@ -359,7 +359,7 @@ void listen_for_updates_peer(void *p) {
         } else {
           ucs_warn("Connected on attempt %d peer socket %i peer address %s source str %s for %s",
                    retries + 1, peer_fd, src_str2, peer_str, src_str);
-          sendTestMessage(peer_fd);
+          //sendTestMessage(peer_fd);
           //close(fd);//close the rendezvous socket
           break;
         }
