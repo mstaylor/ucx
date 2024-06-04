@@ -1577,6 +1577,20 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                         redisHashConnectStatus, "true");
 
 
+    ucs_warn("writing peer2 key/value to redis - key: %s value: %s",
+             peer_redis_key2, publicAddressPort2);
+    // run this redis in a transaction to prevent race conditions
+    status =
+        setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+                      peer_redis_key2, publicAddressPort2);
+
+    if (status != UCS_OK) {
+      ucs_warn("unable to update peer redis key 2");
+      return status;
+    }
+
+    ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key2,
+             publicAddressPort2);
 
     uct_tcp_cm_conn_complete(ep);
     return UCS_OK;
