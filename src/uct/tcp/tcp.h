@@ -178,7 +178,8 @@ typedef enum uct_tcp_cm_conn_event {
      * on a peer's EP in order to send AM data. */
     UCT_TCP_CM_CONN_ACK_WITH_REQ      = (UCT_TCP_CM_CONN_REQ |
                                          UCT_TCP_CM_CONN_ACK),
-    UCT_TCP_CM_CONN_FIN               = UCS_BIT(2)
+    UCT_TCP_CM_CONN_FIN               = UCS_BIT(2),
+    UCT_TCP_CM_CONN_PING              = UCS_BIT(3)
 } uct_tcp_cm_conn_event_t;
 
 
@@ -641,6 +642,10 @@ uct_tcp_ep_check(uct_ep_h tl_ep, unsigned flags, uct_completion_t *comp);
 ucs_status_t uct_tcp_cm_send_event_pending_cb(uct_pending_req_t *self);
 
 ucs_status_t uct_tcp_cm_send_event(uct_tcp_ep_t *ep,
+                                   uct_tcp_cm_conn_event_t event,
+                                   int log_error);
+
+ucs_status_t uct_tcp_cm_send_event2(uct_tcp_ep_t *ep,
                                    uct_tcp_cm_conn_event_t event,
                                    int log_error);
 
