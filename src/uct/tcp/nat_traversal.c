@@ -429,21 +429,27 @@ void sendTestMessage(int fd) {
   char buffer[200] = "Hello, server!";
   ssize_t bytes_sent;
 
-  bytes_sent = send(fd, buffer, strlen(buffer), 0);
-  if (bytes_sent < 0) {
-    if (errno == EPIPE) {
-      perror("Broken pipe error");
-      ucs_warn("could not send message");
-      if (fd < 0) {
-        return;
+  int retries = 6;
+
+  int currentTry = 0;
+  while (currentTry < retries) {
+    bytes_sent = send(fd, buffer, strlen(buffer), 0);
+    if (bytes_sent < 0) {
+      if (errno == EPIPE) {
+        perror("Broken pipe error");
+        ucs_warn("could not send message");
+        currentTry++;
+        continue;
+      } else {
+        perror("Send error");
+        ucs_warn("unable to send test message");
+        currentTry++;
+        continue;
       }
     } else {
-      perror("Send error");
-      ucs_warn("unable to send test message");
-      return;
+      ucs_warn("Message sent: %s", buffer);
+      break;
     }
-  } else {
-    ucs_warn("Message sent: %s", buffer);
   }
 }
 

@@ -1592,6 +1592,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key2,
              publicAddressPort2);
 
+    msleep(1000);
+
+    ucs_warn("sending actual conn complete message");
+
     uct_tcp_cm_conn_complete(ep);
     return UCS_OK;
 
