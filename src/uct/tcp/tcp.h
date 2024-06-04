@@ -414,6 +414,7 @@ typedef struct uct_tcp_iface {
         char *                    override_ip_address; /** Override Ip Address **/
         int                       ignore_ifname; /** Ignore Ifname from getifaddrs (nat traversal) **/
         int                       enable_nat_traversal;
+        int                       enable_dummy_send;
         char                      redis_ip_address[INET6_ADDRSTRLEN];
         int                       redis_port;
         char                      rendezvous_ip_address[INET6_ADDRSTRLEN];
@@ -476,6 +477,7 @@ typedef struct uct_tcp_iface_config {
     int                            rendezvous_port;
     char *                         pairing_name;
     char *                         public_ip_address;
+    int                           enable_dummy_send;
 
 } uct_tcp_iface_config_t;
 

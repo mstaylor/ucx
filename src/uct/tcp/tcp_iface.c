@@ -84,6 +84,9 @@ static ucs_config_field_t uct_tcp_iface_config_table[] = {
     {"IGNORE_IFNAME", "n",
      "ignore ifname",
      ucs_offsetof(uct_tcp_iface_config_t, ignore_ifname), UCS_CONFIG_TYPE_BOOL},
+    {"ENABLE_DUMMY_SEND", "n",
+     "enable dummy send",
+     ucs_offsetof(uct_tcp_iface_config_t, enable_dummy_send), UCS_CONFIG_TYPE_BOOL},
     {"ENABLE_NAT_TRAVERSAL", "n",
      "enable the use of tcp hole punching ",
      ucs_offsetof(uct_tcp_iface_config_t, enable_nat_traversal), UCS_CONFIG_TYPE_BOOL},
@@ -943,6 +946,7 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     self->port_range.first         = config->port_range.first;
     self->port_range.last          = config->port_range.last;
     self->config.ignore_ifname     = config->ignore_ifname;
+    self->config.enable_dummy_send = config->enable_dummy_send;
     ucs_strncpy_zero(self->config.redis_ip_address, config->redis_ip_address,
                      sizeof(self->config.redis_ip_address));
     self->config.redis_port = config->redis_port;
