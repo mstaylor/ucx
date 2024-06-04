@@ -335,6 +335,7 @@ void listen_for_updates_peer(void *p) {
 
       if (result == 0) {
         if (iface->config.enable_dummy_send) {
+          ucs_warn("sending dummy payload...");
           sendTestMessage(peer_fd);
         }
         break;
@@ -362,6 +363,7 @@ void listen_for_updates_peer(void *p) {
           ucs_warn("Connected on attempt %d peer socket %i peer address %s source str %s for %s",
                    retries + 1, peer_fd, src_str2, peer_str, src_str);
           if (iface->config.enable_dummy_send) {
+            ucs_warn("sending dummy payload...");
             sendTestMessage(peer_fd);
           }
           //sendTestMessage(peer_fd);

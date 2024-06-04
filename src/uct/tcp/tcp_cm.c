@@ -1560,6 +1560,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
     ucs_warn("writing redis hash peer %s src %s", src_str2, src_str);
     if (iface->config.enable_dummy_send) {
+      ucs_warn("sending dummy payload...");
       sendTestMessage(ep->fd);
     }
     //sendTestMessage(ep->fd);
