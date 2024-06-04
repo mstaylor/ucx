@@ -876,15 +876,15 @@ unsigned uct_tcp_cm_handle_conn_pkt(uct_tcp_ep_t **ep_p, void *pkt,
   return 0;
 }
 
-/*static void uct_tcp_cm_conn_complete2(uct_tcp_ep_t *ep) {
+static void uct_tcp_cm_conn_complete2(uct_tcp_ep_t *ep) {
   ucs_status_t status;
 
   status = uct_tcp_cm_send_event2(ep, UCT_TCP_CM_CONN_PING, 1);
   if (status != UCS_OK) {
-    *//* error handling was done inside sending event operation *//*
+    /* error handling was done inside sending event operation */
     return;
   }
-}*/
+}
 
 static void uct_tcp_cm_conn_complete(uct_tcp_ep_t *ep) {
   ucs_status_t status;
@@ -1560,7 +1560,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
     ucs_warn("writing redis hash peer %s src %s", src_str2, src_str);
     //sendTestMessage(ep->fd);
-    //uct_tcp_cm_conn_complete2(ep);//send a ping
+    uct_tcp_cm_conn_complete2(ep);//send a ping
     writeRedisHashValue(iface->config.redis_ip_address,
                         iface->config.redis_port, "endpoint_connect_status",
                         redisHashConnectStatus, "true");

@@ -1417,7 +1417,7 @@ static unsigned uct_tcp_ep_progress_am_rx(uct_tcp_ep_t *ep)
     }
 
     /* Parse received active messages */
-    ucs_warn("abouve to call uct_tcp_ep_ctx_buf_need_progress");
+
     while (uct_tcp_ep_ctx_buf_need_progress(&ep->rx)) {
         remaining = ep->rx.length - ep->rx.offset;
         if (remaining < sizeof(*hdr)) {
