@@ -1559,7 +1559,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     }
 
     ucs_warn("writing redis hash peer %s src %s", src_str2, src_str);
-    sendTestMessage(ep->fd);
+    //sendTestMessage(ep->fd);
     //uct_tcp_cm_conn_complete2(ep);//send a ping
     writeRedisHashValue(iface->config.redis_ip_address,
                         iface->config.redis_port, "endpoint_connect_status",
