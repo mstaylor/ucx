@@ -19,6 +19,8 @@
 atomic_bool connection_established = ATOMIC_VAR_INIT(false);*/
 //redisContext *context = NULL;
 
+
+
 ucs_status_t peer_listen(void *p) {
   struct sockaddr_in peer_info;
   struct sockaddr_in local_port_data;
@@ -81,16 +83,16 @@ ucs_status_t peer_listen(void *p) {
 
   len = sizeof(peer_info);
 
-  while (true && !info->connection_established) {
+  while (true) {
     peer = accept(info->accepting_socket, (struct sockaddr *)&peer_info, &len);
     if (peer == -1) {
       ucs_warn("Error when connecting to peer %s", strerror(errno));
-      return UCS_OK;
+      //return UCS_OK;
     } else {
       ucs_warn("Succesfully connected to peer, accepting");
-      info->accepting_socket = peer;
-      info->connection_established = true;
-      return UCS_OK;
+      //info->accepting_socket = peer;
+      //info->connection_established = true;
+      //return UCS_OK;
     }
   }
 
@@ -971,9 +973,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   int so_error;
   socklen_t len = sizeof(so_error);
 
-  // pthread_t peer_listen_thread;
-  // int thread_return;
-  // PeerConnectionData2 peerConnectionData;
+   pthread_t peer_listen_thread;
+   int thread_return;
+   PeerConnectionData2 peerConnectionData;
 
   // rendezvous variables
   struct sockaddr_in server_data;
@@ -1285,9 +1287,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                      sizeof(src_str2));
 
 
-
-    //memcpy(old_peer_addr[0], (struct sockaddr *)&ep->peer_addr, iface->config.sockaddr_len);
-
     if ((struct sockaddr *)&ep->peer_addr != NULL) {
       memcpy((struct sockaddr *)&ep->peer_addr, addr, addrlen);
     }
@@ -1296,8 +1295,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                      sizeof(src_str2));
 
     ucs_warn("connecting to peer address socket ip: %s from src: %s", src_str2, src_str);
-    /*status =
-        ucs_socket_connect(ep->fd, (const struct sockaddr *)&ep->peer_addr);*/
 
     // set the peer socket to be non-blocking so we can retry
     // connection attempts if necessary
@@ -1348,19 +1345,20 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     // try to reconnect until listen connection succeeds and switch file
     // descriptor
 
-    // peerConnectionData.port = endpoint_src_port;
-    // peerConnectionData.ip = endpoint_local_port_addr.sin_addr;
-    // peerConnectionData.accepting_socket = -1;
-    // peerConnectionData.connection_established = 0;
+    peerConnectionData.port = endpoint_src_port;
+    peerConnectionData.ip = endpoint_local_port_addr.sin_addr;
+    peerConnectionData.accepting_socket = -1;
+    peerConnectionData.connection_established = 0;
 
-    //ucs_warn("sending thread port %i", endpoint_src_port);
+    ucs_warn("sending thread port %i", endpoint_src_port);
 
-    /*thread_return = pthread_create(&peer_listen_thread, NULL, (void
-    *)peer_listen, (void*) &peerConnectionData); if(thread_return) {
-      ucs_error("Error when creating thread for listening to endpoint src
-    address "); return UCS_ERR_IO_ERROR;
+    thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen,
+                                   (void*) &peerConnectionData);
+    if(thread_return) {
+      ucs_error("Error when creating thread for listening to endpoint src address ");
+      return UCS_ERR_IO_ERROR;
     }
-*/
+
     while (true) {
 
       status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr, &peer_addr_len);
@@ -1597,6 +1595,13 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     ucs_warn("sending actual conn complete message");
 
     uct_tcp_cm_conn_complete(ep);
+
+    if(!thread_return) {
+      ucs_warn("cancelling endpoint thread...");
+      pthread_cancel(peer_listen_thread);
+      ucs_warn("endpoint thread cancelled...");
+    }
+
     return UCS_OK;
 
   } else {
