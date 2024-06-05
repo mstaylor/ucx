@@ -26,6 +26,7 @@ typedef struct {
   int      port;
   int accepting_socket;
   int connection_established;
+  int cancel;
 } PeerConnectionData2;
 
 int msleep(long msec);

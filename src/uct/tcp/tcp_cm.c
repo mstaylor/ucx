@@ -21,6 +21,7 @@ atomic_bool connection_established = ATOMIC_VAR_INIT(false);*/
 
 
 
+
 ucs_status_t peer_listen(void *p) {
   struct sockaddr_in peer_info;
   struct sockaddr_in local_port_data;
@@ -83,7 +84,7 @@ ucs_status_t peer_listen(void *p) {
 
   len = sizeof(peer_info);
 
-  while (true) {
+  while (true && info->cancel != 1) {
     peer = accept(info->accepting_socket, (struct sockaddr *)&peer_info, &len);
     if (peer == -1) {
       ucs_warn("Error when connecting to peer %s", strerror(errno));
@@ -1349,6 +1350,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     peerConnectionData.ip = endpoint_local_port_addr.sin_addr;
     peerConnectionData.accepting_socket = -1;
     peerConnectionData.connection_established = 0;
+    peerConnectionData.cancel = 0;
 
     ucs_warn("sending thread port %i", endpoint_src_port);
 
@@ -1501,24 +1503,27 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
              peerConnectionData.accepting_socket);
     if(peerConnectionData.connection_established == 1) {
       ucs_warn("connection established via listen thread");
-      pthread_cancel(peer_listen_thread);
+      ///pthread_cancel(peer_listen_thread);
 
-      ucs_warn("thread cancelled...");
+      //ucs_warn("thread cancelled...");
       //pthread_join(peer_listen_thread, NULL);
       ep->fd = peerConnectionData.accepting_socket;
       ucs_warn("switched ep->fd to listen socket - socket fd: %d host %s",
     ep->fd, src_str2);
+      peerConnectionData.cancel = 1;
 
     } else {
-      ucs_warn("canceling endpoint listen thread...");
+      //ucs_warn("canceling endpoint listen thread...");
       if (peerConnectionData.accepting_socket != -1) {
         ucs_warn("closing accepting socket %i", peerConnectionData.accepting_socket);
         close(peerConnectionData.accepting_socket);
       }
-      // Cancel the thread
-      pthread_cancel(peer_listen_thread);
 
-      ucs_warn("cancelled thread...");
+      peerConnectionData.cancel = 1;
+      // Cancel the thread
+      //pthread_cancel(peer_listen_thread);
+
+      //ucs_warn("cancelled thread...");
 
       //atomic_store(&accepting_socket, -1);
       //atomic_store(&connection_established, false);
