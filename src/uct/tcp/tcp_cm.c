@@ -87,12 +87,12 @@ ucs_status_t peer_listen(void *p) {
     peer = accept(info->accepting_socket, (struct sockaddr *)&peer_info, &len);
     if (peer == -1) {
       ucs_warn("Error when connecting to peer %s", strerror(errno));
-      //return UCS_OK;
+      return UCS_OK;
     } else {
       ucs_warn("Succesfully connected to peer, accepting");
-      //info->accepting_socket = peer;
-      //info->connection_established = true;
-      //return UCS_OK;
+      info->accepting_socket = peer;
+      info->connection_established = true;
+      return UCS_OK;
     }
   }
 
@@ -1359,7 +1359,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
       return UCS_ERR_IO_ERROR;
     }
 
-    while (true) {
+    while (true && !peerConnectionData.connection_established) {
 
       status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr, &peer_addr_len);
       if (status != UCS_OK) {
@@ -1494,14 +1494,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     deleteRedisKeyTransactional(iface->config.redis_ip_address,
     iface->config.redis_port, peer_redis_key2);
 */
-    /*ucs_warn("checking the fd which connected...");
+    ucs_warn("checking the fd which connected...");
     //Do we need to switch the fd?
     ucs_warn("value of connection_established: %i value of socket %i",
              peerConnectionData.connection_established,
              peerConnectionData.accepting_socket);
     if(peerConnectionData.connection_established == 1) {
       ucs_warn("connection established via listen thread");
-      //pthread_cancel(peer_listen_thread);
+      pthread_cancel(peer_listen_thread);
 
       ucs_warn("thread cancelled...");
       //pthread_join(peer_listen_thread, NULL);
@@ -1512,17 +1512,17 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     } else {
       ucs_warn("canceling endpoint listen thread...");
       if (peerConnectionData.accepting_socket != -1) {
-        ucs_warn("cancelling socket %i", peerConnectionData.accepting_socket);
+        ucs_warn("closing accepting socket %i", peerConnectionData.accepting_socket);
         close(peerConnectionData.accepting_socket);
       }
       // Cancel the thread
-      //pthread_cancel(peer_listen_thread);
+      pthread_cancel(peer_listen_thread);
 
       ucs_warn("cancelled thread...");
 
       //atomic_store(&accepting_socket, -1);
       //atomic_store(&connection_established, false);
-    }*/
+    }
 
     // atomic_store(&connection_established, true);//stop listening
 
@@ -1596,11 +1596,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
     uct_tcp_cm_conn_complete(ep);
 
-    if(!thread_return) {
+    /*if(!thread_return) {
       ucs_warn("cancelling endpoint thread...");
       pthread_cancel(peer_listen_thread);
       ucs_warn("endpoint thread cancelled...");
-    }
+    }*/
 
     return UCS_OK;
 
