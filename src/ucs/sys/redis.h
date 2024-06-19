@@ -12,6 +12,7 @@
 
 #define PEER_KEY "peer"
 #define PEER_KEY2 "peer2"
+#define PAIR "pair"
 
 redisContext * redisLogin(const char *hostname, int port);
 

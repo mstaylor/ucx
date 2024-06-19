@@ -754,17 +754,6 @@ ucs_status_t ucs_netif_get_addr2(const char *if_name, sa_family_t af,
   struct sockaddr* addr;
   size_t addrlen;
   struct sockaddr_storage connect_addr;
-  //int enable_flag = 1;
-  //int fd;
-  //struct sockaddr_in server_data;
-  //struct sockaddr_in local_addr;
-  //socklen_t local_addr_len = sizeof(local_addr);
-  //char local_ip[UCS_SOCKADDR_STRING_LEN];
-  //uint16_t local_port;
-  //ssize_t bytes;
-  //PeerConnectionData public_info;
-  //char public_ipadd[UCS_SOCKADDR_STRING_LEN];
-
 
   if (getifaddrs(&ifaddrs)) {
     ucs_warn("getifaddrs error: %m");

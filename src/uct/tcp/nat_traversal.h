@@ -21,13 +21,6 @@ typedef struct {
     in_port_t      port;
 } PeerConnectionData;
 
-typedef struct {
-  struct in_addr ip;
-  int      port;
-  int accepting_socket;
-  int connection_established;
-  int cancel;
-} PeerConnectionData2;
 
 int msleep(long msec);
 
