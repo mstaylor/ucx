@@ -645,6 +645,7 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     return status;
 }
 
+/*
 static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 {
 
@@ -663,6 +664,7 @@ static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 
   return UCS_OK;
 }
+*/
 
 static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
 {
@@ -1039,10 +1041,13 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
         goto err_cleanup_event_set;
     }
 
-    if (self->config.enable_nat_traversal) {
 
+    //Note: disabling NAT background thread - endpoints will connect to each
+    //other during cm_conn_start
+
+    /*if (self->config.enable_nat_traversal) {
       uct_tcp_iface_connect_with_peers(self);
-    }
+    }*/
 
     return UCS_OK;
 

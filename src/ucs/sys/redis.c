@@ -260,110 +260,98 @@ ucs_status_t deleteRedisKeyTransactional(const char *hostname, int port, const c
   return status;
 }
 
-ucs_status_t updateKeyIfMissingWithContext(redisContext *c, const char *key, const char *value) {
-  ucs_status_t status = UCS_OK;
+void generate_random_string(char *str, size_t length) {
+  // Define the character set
+  const char charset[] =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  size_t charset_size = sizeof(charset) - 1;
 
-  redisReply *reply;
+  // Seed the random number generator
+  srand(time(NULL));
 
-
-  if (c != NULL) {
-
-    reply = redisCommand(c,"WATCH %s", key);
-    if (reply == NULL) {
-      ucs_warn("Failed to execute WATCH command");
-      return UCS_ERR_IO_ERROR;
-    }
-    freeReplyObject(reply);
-
-    reply = redisCommand(c,"GET %s", key);
-
-    if (reply == NULL) {
-      //key exists so not updating
-      return UCS_ERR_IO_ERROR;
-    }
-    freeReplyObject(reply);
-
-    reply = redisCommand(c,"MULTI");
-    if (reply == NULL) {
-      ucs_warn("could not set redis MULTI");
-      return UCS_ERR_IO_ERROR;
-    }
-    freeReplyObject(reply);
-
-    reply = redisCommand(c,"SET %s %s", key, value);
-    if (reply == NULL) {
-      ucs_warn("could not set value in redis transaction");
-      return UCS_ERR_IO_ERROR;
-    }
-    freeReplyObject(reply);
-
-    reply = redisCommand(c,"EXEC");
-    if (reply->type == REDIS_REPLY_ARRAY) {
-      ucs_warn("Transaction executed, counter updated key: %s value: %s", key, value);
-      status = UCS_OK;
-    } else {
-      printf("Transaction failed, counter not updated Key: %s value: %s", key, value);
-      status = UCS_ERR_IO_ERROR;
-    }
-    freeReplyObject(reply);
-
+  // Generate the random string
+  for (size_t i = 0; i < length; i++) {
+    int key = rand() % charset_size;
+    str[i] = charset[key];
   }
 
-
-  return status;
+  // Null-terminate the string
+  str[length] = '\0';
 }
 
-ucs_status_t updateKeyIfMissing(const char *hostname, int port, const char *key, const char *value) {
-  ucs_status_t status = UCS_OK;
 
-  redisReply *reply;
+
+char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const char *key1, const char *key2) {
+
+  char *result = NULL;
+  char randomString[UCS_SOCKADDR_STRING_LEN * 2];
+  char pair_value[200];
+
+  redisReply *reply = NULL;
   redisContext *c = redisLogin(hostname, port);
 
   if (c != NULL) {
 
-    reply = redisCommand(c,"WATCH %s", key);
+    reply = redisCommand(c,"WATCH %s %s", key1, key2);
     if (reply == NULL) {
       ucs_warn("Failed to execute WATCH command");
-      return UCS_ERR_IO_ERROR;
+      return result;
     }
     freeReplyObject(reply);
 
-    reply = redisCommand(c,"GET %s", key);
+    reply = redisCommand(c,"GET %s", key1);
 
     if (reply == NULL) {
       //key exists so not updating
-      return UCS_ERR_IO_ERROR;
+      reply = redisCommand(c,"GET %s", key2);
     }
-    freeReplyObject(reply);
+    //we return the pair value since it has been set
+    if (reply != NULL) {
+      result = (char*) malloc(strlen(pair_value)+1);
+      strcpy(result, pair_value);
+      freeReplyObject(reply);
+      return result;
+    }
+
+
+
 
     reply = redisCommand(c,"MULTI");
     if (reply == NULL) {
       ucs_warn("could not set redis MULTI");
-      return UCS_ERR_IO_ERROR;
+      return result;
     }
     freeReplyObject(reply);
 
-    reply = redisCommand(c,"SET %s %s", key, value);
+
+    // Generate random string for unique pair name
+    generate_random_string(randomString, UCS_SOCKADDR_STRING_LEN);
+
+    sprintf(pair_value, "%s:%s", PAIR, randomString);
+
+    reply = redisCommand(c,"SET %s %s", key1, pair_value);
     if (reply == NULL) {
       ucs_warn("could not set value in redis transaction");
-      return UCS_ERR_IO_ERROR;
+      return result;
     }
     freeReplyObject(reply);
 
     reply = redisCommand(c,"EXEC");
     if (reply->type == REDIS_REPLY_ARRAY) {
-      ucs_warn("Transaction executed, counter updated key: %s value: %s", key, value);
-      status = UCS_OK;
+      ucs_warn("Transaction executed, counter updated key: %s value: %s", key1, pair_value);
+      result = (char*) malloc(strlen(pair_value)+1);
+      strcpy(result, pair_value);
+
     } else {
-      printf("Transaction failed, counter not updated Key: %s value: %s", key, value);
-      status = UCS_ERR_IO_ERROR;
+      printf("Transaction failed, counter not updated Key: %s value: %s", key1, pair_value);
+
     }
     freeReplyObject(reply);
 
   }
 
 
-  return status;
+  return result;
 
 
 }

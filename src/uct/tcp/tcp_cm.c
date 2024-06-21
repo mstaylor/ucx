@@ -834,11 +834,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   char src_str[UCS_SOCKADDR_STRING_LEN];
   char src_str2[UCS_SOCKADDR_STRING_LEN];
   char endpoint_src_address[UCS_SOCKADDR_STRING_LEN];
-  char peer_redis_key[UCS_SOCKADDR_STRING_LEN * 2];
-  char peer_redis_key2[UCS_SOCKADDR_STRING_LEN * 2];
+  //char peer_redis_key[UCS_SOCKADDR_STRING_LEN * 2];
+  //char peer_redis_key2[UCS_SOCKADDR_STRING_LEN * 2];
 
-  char publicAddressPort[UCS_SOCKADDR_STRING_LEN * 2];
-  char publicAddressPort2[UCS_SOCKADDR_STRING_LEN * 2];
+  //char publicAddressPort[UCS_SOCKADDR_STRING_LEN * 2];
+  //char publicAddressPort2[UCS_SOCKADDR_STRING_LEN * 2];
   struct sockaddr_in endpoint_local_port_addr;
   socklen_t endpoint_local_addr_len = sizeof(endpoint_local_port_addr);
   int enable_flag = 1;
@@ -864,8 +864,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   socklen_t len = sizeof(so_error);
 
   // rendezvous variables
-
-  char pair_key[UCS_SOCKADDR_STRING_LEN * 2];
+  char pair_key1[UCS_SOCKADDR_STRING_LEN * 2];
+  char pair_key2[UCS_SOCKADDR_STRING_LEN * 2];
   char *pair_value = NULL;
   struct sockaddr_in server_data;
   PeerConnectionData public_info;
@@ -910,6 +910,21 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                             sizeof(src_str)));
 
   if (iface->config.enable_nat_traversal) {
+
+    //check redis for pair value - we need to check both src and dest
+    //if pair value is null, write a new pair value
+    sprintf(pair_key1, "%s_%s", src_str, PAIR);
+    sprintf(pair_key2, "%s_%s", dest_str, PAIR);
+
+    pair_value = retrieveKeyAndUpdateKeyIfMissing(iface->config.redis_ip_address,
+                                                iface->config.redis_port, pair_key1, pair_key2);
+
+    if (pair_value == NULL) { //this should not happen - A pair should either exist or be created
+      ucs_warn("could not retrieve or create pair key");
+      return UCS_ERR_IO_ERROR;
+    }
+
+    ucs_warn("pair_value : %s associated with src: %s dest: %s", pair_value, src_str, dest_str);
     // Call Rendezvous server and retrieve public port
 
     // get the current listen and set the public address/port in redis
@@ -1001,22 +1016,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
     ucs_warn("Local IP address bound: %s:%d peer port was %d", local_ip, local_port, listen_port);
 
-    //now find the pairing name associated with the peer
-
-    sprintf(pair_key, "%s_%s", dest_str, PAIR);
-
-    ucs_warn("checking for pair_key in redis: %s", pair_key);
-
-    pair_value = getValueFromRedis(iface->config.redis_ip_address,
-                                       iface->config.redis_port, pair_key);
-
-    while (pair_value == NULL) {
-      msleep(1000);
-      pair_value = getValueFromRedis(iface->config.redis_ip_address,
-                                         iface->config.redis_port, pair_key);
-    }
-
-    ucs_warn("found pair_value %s for pair_key: %s", pair_value, pair_key);
 
 
     ucs_warn("sending request to rendezvous");
@@ -1027,7 +1026,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     }
 
 
+
+
     ucs_warn("receiving from rendezvous for pair %s", pair_value);
+
 
     bytes = recv(fd, &public_info, sizeof(public_info), MSG_WAITALL);
     if (bytes == -1) {
@@ -1051,24 +1053,24 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     // set the peer redis key#1 to point to peeraddress-> public address
     // this will be used by the peer to send connect requests
 
-    sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
+    /*sprintf(peer_redis_key, "%s:%s", PEER_KEY, dest_str);
     setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                   peer_redis_key, publicAddressPort);
     ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key,
-             publicAddressPort);
+             publicAddressPort);*/
 
     // set the peer redis key#2 in a transaction to ensure it isn't overwritten
     // and there are no race conditions
     // this should be set to the peer address->public address
 
-    sprintf(peer_redis_key2, "%s:%s", PEER_KEY2, dest_str);
+    /*sprintf(peer_redis_key2, "%s:%s", PEER_KEY2, dest_str);
 
     sprintf(publicAddressPort2, "%s:%i", public_ipadd, endpoint_src_port);
 
     ucs_warn("writing peer2 key/value to redis - key: %s value: %s",
-             peer_redis_key2, publicAddressPort2);
+             peer_redis_key2, publicAddressPort2);*/
 
-    status =
+    /*status =
         setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
                       peer_redis_key2, publicAddressPort2);
 
@@ -1078,7 +1080,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     }
 
     ucs_warn("wrote redis peer address: key %s, value %s", peer_redis_key2,
-             publicAddressPort2);
+             publicAddressPort2);*/
 
 
     /**
