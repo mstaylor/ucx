@@ -337,9 +337,10 @@ char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const ch
     // Generate random string for unique pair name
     generate_random_string(randomString, UCS_SOCKADDR_STRING_LEN);
 
-    sprintf(pair_value, "%s:%s", PAIR, randomString);
+    sprintf(pair_value, "%s:%s%s", PAIR, randomString,key1);
 
     ucs_warn("random string: %s pair_value:%s", randomString, pair_value);
+
 
     reply = redisCommand(c,"SET %s %s", key1, pair_value);
     if (reply == NULL) {
