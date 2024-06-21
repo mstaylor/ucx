@@ -4,6 +4,16 @@
 
 #include "redis.h"
 #include <stdbool.h>
+#include <time.h>
+
+// Seed the random number generator
+void initialize_random() {
+  static bool initialized = false;
+  if (!initialized) {
+    srand(time(NULL));
+    initialized = true;
+  }
+}
 
 redisContext * redisLogin(const char *hostname, int port) {
     redisContext *c;
@@ -266,8 +276,7 @@ void generate_random_string(char *str, size_t length) {
       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   size_t charset_size = sizeof(charset) - 1;
 
-  // Seed the random number generator
-  srand(time(NULL));
+  initialize_random();
 
   // Generate the random string
   for (size_t i = 0; i < length; i++) {
