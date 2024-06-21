@@ -299,23 +299,22 @@ char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const ch
     }
     freeReplyObject(reply);
 
+    ucs_warn("retrieving key: %s from redis", key1);
     reply = redisCommand(c,"GET %s", key1);
 
-    if (reply == NULL) {
+    if (reply == NULL || reply->type != REDIS_REPLY_STRING) {
       //key exists so not updating
+      ucs_warn("retrieving key: %s from redis", key2);
       reply = redisCommand(c,"GET %s", key2);
     }
     //we return the pair value since it has been set
-    if (reply != NULL) {
+    if (reply != NULL && reply->type == REDIS_REPLY_STRING) {
       ucs_warn("returning the pair value since it has been previously set");
       result = (char*) malloc(strlen(pair_value)+1);
       strcpy(result, pair_value);
       freeReplyObject(reply);
       return result;
     }
-
-
-
 
     reply = redisCommand(c,"MULTI");
     if (reply == NULL) {
