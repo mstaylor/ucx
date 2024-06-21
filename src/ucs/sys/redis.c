@@ -310,8 +310,8 @@ char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const ch
     //we return the pair value since it has been set
     if (reply != NULL && reply->type == REDIS_REPLY_STRING) {
       ucs_warn("returning the pair value since it has been previously set");
-      result = (char*) malloc(strlen(pair_value)+1);
-      strcpy(result, pair_value);
+      result = (char*) malloc(strlen(reply->str)+1);
+      strcpy(result, reply->str);
       freeReplyObject(reply);
       return result;
     }
