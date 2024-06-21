@@ -5,12 +5,13 @@
 #include "redis.h"
 #include <stdbool.h>
 #include <time.h>
+#include <unistd.h>
 
 // Seed the random number generator
 void initialize_random() {
   static bool initialized = false;
   if (!initialized) {
-    srand(time(NULL));
+    srand(time(NULL) ^ (getpid() << 16));
     initialized = true;
   }
 }
