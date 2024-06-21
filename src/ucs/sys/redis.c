@@ -307,6 +307,7 @@ char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const ch
     }
     //we return the pair value since it has been set
     if (reply != NULL) {
+      ucs_warn("returning the pair value since it has been previously set");
       result = (char*) malloc(strlen(pair_value)+1);
       strcpy(result, pair_value);
       freeReplyObject(reply);
@@ -329,6 +330,8 @@ char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const ch
 
     sprintf(pair_value, "%s:%s", PAIR, randomString);
 
+    ucs_warn("random string: %s pair_value:%s", randomString, pair_value);
+
     reply = redisCommand(c,"SET %s %s", key1, pair_value);
     if (reply == NULL) {
       ucs_warn("could not set value in redis transaction");
@@ -343,12 +346,15 @@ char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const ch
       strcpy(result, pair_value);
 
     } else {
-      printf("Transaction failed, counter not updated Key: %s value: %s", key1, pair_value);
+      ucs_warn("Transaction failed, counter not updated Key: %s value: %s", key1, pair_value);
 
     }
     freeReplyObject(reply);
 
+  } else {
+    ucs_warn("could not connect to redis...");
   }
+
 
 
   return result;
