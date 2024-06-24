@@ -1121,10 +1121,13 @@ ucp_ep_create_api_to_worker_addr(ucp_worker_h worker,
     /* if needed, send initial wireup message */
     if (!(ep->flags & UCP_EP_FLAG_LOCAL_CONNECTED)) {
         ucs_assert(!(ep->flags & UCP_EP_FLAG_CONNECT_REQ_QUEUED));
+        ucs_warn("sending wireup...");
         status = ucp_wireup_send_request(ep);
         if (status != UCS_OK) {
             goto out_free_address;
         }
+    } else {
+      ucs_warn("not sending wireup");
     }
 
     status = UCS_OK;
