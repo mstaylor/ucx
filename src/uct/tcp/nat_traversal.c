@@ -76,6 +76,7 @@ void listen_for_updates_peer(void *p) {
   uint16_t mapped_port;
   struct sockaddr_in server_data;
   PeerConnectionData public_info;
+  PeerConnectionData peer_data;
   ssize_t bytes;
   char source_ipadd[UCS_SOCKADDR_STRING_LEN];
   char public_ipadd[UCS_SOCKADDR_STRING_LEN];
@@ -148,14 +149,17 @@ void listen_for_updates_peer(void *p) {
                                          iface->config.redis_port, peer_str);
     }
 
-    ucs_warn("received remote address: %s for peer %s", remote_address,
+    ucs_warn("received peer address: %s for peer %s from redis", remote_address,
              peer_str);
-
+    //we con't care about the remote_address since we're using the rendezvous address
     free(remote_address);
     remote_address = NULL;
 
     //now call rendez
     ucs_warn("calling rendezvous within nat_traversal");
+
+    memset(&public_info, 0, sizeof(public_info));
+    memset(&peer_data, 0, sizeof(peer_data));
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == -1) {
       ucs_error("Could not create socket for rendezvous server: ");
@@ -230,15 +234,24 @@ void listen_for_updates_peer(void *p) {
       continue;
     }
 
-    public_port = ntohs(public_info.port);
+    // Wait until rendezvous server sends info about peer
+    bytes = recv(fd, &peer_data, sizeof(peer_data), MSG_WAITALL);
+    if(bytes == -1) {
+      ucs_warn("Failed to get peer data from rendezvous server: ");
+      continue;
+    } else if(bytes == 0) {
+      ucs_warn("Server has disconnected when waiting for peer data");
+      continue;
+    }
+
+    public_port = ntohs(peer_data.port);
 
     ucs_warn("client data returned from rendezvous: %s:%i for pair_value: %s",
-             ip_to_string(&public_info.ip.s_addr, public_ipadd,
+             ip_to_string(&peer_data.ip.s_addr, public_ipadd,
                           sizeof(public_ipadd)),
              public_port, pair_value);
 
     //peer port is peer returned by rendezvous
-
 
     sprintf(publicAddressPort, "%s:%i", public_ipadd, public_port);
 

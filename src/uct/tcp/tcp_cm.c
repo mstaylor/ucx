@@ -751,7 +751,8 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   char src_str[UCS_SOCKADDR_STRING_LEN];
   char src_str2[UCS_SOCKADDR_STRING_LEN];
   char endpoint_src_address[UCS_SOCKADDR_STRING_LEN];
-  //char peer_redis_key[UCS_SOCKADDR_STRING_LEN * 2];
+  char peer_redis_key[UCS_SOCKADDR_STRING_LEN * 2];
+  char peer_redis_value[UCS_SOCKADDR_STRING_LEN * 2];
   //char peer_redis_key2[UCS_SOCKADDR_STRING_LEN * 2];
 
   //char publicAddressPort[UCS_SOCKADDR_STRING_LEN * 2];
@@ -786,7 +787,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   char *pair_value = NULL;
   struct sockaddr_in server_data;
   PeerConnectionData public_info;
-  //PeerConnectionData peer_info;
+  PeerConnectionData peer_data;
   ssize_t bytes;
   // char source_ipadd[UCS_SOCKADDR_STRING_LEN];
   char public_ipadd[UCS_SOCKADDR_STRING_LEN];
@@ -828,6 +829,18 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                             sizeof(src_str)));
 
   if (iface->config.enable_nat_traversal) {
+
+    //write peer key/value
+    sprintf(peer_redis_key, "%s:%s", PEER_KEY2, dest_str);
+    sprintf(peer_redis_value, "%s", src_str);
+
+
+
+    setRedisValue(iface->config.redis_ip_address,
+                  iface->config.redis_port, peer_redis_key, peer_redis_value);
+
+    ucs_warn("wrote peer_key: %s peer_value: %s", peer_redis_key, peer_redis_value);
+
 
     //check redis for pair value - we need to check both src and dest
     //if pair value is null, write a new pair value
@@ -944,8 +957,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     }
 
 
-
-
     ucs_warn("receiving from rendezvous for pair %s", pair_value);
 
 
@@ -958,12 +969,29 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
       return UCS_ERR_IO_ERROR;
     }
     // close(fd);
-    ucs_warn("client data returned from rendezvous: %s:%i pair %s",
+    ucs_warn("source client data returned from rendezvous: %s:%i pair %s",
              ip_to_string(&public_info.ip.s_addr, public_ipadd,
                           sizeof(public_ipadd)),
              ntohs(public_info.port), pair_value);
 
-    endpoint_src_port = ntohs(public_info.port);
+    bytes = -1;
+
+    // Wait until rendezvous server sends info about peer
+    bytes = recv(fd, &peer_data, sizeof(peer_data), MSG_WAITALL);
+    if(bytes == -1) {
+      ucs_warn("Failed to get peer data from rendezvous server: ");
+      return UCS_ERR_IO_ERROR;
+    } else if(bytes == 0) {
+      ucs_warn("Server has disconnected when waiting for peer data");
+      return UCS_ERR_IO_ERROR;
+    }
+
+    ucs_warn("dest client data returned from rendezvous: %s:%i pair %s",
+             ip_to_string(&peer_data.ip.s_addr, public_ipadd,
+                          sizeof(public_ipadd)),
+             ntohs(peer_data.port), pair_value);
+
+    endpoint_src_port = ntohs(peer_data.port);
 
     ucs_warn("endpoint source port for peer: %d, original dest address: %s", endpoint_src_port, dest_str);
 
