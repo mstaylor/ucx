@@ -821,6 +821,8 @@ ucs_status_t uct_tcp_ep_create(const uct_ep_params_t *params, uct_ep_h *ep_p)
     struct sockaddr_storage dest_addr;
     ucs_status_t status;
 
+    ucs_warn("uct_tcp_ep_create");
+
     if (ucs_test_all_flags(params->field_mask,
                            UCT_EP_PARAM_FIELD_DEV_ADDR |
                            UCT_EP_PARAM_FIELD_IFACE_ADDR)) {
