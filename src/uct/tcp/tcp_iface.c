@@ -645,26 +645,30 @@ static ucs_status_t uct_tcp_iface_server_init(uct_tcp_iface_t *iface)
     return status;
 }
 
-/*
+
 static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 {
 
   int thread_return;
 
-  //TODO: check for thread bound
-  //first peer update thread
-  ucs_warn("creating thread %d", current_address_count);
-  thread_return = pthread_create(&redis_update_thread[current_address_count], NULL,
-                                     (void *)listen_for_updates_peer, (void*) iface);
-  if(thread_return) {
-    ucs_error("Error when creating thread for listening for updated peer");
-    return UCS_ERR_IO_ERROR;
+  if (current_address_count == 0) { //only use first address to check for peers
+
+
+    // first peer update thread
+    ucs_warn("creating thread %d", current_address_count);
+    thread_return =
+        pthread_create(&redis_update_thread[current_address_count], NULL,
+                       (void *)listen_for_updates_peer, (void *)iface);
+    if (thread_return) {
+      ucs_error("Error when creating thread for listening for updated peer");
+      return UCS_ERR_IO_ERROR;
+    }
+    current_address_count++;
   }
-  current_address_count++;
 
   return UCS_OK;
 }
-*/
+
 
 static ucs_status_t uct_tcp_iface_listener_init(uct_tcp_iface_t *iface)
 {
@@ -1045,9 +1049,9 @@ static UCS_CLASS_INIT_FUNC(uct_tcp_iface_t, uct_md_h md, uct_worker_h worker,
     //Note: disabling NAT background thread - endpoints will connect to each
     //other during cm_conn_start
 
-    /*if (self->config.enable_nat_traversal) {
+    if (self->config.enable_nat_traversal) {
       uct_tcp_iface_connect_with_peers(self);
-    }*/
+    }
 
     return UCS_OK;
 
