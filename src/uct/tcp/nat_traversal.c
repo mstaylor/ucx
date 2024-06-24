@@ -92,7 +92,7 @@ void listen_for_updates_peer(void *p) {
   int public_port = -1;
   int peer_fd;
   //struct timeval timeout;
-  //int retries = 0;
+  int retries = 0;
   int result = 0;
   //int result_opt;
   //fd_set set;
@@ -298,12 +298,15 @@ void listen_for_updates_peer(void *p) {
     }
     //timeout.tv_sec = NAT_CONNECT_TO_SEC;
     //timeout.tv_usec = 0;
-    while (true) {
 
-      ucs_sockaddr_str(addr, src_str2, sizeof(src_str2));
+    ucs_sockaddr_str(addr, src_str2, sizeof(src_str2));
 
-      ucs_warn("connecting to peer address socket ip: %s source str: %s for %s",
-               src_str2, peer_str, src_str);
+    ucs_warn("connecting to peer address socket ip: %s source str: %s for %s",
+             src_str2, peer_str, src_str);
+
+    while (true && retries < NAT_RETRIES) {
+      retries++;
+
 
       result = connect(peer_fd, addr, addrlen);
 
@@ -323,6 +326,8 @@ void listen_for_updates_peer(void *p) {
       }
     }
 
+    retries = 0;
+
     flags = fcntl(peer_fd, F_GETFL, 0);
     flags &= ~(O_NONBLOCK);
     fcntl(peer_fd, F_SETFL, flags);
@@ -341,30 +346,4 @@ void listen_for_updates_peer(void *p) {
   }
 }
 
-void sendTestMessage(int fd) {
-  char buffer[200] = "Hello, server!";
-  ssize_t bytes_sent;
 
-  int retries = 6;
-
-  int currentTry = 0;
-  while (currentTry < retries) {
-    bytes_sent = send(fd, buffer, strlen(buffer), 0);
-    if (bytes_sent < 0) {
-      if (errno == EPIPE) {
-        perror("Broken pipe error");
-        ucs_warn("could not send message");
-        currentTry++;
-        continue;
-      } else {
-        perror("Send error");
-        ucs_warn("unable to send test message");
-        currentTry++;
-        continue;
-      }
-    } else {
-      ucs_warn("Message sent: %s", buffer);
-      break;
-    }
-  }
-}

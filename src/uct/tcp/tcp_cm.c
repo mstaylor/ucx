@@ -801,6 +801,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
   int rend_bind_res;
   int fd;
+  int retries = 0;
 
   struct sockaddr_in rend_local_port_addr;
   socklen_t rend_local_addr_len = sizeof(rend_local_port_addr);
@@ -1101,20 +1102,22 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     // try to reconnect until listen connection succeeds and switch file
     // descriptor
 
-    while (true) {
+    status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr,
+                                 &peer_addr_len);
+    if (status != UCS_OK) {
+      ucs_warn("ucs_sockaddr_sizeof failed ");
+      return status;
+    }
 
-      status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr,
-                                   &peer_addr_len);
-      if (status != UCS_OK) {
-        ucs_warn("ucs_sockaddr_sizeof failed ");
-        return status;
-      }
+    ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr, src_str2,
+                     sizeof(src_str2));
 
-      ucs_sockaddr_str((const struct sockaddr *)&ep->peer_addr, src_str2,
-                       sizeof(src_str2));
+    ucs_warn("connecting to peer address socket ip: %s src: %s", src_str2,
+             src_str);
 
-      ucs_warn("connecting to peer address socket ip: %s src: %s", src_str2,
-               src_str);
+    while (true && retries < NAT_RETRIES) {
+      retries++;
+
 
       result = connect(ep->fd, (const struct sockaddr *)&ep->peer_addr,
                        peer_addr_len);

@@ -13,7 +13,7 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 
-#define NAT_RETRIES 6
+#define NAT_RETRIES 25
 #define NAT_CONNECT_TO_SEC 6
 
 typedef struct {
@@ -33,7 +33,6 @@ const char * ip_to_string(in_addr_t *ip, char * buffer, size_t max_size);
  */
 void listen_for_updates_peer(void *p);
 
-void sendTestMessage(int fd);
 
 
 #endif //UCX_NAT_TRAVERSAL_H
