@@ -1074,6 +1074,12 @@ ucp_ep_create_api_to_worker_addr(ucp_worker_h worker,
                                     conn_sn ^
                                     (remote_address.uuid == worker->uuid),
                                     UCS_CONN_MATCH_QUEUE_UNEXP);
+
+    if (remote_address.uuid == worker->uuid) {
+      ucs_warn("remote address and worker are the same!");
+    }
+
+
     if (ep != NULL) {
       ucs_warn("ep not null adjusting params");
         status = ucp_ep_adjust_params(ep, params);
