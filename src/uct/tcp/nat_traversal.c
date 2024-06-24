@@ -64,8 +64,9 @@ void listen_for_updates_peer(void *p) {
   char src_str[UCS_SOCKADDR_STRING_LEN];
   char src_str2[UCS_SOCKADDR_STRING_LEN];
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN * 2];
-  char pair_key[UCS_SOCKADDR_STRING_LEN * 2];
-  char pair_value[200];
+
+  char pair_key1[UCS_SOCKADDR_STRING_LEN * 2];
+  char pair_key2[UCS_SOCKADDR_STRING_LEN * 2];
 
   int fd = -1, ret;
   int enable_flag = 1;
@@ -82,6 +83,7 @@ void listen_for_updates_peer(void *p) {
   char public_ipadd[UCS_SOCKADDR_STRING_LEN];
   char publicAddressPort[UCS_SOCKADDR_STRING_LEN * 2];
   char randomString[UCS_SOCKADDR_STRING_LEN * 2];
+  char *pair_value = NULL;
   int publicPort = 0;
 
   struct sockaddr_storage connect_addr;
@@ -123,13 +125,13 @@ void listen_for_updates_peer(void *p) {
   // Generate random string for unique pair name
   generate_random_string(randomString, UCS_SOCKADDR_STRING_LEN);
 
-  sprintf(pair_value, "%s:%s", PAIR, randomString);
-  sprintf(pair_key, "%s_%s", src_str, PAIR);
+  //sprintf(pair_value, "%s:%s", PAIR, randomString);
+  //sprintf(pair_key, "%s_%s", src_str, PAIR);
 
-  ucs_warn("writing pair_key: %s and pair_value:%s for src:%s", pair_key, pair_value, src_str);
+  //ucs_warn("writing pair_key: %s and pair_value:%s for src:%s", pair_key, pair_value, src_str);
 
-  setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
-                pair_key, pair_value);
+  //setRedisValue(iface->config.redis_ip_address, iface->config.redis_port,
+  //              pair_key, pair_value);
 
 
   // Retrieve remote address written during endpoint start (cm_start)
@@ -151,7 +153,22 @@ void listen_for_updates_peer(void *p) {
 
     ucs_warn("received peer address: %s for peer %s from redis", remote_address,
              peer_str);
-    //we con't care about the remote_address since we're using the rendezvous address
+
+
+    sprintf(pair_key1, "%s_%s", src_str, PAIR);
+    sprintf(pair_key2, "%s_%s", remote_address, PAIR);
+
+    pair_value = retrieveKeyAndUpdateKeyIfMissing(iface->config.redis_ip_address,
+                                                  iface->config.redis_port, pair_key1, pair_key2);
+
+    if (pair_value == NULL) { //this should not happen - A pair should either exist or be created
+      ucs_warn("could not retrieve or create pair key");
+      continue;
+    }
+
+    ucs_warn("pair_value : %s associated with src: %s dest: %s", pair_value, src_str, remote_address);
+
+
     free(remote_address);
     remote_address = NULL;
 
@@ -256,7 +273,7 @@ void listen_for_updates_peer(void *p) {
     sprintf(publicAddressPort, "%s:%i", public_ipadd, public_port);
 
     //set connect_addr to address returned by rendez
-
+    free(pair_value);
     set_sock_addr(public_ipadd, &connect_addr, AF_INET, publicPort);
 
     addr = (struct sockaddr *)&connect_addr;
