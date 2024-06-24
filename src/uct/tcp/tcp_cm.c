@@ -1115,7 +1115,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     ucs_warn("connecting to peer address socket ip: %s src: %s", src_str2,
              src_str);
 
-    while (true && retries < NAT_RETRIES) {
+    while (true) {
       retries++;
 
 
@@ -1126,14 +1126,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
           continue;
         } else if(errno == EISCONN) {
-          ucs_warn("Succesfully connected to peer, EISCONN");
+          ucs_warn("Succesfully connected to peer, EISCONN - number of retries: %d", retries);
           break;
         } else {
           msleep(100);
           continue;
         }
       } else {
-        ucs_warn("Succesfully connected to peer");
+        ucs_warn("Succesfully connected to peer - number of retries: %d", retries);
         break;
       }
     }

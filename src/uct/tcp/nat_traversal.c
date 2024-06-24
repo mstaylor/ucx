@@ -304,7 +304,7 @@ void listen_for_updates_peer(void *p) {
     ucs_warn("connecting to peer address socket ip: %s source str: %s for %s",
              src_str2, peer_str, src_str);
 
-    while (true && retries < NAT_RETRIES) {
+    while (true ) {
       retries++;
 
 
@@ -314,17 +314,19 @@ void listen_for_updates_peer(void *p) {
         if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
           continue;
         } else if(errno == EISCONN) {
-          ucs_warn("Succesfully connected to peer, EISCONN");
+          ucs_warn("Succesfully connected to peer, EISCONN numtries: %d", retries);
           break;
         } else {
           msleep(100);
           continue;
         }
       } else {
-        ucs_warn("Succesfully connected to peer");
+        ucs_warn("Succesfully connected to peer - number of retries: %d", retries);
         break;
       }
     }
+
+
 
     retries = 0;
 
