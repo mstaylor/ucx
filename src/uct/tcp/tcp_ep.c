@@ -721,6 +721,7 @@ static ucs_status_t uct_tcp_ep_connect(uct_tcp_ep_t *ep)
 
     if (uct_tcp_ep_is_self(ep) ||
         (ep->flags & UCT_TCP_EP_FLAG_CONNECT_TO_EP)) {
+      ucs_warn("uct_tcp_ep_connect1");
         status = uct_tcp_ep_create_socket_and_connect(ep);
         if (status != UCS_OK) {
             return status;
@@ -731,6 +732,7 @@ static ucs_status_t uct_tcp_ep_connect(uct_tcp_ep_t *ep)
     peer_ep = uct_tcp_cm_get_ep(iface, (struct sockaddr*)&ep->peer_addr,
                                 ep->cm_id.conn_sn, UCT_TCP_EP_FLAG_CTX_TYPE_RX);
     if (peer_ep == NULL) {
+      ucs_warn("uct_tcp_ep_connect2");
         status = uct_tcp_ep_create_socket_and_connect(ep);
         if (status != UCS_OK) {
             return status;
@@ -738,6 +740,7 @@ static ucs_status_t uct_tcp_ep_connect(uct_tcp_ep_t *ep)
     } else {
         /* EP that connects to self or EP created using CONNECT_TO_EP mustn't
          * go here and always create socket and connect to a peer */
+        ucs_warn("uct_tcp_ep_connect3");
         ucs_assert(!uct_tcp_ep_is_self(ep) &&
                    !(ep->flags & UCT_TCP_EP_FLAG_CONNECT_TO_EP));
         ucs_assert((peer_ep != NULL) && (peer_ep->fd != -1) &&
@@ -835,12 +838,18 @@ ucs_status_t uct_tcp_ep_create(const uct_ep_params_t *params, uct_ep_h *ep_p)
         return status;
     }
 
+    ucs_warn("creating endpoint...");
+
     if (!(ep->flags & UCT_TCP_EP_FLAG_CONNECT_TO_EP)) {
+      ucs_warn("connecting to endpoint...");
         uct_tcp_cm_ep_set_conn_sn(ep);
         status = uct_tcp_ep_connect(ep);
         if (status != UCS_OK) {
             return status;
         }
+    } else {
+      ucs_warn(" flags do not include UCT_TCP_EP_FLAG_CONNECT_TO_EP");
+      //figure out pairing situation here
     }
 
     /* cppcheck-suppress autoVariables */
