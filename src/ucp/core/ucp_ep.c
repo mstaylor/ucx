@@ -401,7 +401,7 @@ ucs_status_t ucp_ep_create_base(ucp_worker_h worker, unsigned ep_init_flags,
     ucp_ep_refcount_add(ep, create);
 
     *ep_p = ep;
-    ucs_debug("created ep %p to %s %s", ep, ucp_ep_peer_name(ep), message);
+    ucs_warn("created ep %p to %s %s", ep, ucp_ep_peer_name(ep), message);
     return UCS_OK;
 
 err_ep_deallocate:
