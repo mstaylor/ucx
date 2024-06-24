@@ -91,18 +91,18 @@ void listen_for_updates_peer(void *p) {
 
   int public_port = -1;
   int peer_fd;
-  struct timeval timeout;
-  int retries = 0;
+  //struct timeval timeout;
+  //int retries = 0;
   int result = 0;
-  int result_opt;
-  fd_set set;
-  int so_error;
-
+  //int result_opt;
+  //fd_set set;
+  //int so_error;
+  int flags;
 
   const char *peer_str = NULL;
-  socklen_t len = sizeof(so_error);
+  //socklen_t len = sizeof(so_error);
 
-  ucs_status_t status;
+  //ucs_status_t status;
 
   uct_tcp_iface_t *iface = (uct_tcp_iface_t *)p;
 
@@ -296,11 +296,9 @@ void listen_for_updates_peer(void *p) {
     if (fcntl(peer_fd, F_SETFL, O_NONBLOCK) != 0) {
       ucs_warn("Setting O_NONBLOCK failed: ");
     }
-    timeout.tv_sec = NAT_CONNECT_TO_SEC;
-    timeout.tv_usec = 0;
-    while (retries < NAT_RETRIES) {
-      ucs_warn("retrying connection - current retry: %i for %s", retries,
-               src_str);
+    //timeout.tv_sec = NAT_CONNECT_TO_SEC;
+    //timeout.tv_usec = 0;
+    while (true) {
 
       ucs_sockaddr_str(addr, src_str2, sizeof(src_str2));
 
@@ -309,82 +307,25 @@ void listen_for_updates_peer(void *p) {
 
       result = connect(peer_fd, addr, addrlen);
 
-      if (result == 0) {
-        if (iface->config.enable_dummy_send) {
-          ucs_warn("sending dummy payload...");
-          sendTestMessage(peer_fd);
-        }
-        break;
-      }
-
-      FD_ZERO(&set);
-      FD_SET(peer_fd, &set);
-      timeout.tv_sec = 10; // 10 second timeout
-      timeout.tv_usec = 0;
-
-      result = select(peer_fd + 1, NULL, &set, NULL, &timeout);
-      if (result < 0 && errno != EINTR) {
-        // select() failed or connection timed out
-        ucs_warn("select failed/connect timeout on peer socket %i peer address "
-                 "%s source %s for %s",
-                 peer_fd, src_str2, peer_str, src_str);
-      } else if (result > 0) {
-        result_opt = getsockopt(peer_fd, SOL_SOCKET, SO_ERROR, &so_error, &len);
-        if (result_opt < 0) {
-          ucs_warn("Connection failed: %s and continuing peer socket %i peer "
-                   "address %s source %s for %s",
-                   strerror(so_error), peer_fd, src_str2, peer_str, src_str);
-        } else if (so_error) {
-          ucs_warn("Error in delayed connection() %d - %s peer socket %i peer "
-                   "address %s source str %s for %s",
-                   so_error, strerror(so_error), peer_fd, src_str2, peer_str,
-                   src_str);
-        } else {
-          ucs_warn("Connected on attempt %d peer socket %i peer address %s "
-                   "source str %s for %s",
-                   retries + 1, peer_fd, src_str2, peer_str, src_str);
-
+      if (result != 0) {
+        if (errno == EALREADY || errno == EAGAIN || errno == EINPROGRESS) {
+          continue;
+        } else if(errno == EISCONN) {
+          ucs_warn("Succesfully connected to peer, EISCONN");
           break;
+        } else {
+          msleep(100);
+          continue;
         }
       } else {
-        ucs_warn("Timeout or error. peer socket %i peer address %s for %s",
-                 peer_fd, src_str2, src_str);
-      }
-
-      close(peer_fd);
-
-      status = ucs_socket_create(AF_INET, SOCK_STREAM, &peer_fd);
-      if (status != UCS_OK) {
-        ucs_warn("could not create socket");
+        ucs_warn("Succesfully connected to peer");
         break;
       }
-
-      status = ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEPORT,
-                                 &enable_flag, sizeof(int));
-      if (status != UCS_OK) {
-        ucs_warn("could NOT configure to reuse socket port");
-        break;
-      }
-
-      status = ucs_socket_setopt(peer_fd, SOL_SOCKET, SO_REUSEADDR,
-                                 &enable_flag, sizeof(int));
-      if (status != UCS_OK) {
-        ucs_warn("could NOT configure to reuse socket address");
-        break;
-      }
-
-      if (bind(peer_fd, (struct sockaddr *)&local_port_addr2, local_addr_len2) <
-          0) {
-        ucs_error("error binding to rendezvous socket %s", strerror(errno));
-        continue;
-      }
-
-      if (fcntl(peer_fd, F_SETFL, O_NONBLOCK) != 0) {
-        ucs_warn("Setting O_NONBLOCK failed: ");
-      }
-
-      retries++;
     }
+
+    flags = fcntl(peer_fd, F_GETFL, 0);
+    flags &= ~(O_NONBLOCK);
+    fcntl(peer_fd, F_SETFL, flags);
 
     //delete the peer key, since we've processed it
 
@@ -396,7 +337,7 @@ void listen_for_updates_peer(void *p) {
 
     // close(peer_fd);
 
-    retries = 0;
+    //retries = 0;
   }
 }
 
