@@ -1075,6 +1075,7 @@ ucp_ep_create_api_to_worker_addr(ucp_worker_h worker,
                                     (remote_address.uuid == worker->uuid),
                                     UCS_CONN_MATCH_QUEUE_UNEXP);
     if (ep != NULL) {
+      ucs_warn("ep not null adjusting params");
         status = ucp_ep_adjust_params(ep, params);
         if (status != UCS_OK) {
             goto err_destroy_ep;
@@ -1082,6 +1083,7 @@ ucp_ep_create_api_to_worker_addr(ucp_worker_h worker,
 
         ucp_stream_ep_activate(ep);
         goto out_resolve_remote_id;
+        ucs_warn("ep not null here");
     }
 
     status = ucp_ep_create_to_worker_addr(worker, &ucp_tl_bitmap_max,
@@ -1107,9 +1109,11 @@ ucp_ep_create_api_to_worker_addr(ucp_worker_h worker,
     flags = UCP_PARAM_VALUE(EP, params, flags, FLAGS, 0);
     if ((remote_address.uuid == worker->uuid) &&
         !(flags & UCP_EP_PARAMS_FLAGS_NO_LOOPBACK)) {
+      ucs_warn("here about to ucp_ep_update_remote_id");
         ucp_ep_update_remote_id(ep, ucp_ep_local_id(ep));
     } else if (!ucp_ep_match_insert(worker, ep, remote_address.uuid, conn_sn,
                                     UCS_CONN_MATCH_QUEUE_EXP)) {
+      ucs_warn("!ucp_ep_match_insert");
         if (context->config.features & UCP_FEATURE_STREAM) {
             status = UCS_ERR_EXCEEDS_LIMIT;
             ucs_error("worker %p: failed to create the endpoint without"
@@ -1121,13 +1125,10 @@ ucp_ep_create_api_to_worker_addr(ucp_worker_h worker,
     /* if needed, send initial wireup message */
     if (!(ep->flags & UCP_EP_FLAG_LOCAL_CONNECTED)) {
         ucs_assert(!(ep->flags & UCP_EP_FLAG_CONNECT_REQ_QUEUED));
-        ucs_warn("sending wireup...");
         status = ucp_wireup_send_request(ep);
         if (status != UCS_OK) {
             goto out_free_address;
         }
-    } else {
-      ucs_warn("not sending wireup");
     }
 
     status = UCS_OK;
