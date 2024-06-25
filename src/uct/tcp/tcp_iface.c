@@ -651,8 +651,6 @@ static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
 
   int thread_return;
 
-  if (current_address_count == 0) { //only use first address to check for peers
-
 
     // first peer update thread
     ucs_warn("creating thread %d", current_address_count);
@@ -664,7 +662,7 @@ static ucs_status_t uct_tcp_iface_connect_with_peers(uct_tcp_iface_t *iface)
       return UCS_ERR_IO_ERROR;
     }
     current_address_count++;
-  }
+
 
   return UCS_OK;
 }
