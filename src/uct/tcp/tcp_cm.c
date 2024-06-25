@@ -15,6 +15,87 @@
 
 #include <ucs/async/async.h>
 
+ucs_status_t peer_listen(void *p) {
+  struct sockaddr_in peer_info;
+  struct sockaddr_in local_port_data;
+  int peer;
+  char src_str[UCS_SOCKADDR_STRING_LEN * 2];
+  int bind_port = -1;
+
+  unsigned int len;
+  int enable_flag = 1;
+  PeerConnectionData2 *info = (PeerConnectionData2 *)p;
+
+  // Create socket on the port that was previously used to contact the
+  // rendezvous server
+  info->accepting_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (info->accepting_socket == -1) {
+    ucs_error("Socket creation failed: ");
+    return UCS_ERR_IO_ERROR;
+  }
+
+  if (setsockopt(info->accepting_socket, SOL_SOCKET, SO_REUSEADDR, &enable_flag,
+                 sizeof(int)) < 0 ||
+      setsockopt(info->accepting_socket, SOL_SOCKET, SO_REUSEPORT, &enable_flag,
+                 sizeof(int)) < 0) {
+    ucs_error("Setting REUSE options failed: ");
+    return UCS_ERR_IO_ERROR;
+  }
+
+  local_port_data.sin_family = AF_INET;
+  local_port_data.sin_addr.s_addr = INADDR_ANY;
+
+  bind_port = info->port;
+
+  ucs_warn("bind port provided by info is %i", bind_port);
+
+  set_sock_addr(NULL, (struct sockaddr_storage *)&local_port_data, AF_INET,
+                bind_port);
+
+  if (bind(info->accepting_socket, (const struct sockaddr *)&local_port_data,
+           sizeof(local_port_data)) < 0) {
+    ucs_error("Could not bind to local port: ");
+    return UCS_ERR_IO_ERROR;
+  } else {
+    ucs_warn("bound peer listen socket %d", info->accepting_socket);
+  }
+
+  ucs_sockaddr_str((const struct sockaddr *)&local_port_data, src_str,
+                   sizeof(src_str));
+
+  ucs_warn("bound socket to to source address: %s", src_str);
+
+  if (listen(info->accepting_socket, 1) == -1) {
+    ucs_error("Listening on local port failed: ");
+    return UCS_ERR_IO_ERROR;
+  } else {
+    ucs_warn("peer listen_socket %d listening ", info->accepting_socket);
+  }
+
+  ucs_warn("peer listen_socket listening on %s", src_str);
+
+  len = sizeof(peer_info);
+
+  while (true) {
+    while (true && info->cancel != 1) {
+      peer =
+          accept(info->accepting_socket, (struct sockaddr *)&peer_info, &len);
+      if (peer == -1) {
+        ucs_warn("Error when connecting to peer %s", strerror(errno));
+        return UCS_OK;
+      } else {
+        ucs_warn("Succesfully connected to peer, accepting");
+        info->accepting_socket = peer;
+        info->connection_established = true;
+        return UCS_OK;
+      }
+    }
+
+    return UCS_OK;
+  }
+}
+
 void uct_tcp_cm_change_conn_state(uct_tcp_ep_t *ep,
                                   uct_tcp_ep_conn_state_t new_conn_state) {
   // int full_log           = 1;
@@ -788,6 +869,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   struct sockaddr_in server_data;
   PeerConnectionData public_info;
   PeerConnectionData peer_data;
+  PeerConnectionData2 * peerConnectionData = NULL;
   ssize_t bytes;
   // char source_ipadd[UCS_SOCKADDR_STRING_LEN];
   char public_ipadd[UCS_SOCKADDR_STRING_LEN];
@@ -795,6 +877,9 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
   struct sockaddr_in local_addr;
   socklen_t local_addr_len = sizeof(local_addr);
   char local_ip[UCS_SOCKADDR_STRING_LEN];
+
+  pthread_t peer_listen_thread;
+  int thread_return;
 
   char redisHashConnectStatus[200];
   uint16_t local_port;
@@ -889,12 +974,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     rend_local_port_addr.sin_family = AF_INET;
     rend_local_port_addr.sin_addr.s_addr = INADDR_ANY;
 
-    status = ucs_sockaddr_set_port((struct sockaddr *)&rend_local_port_addr,
+    /*status = ucs_sockaddr_set_port((struct sockaddr *)&rend_local_port_addr,
                                    listen_port);
     if (status != UCS_OK) {
       ucs_warn("could not set rend_local_port_addr to port: %i", listen_port);
       return UCS_ERR_IO_ERROR;
-    }
+    }*/
 
     status = ucs_sockaddr_sizeof((struct sockaddr *)&rend_local_port_addr,
                                  &rend_addr_len);
@@ -906,7 +991,6 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     rend_bind_res =
         bind(fd, (struct sockaddr *)&rend_local_port_addr, rend_local_addr_len);
     if (rend_bind_res < 0) {
-      status = (errno == EADDRINUSE) ? UCS_ERR_BUSY : UCS_ERR_IO_ERROR;
       ucs_warn("bind(fd=%d addr=%s) failed: %m", fd,
                ucs_sockaddr_str((struct sockaddr *)&rend_local_port_addr,
                                 local_ip, sizeof(local_ip)));
@@ -1102,6 +1186,32 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     // try to reconnect until listen connection succeeds and switch file
     // descriptor
 
+    peerConnectionData = malloc(sizeof(PeerConnectionData2));
+
+    if (peerConnectionData == NULL) {
+      ucs_warn("unable to allocate PeerConnectionData");
+      return UCS_ERR_IO_ERROR;
+    }
+
+
+    peerConnectionData->port = endpoint_src_port;
+    peerConnectionData->ip = endpoint_local_port_addr.sin_addr;
+    peerConnectionData->accepting_socket = -1;
+    peerConnectionData->connection_established = 0;
+    peerConnectionData->cancel = 0;
+
+    ucs_warn("sending thread port %i", endpoint_src_port);
+
+    thread_return = pthread_create(&peer_listen_thread, NULL, (void *)peer_listen,
+                                   (void*) peerConnectionData);
+    if(thread_return) {
+      ucs_error("Error when creating thread for listening to endpoint src address ");
+      return UCS_ERR_IO_ERROR;
+    }
+
+
+
+
     status = ucs_sockaddr_sizeof((const struct sockaddr *)&ep->peer_addr,
                                  &peer_addr_len);
     if (status != UCS_OK) {
@@ -1129,6 +1239,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
           ucs_warn("Succesfully connected to peer, EISCONN - number of retries: %d", retries);
           break;
         } else {
+          //ucs_warn("error no: %d", errno);
           msleep(100);
           continue;
         }
@@ -1137,6 +1248,11 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
         break;
       }
     }
+
+
+    peerConnectionData->cancel= 1;
+
+    free(peerConnectionData);
 
     // 8. renable blocking on fd amd continue
     flags = fcntl(ep->fd, F_GETFL, 0);
