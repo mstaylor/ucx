@@ -1147,6 +1147,14 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
                   AF_INET, local_port);
 
 
+    if (setsockopt(ep->fd, SOL_SOCKET, SO_REUSEADDR, &enable_flag, sizeof(int)) <
+            0 ||
+        setsockopt(ep->fd, SOL_SOCKET, SO_REUSEPORT, &enable_flag, sizeof(int)) <
+            0) {
+      ucs_error("Setting REUSE options failed on endpoint: ");
+      return UCS_ERR_IO_ERROR;
+    }
+
     /// bind the endpoint to the newly created socket
     if (bind(ep->fd, (struct sockaddr *)&endpoint_local_port_addr,
              endpoint_local_addr_len) < 0) {
