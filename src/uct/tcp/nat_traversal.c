@@ -66,7 +66,7 @@ void listen_for_updates_peer(void *p) {
   char peer_redis_key[UCS_SOCKADDR_STRING_LEN * 2];
 
   char pair_key1[UCS_SOCKADDR_STRING_LEN * 2];
-  char pair_key2[UCS_SOCKADDR_STRING_LEN * 2];
+  //char pair_key2[UCS_SOCKADDR_STRING_LEN * 2];
 
   int fd = -1, ret;
   int enable_flag = 1;
@@ -96,6 +96,7 @@ void listen_for_updates_peer(void *p) {
   //struct timeval timeout;
   int retries = 0;
   int result = 0;
+  int error_count = 0;
   //int result_opt;
   //fd_set set;
   //int so_error;
@@ -155,13 +156,13 @@ void listen_for_updates_peer(void *p) {
              peer_str);
 
 
-    sprintf(pair_key1, "%s_%s", src_str, PAIR);
-    sprintf(pair_key2, "%s_%s", remote_address, PAIR);
+    sprintf(pair_key1, "%s_%s", remote_address, PAIR);
+    /*sprintf(pair_key2, "%s_%s", remote_address, PAIR);*/
 
-    pair_value = retrieveKeyAndUpdateKeyIfMissing(iface->config.redis_ip_address,
-                                                  iface->config.redis_port, pair_key1, pair_key2);
+    pair_value = getValueFromRedis(iface->config.redis_ip_address,
+                                                  iface->config.redis_port, pair_key1);
 
-    if (pair_value == NULL) { //this should not happen - A pair should either exist or be created
+    if (pair_value == NULL) { //this should not happen - A pair should already exist
       ucs_warn("could not retrieve or create pair key");
       continue;
     }
@@ -334,6 +335,13 @@ void listen_for_updates_peer(void *p) {
           ucs_warn("Succesfully connected to peer, EISCONN numtries: %d", retries);
           break;
         } else {
+
+          error_count++;
+          ucs_warn("err returned: %d %s", errno, strerror(errno));
+          if (error_count > 9) {
+            ucs_warn("too many errors, so returning...");
+            break;
+          }
           msleep(100);
           continue;
         }
@@ -344,7 +352,7 @@ void listen_for_updates_peer(void *p) {
     }
 
 
-
+    error_count = 0;
     retries = 0;
 
     flags = fcntl(peer_fd, F_GETFL, 0);

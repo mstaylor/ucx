@@ -845,7 +845,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
   int result = 0;
   //int result_opt = 0;
-  uint16_t listen_port = 0;
+  //uint16_t listen_port = 0;
   int endpoint_src_port = 0;
 
   struct sockaddr *addr = NULL;
@@ -864,7 +864,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
   // rendezvous variables
   char pair_key1[UCS_SOCKADDR_STRING_LEN * 2];
-  char pair_key2[UCS_SOCKADDR_STRING_LEN * 2];
+  //char pair_key2[UCS_SOCKADDR_STRING_LEN * 2];
   char *pair_value = NULL;
   struct sockaddr_in server_data;
   PeerConnectionData public_info;
@@ -916,6 +916,19 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
   if (iface->config.enable_nat_traversal) {
 
+    sprintf(pair_key1, "%s_%s", src_str, PAIR);
+    /*sprintf(pair_key2, "%s_%s", dest_str, PAIR);*/
+
+    pair_value = retrieveKeyAndUpdateKeyIfMissing(iface->config.redis_ip_address,
+                                                  iface->config.redis_port, pair_key1);
+
+    if (pair_value == NULL) { //this should not happen - A pair should either exist or be created
+      ucs_warn("could not retrieve or create pair key");
+      return UCS_ERR_IO_ERROR;
+    }
+
+    ucs_warn("pair_value : %s associated with src: %s dest: %s", pair_value, src_str, dest_str);
+
     //write peer key/value
     sprintf(peer_redis_key, "%s:%s", PEER_KEY2, dest_str);
     sprintf(peer_redis_value, "%s", src_str);
@@ -930,23 +943,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
     //check redis for pair value - we need to check both src and dest
     //if pair value is null, write a new pair value
-    sprintf(pair_key1, "%s_%s", src_str, PAIR);
-    sprintf(pair_key2, "%s_%s", dest_str, PAIR);
 
-    pair_value = retrieveKeyAndUpdateKeyIfMissing(iface->config.redis_ip_address,
-                                                iface->config.redis_port, pair_key1, pair_key2);
-
-    if (pair_value == NULL) { //this should not happen - A pair should either exist or be created
-      ucs_warn("could not retrieve or create pair key");
-      return UCS_ERR_IO_ERROR;
-    }
-
-    ucs_warn("pair_value : %s associated with src: %s dest: %s", pair_value, src_str, dest_str);
     // Call Rendezvous server and retrieve public port
 
     // get the current listen and set the public address/port in redis
-    ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr,
-                          &listen_port);
+    /*ucs_sockaddr_get_port((struct sockaddr *)&iface->config.ifaddr,
+                          &listen_port);*/
 
     // Write peer:ip:port -> sourceip:port to redis
     // listen thread for recv worker to process
@@ -974,12 +976,12 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     rend_local_port_addr.sin_family = AF_INET;
     rend_local_port_addr.sin_addr.s_addr = INADDR_ANY;
 
-    status = ucs_sockaddr_set_port((struct sockaddr *)&rend_local_port_addr,
+    /*status = ucs_sockaddr_set_port((struct sockaddr *)&rend_local_port_addr,
                                    listen_port);
     if (status != UCS_OK) {
       ucs_warn("could not set rend_local_port_addr to port: %i", listen_port);
       return UCS_ERR_IO_ERROR;
-    }
+    }*/
 
     status = ucs_sockaddr_sizeof((struct sockaddr *)&rend_local_port_addr,
                                  &rend_addr_len);
@@ -1030,7 +1032,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
 
     ucs_sockaddr_get_port((const struct sockaddr *)&local_addr, &local_port);
 
-    ucs_warn("Local IP address bound: %s:%d peer port was %d", local_ip, local_port, listen_port);
+    ucs_warn("Local IP address bound for rendezvous: %s:%d ", local_ip, local_port/*, listen_port*/);
 
 
 
@@ -1058,6 +1060,10 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
              ip_to_string(&public_info.ip.s_addr, public_ipadd,
                           sizeof(public_ipadd)),
              ntohs(public_info.port), pair_value);
+
+    local_port = ntohs(public_info.port);
+
+    ucs_warn("local port retuned by rendezvous for src: %d", local_port);
 
     bytes = -1;
 
@@ -1143,7 +1149,7 @@ ucs_status_t uct_tcp_cm_conn_start(uct_tcp_ep_t *ep) {
     // set the peer socket to be non-blocking so we can retry
     // connection attempts if necessary
 
-    set_sock_addr("127.0.0.1", (struct sockaddr_storage *)&endpoint_local_port_addr,
+    set_sock_addr(NULL, (struct sockaddr_storage *)&endpoint_local_port_addr,
                   AF_INET, local_port);
 
 

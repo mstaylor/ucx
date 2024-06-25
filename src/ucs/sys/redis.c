@@ -291,7 +291,7 @@ void generate_random_string(char *str, size_t length) {
 
 
 
-char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const char *key1, const char *key2) {
+char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const char *key1) {
 
   char *result = NULL;
   char randomString[UCS_SOCKADDR_STRING_LEN * 2];
@@ -302,7 +302,7 @@ char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const ch
 
   if (c != NULL) {
 
-    reply = redisCommand(c,"WATCH %s %s", key1, key2);
+    reply = redisCommand(c,"WATCH %s", key1);
     if (reply == NULL) {
       ucs_warn("Failed to execute WATCH command");
       return result;
@@ -312,11 +312,11 @@ char * retrieveKeyAndUpdateKeyIfMissing(const char *hostname, int port, const ch
     ucs_warn("retrieving key: %s from redis", key1);
     reply = redisCommand(c,"GET %s", key1);
 
-    if (reply == NULL || reply->type != REDIS_REPLY_STRING) {
+    /*if (reply == NULL || reply->type != REDIS_REPLY_STRING) {
       //key exists so not updating
       ucs_warn("retrieving key: %s from redis", key2);
       reply = redisCommand(c,"GET %s", key2);
-    }
+    }*/
     //we return the pair value since it has been set
     if (reply != NULL && reply->type == REDIS_REPLY_STRING) {
       ucs_warn("returning the pair value since it has been previously set");
