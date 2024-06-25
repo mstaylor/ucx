@@ -81,10 +81,10 @@ void listen_for_updates_peer(void *p) {
   ssize_t bytes;
   char source_ipadd[UCS_SOCKADDR_STRING_LEN];
   char public_ipadd[UCS_SOCKADDR_STRING_LEN];
-  char publicAddressPort[UCS_SOCKADDR_STRING_LEN * 2];
+  //char publicAddressPort[UCS_SOCKADDR_STRING_LEN * 2];
   char randomString[UCS_SOCKADDR_STRING_LEN * 2];
   char *pair_value = NULL;
-  int publicPort = 0;
+  //int publicPort = 0;
 
   struct sockaddr_storage connect_addr;
   struct sockaddr *addr = NULL;
