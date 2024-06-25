@@ -271,11 +271,11 @@ void listen_for_updates_peer(void *p) {
 
     //peer port is peer returned by rendezvous
 
-    sprintf(publicAddressPort, "%s:%i", public_ipadd, public_port);
+    //sprintf(publicAddressPort, "%s:%i", public_ipadd, public_port);
 
     //set connect_addr to address returned by rendez
     free(pair_value);
-    set_sock_addr(public_ipadd, &connect_addr, AF_INET, publicPort);
+    set_sock_addr(public_ipadd, &connect_addr, AF_INET, public_port);
 
     addr = (struct sockaddr *)&connect_addr;
 
