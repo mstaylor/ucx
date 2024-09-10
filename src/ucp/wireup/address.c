@@ -1783,14 +1783,14 @@ ucs_status_t ucp_address_unpack(ucp_worker_t *worker, const void *buffer,
             last_ep_addr          = !(*(uint8_t*)flags_ptr &
                                       UCP_ADDRESS_FLAG_HAS_EP_ADDR);
             while (!last_ep_addr) {
-                if (address->num_ep_addrs >= UCP_MAX_LANES) {
+                /*if (address->num_ep_addrs > UCP_MAX_LANES) {
                     ucp_address_error(
                             unpack_flags,
                             "failed to parse address: number of ep addresses"
                             " exceeds %d number addresses found: %d",
                             UCP_MAX_LANES, address->num_ep_addrs);
                     goto err_free;
-                }
+                }*/
 
                 ptr = ucp_address_unpack_tl_length(worker, flags_ptr, ptr,
                                                    addr_version, &ep_addr_len,
