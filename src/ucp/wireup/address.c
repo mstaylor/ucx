@@ -1787,9 +1787,10 @@ ucs_status_t ucp_address_unpack(ucp_worker_t *worker, const void *buffer,
                     ucp_address_error(
                             unpack_flags,
                             "failed to parse address: number of ep addresses"
-                            " exceeds %d",
-                            UCP_MAX_LANES);
-                    goto err_free;
+                            " exceeds %d number ep addrs %d",
+                            UCP_MAX_LANES, address->num_ep_addrs  );
+                    break;
+                    //goto err_free;
                 }
 
                 ptr = ucp_address_unpack_tl_length(worker, flags_ptr, ptr,
