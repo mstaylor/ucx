@@ -13,6 +13,8 @@
 #include <ucs/debug/memtrack.h>
 #include <ucs/debug/log.h>
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 static void uct_ud_peer_name(uct_ud_peer_name_t *peer)
 {
     gethostname(peer->name, sizeof(peer->name));

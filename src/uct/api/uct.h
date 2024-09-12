@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <sched.h>
 
+#pragma GCC diagnostic ignored "-Wformat-overflow"
+
 BEGIN_C_DECLS
 
 /**

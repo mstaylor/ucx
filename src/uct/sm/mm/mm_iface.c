@@ -20,6 +20,8 @@
 /* Maximal number of events to clear from the signaling pipe in single call */
 #define UCT_MM_IFACE_MAX_SIG_EVENTS  32
 
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 
 static ucs_config_field_t uct_mm_iface_config_table[] = {
     {"", "ALLOC=md", NULL,

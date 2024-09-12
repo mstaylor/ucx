@@ -49,6 +49,9 @@
 #include <net/if.h>
 #include <netdb.h>
 
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+#pragma GCC diagnostic ignored "-Warray-bounds"
+
 BEGIN_C_DECLS
 
 /**
