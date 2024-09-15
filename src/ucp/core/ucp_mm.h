@@ -20,7 +20,7 @@
 #include <inttypes.h>
 
 
-#define UCP_RCACHE_LOOKUP_FUNC ucs_linear_func_make(50.0e-9, 0)
+#define UCP_RCACHE_OVERHEAD_DEFAULT 50.0e-9
 
 
 /* Mask of UCT memory flags that need make sure are present when reusing an
@@ -35,7 +35,8 @@ enum {
     /*
      * Memory handle was imported and points to some peer's memory buffer.
      */
-    UCP_MEMH_FLAG_IMPORTED  = UCS_BIT(0)
+    UCP_MEMH_FLAG_IMPORTED = UCS_BIT(0),
+    UCP_MEMH_FLAG_MLOCKED  = UCS_BIT(1),
 };
 
 
@@ -157,7 +158,7 @@ ucs_status_t ucp_mem_rereg_mds(ucp_context_h context, ucp_md_map_t reg_md_map,
 
 ucs_status_t ucp_mem_type_reg_buffers(ucp_worker_h worker, void *remote_addr,
                                       size_t length, ucs_memory_type_t mem_type,
-                                      ucp_md_index_t md_index, ucp_mem_h *memh_p,
+                                      ucp_md_index_t md_index, ucp_mem_h memh,
                                       uct_rkey_bundle_t *rkey_bundle);
 
 void ucp_mem_type_unreg_buffers(ucp_worker_h worker, ucp_md_index_t md_index,

@@ -137,13 +137,17 @@ typedef struct ucp_context_config {
     /** Maximal number of endpoints to check on every keepalive round
      * (0 - disabled, inf - check all endpoints on every round) */
     unsigned                               keepalive_num_eps;
+    /** Time period between dynamic transport switching rounds */
+    ucs_time_t                             dynamic_tl_switch_interval;
+    /** Number of usage tracker rounds performed for each progress operation */
+    unsigned                               dynamic_tl_progress_factor;
     /** Defines whether resolving remote endpoint ID is required or not when
      *  creating a local endpoint */
     ucs_on_off_auto_value_t                resolve_remote_ep_id;
     /** Enable indirect IDs to object pointers in wire protocols */
     ucs_on_off_auto_value_t                proto_indirect_id;
     /** Bitmap of memory types whose allocations are registered fully */
-    unsigned                               reg_whole_alloc_bitmap;
+    uint64_t                               reg_whole_alloc_bitmap;
     /** Always use flush operation in rendezvous put */
     int                                    rndv_put_force_flush;
     /** Maximum size of mem type direct rndv*/
@@ -169,6 +173,12 @@ typedef struct ucp_context_config {
     int                                    prefer_offload;
     /** RMA zcopy segment size */
     size_t                                 rma_zcopy_max_seg_size;
+    /** Enable global VA MR */
+    int                                    gva_enable;
+    /** Lock memory when using global VA MR */
+    int                                    gva_mlock;
+    /** Prefetch memory when using global VA MR */
+    int                                    gva_prefetch;
     /** Protocol overhead */
     double                                 proto_overhead_single;
     double                                 proto_overhead_multi;
@@ -176,6 +186,9 @@ typedef struct ucp_context_config {
     double                                 proto_overhead_rndv_rts;
     double                                 proto_overhead_rndv_rtr;
     double                                 proto_overhead_sw;
+    double                                 proto_overhead_rkey_ptr;
+    /** Registration cache lookup overhead estimation */
+    double                                 rcache_overhead;
 } ucp_context_config_t;
 
 
@@ -275,6 +288,11 @@ typedef struct ucp_tl_md {
      * Flags mask parameter for @ref uct_md_mkey_pack_v2
      */
     unsigned               pack_flags_mask;
+
+    /**
+     * Global VA memory handle
+     */
+    uct_mem_h              gva_mr;
 } ucp_tl_md_t;
 
 
@@ -311,6 +329,9 @@ typedef struct ucp_context {
 
     /* Map of MDs that require caching registrations for given memory type. */
     ucp_md_map_t                  cache_md_map[UCS_MEMORY_TYPE_LAST];
+
+    /* Map of MDs that support global VA MRs for given memory type. */
+    ucp_md_map_t                  gva_md_map[UCS_MEMORY_TYPE_LAST];
 
     /* Map of MDs that provide registration of a memory buffer for a given
        memory type to be exported to other processes. */
@@ -387,6 +408,9 @@ typedef struct ucp_context {
 
         /* worker_fence implementation method */
         unsigned                  worker_strong_fence;
+
+        /* Progress wrapper enabled */
+        int                       progress_wrapper_enabled;
 
         struct {
            unsigned               count;
@@ -682,6 +706,12 @@ ucp_memory_detect(ucp_context_h context, const void *address, size_t length,
 
     mem_info->type    = mem_info_internal.type;
     mem_info->sys_dev = mem_info_internal.sys_dev;
+}
+
+static UCS_F_ALWAYS_INLINE int
+ucp_context_usage_tracker_enabled(ucp_context_h context)
+{
+    return context->config.ext.dynamic_tl_switch_interval != UCS_TIME_INFINITY;
 }
 
 void

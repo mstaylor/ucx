@@ -21,6 +21,10 @@
 #include <ucs/debug/log.h>
 #include <string.h>
 
+
+#define UCT_RC_VERBS_IFACE_OVERHEAD 75e-9
+
+
 static uct_rc_iface_ops_t uct_rc_verbs_iface_ops;
 static uct_iface_ops_t uct_rc_verbs_iface_tl_ops;
 
@@ -32,7 +36,7 @@ static const char *uct_rc_verbs_flush_mode_names[] = {
 };
 
 static ucs_config_field_t uct_rc_verbs_iface_config_table[] = {
-  {"RC_", "", NULL,
+  {"RC_", UCT_IB_SEND_OVERHEAD_DEFAULT(UCT_RC_VERBS_IFACE_OVERHEAD), NULL,
    ucs_offsetof(uct_rc_verbs_iface_config_t, super),
    UCS_CONFIG_TYPE_TABLE(uct_rc_iface_config_table)},
 
@@ -230,7 +234,9 @@ uct_rc_verbs_iface_query(uct_iface_h tl_iface, uct_iface_attr_t *iface_attr)
 
     iface_attr->cap.flags |= UCT_IFACE_FLAG_EP_CHECK;
     iface_attr->latency.m += 1e-9;  /* 1 ns per each extra QP */
-    iface_attr->overhead   = 75e-9; /* Software overhead */
+
+    /* Software overhead */
+    iface_attr->overhead = UCT_RC_VERBS_IFACE_OVERHEAD;
 
     iface_attr->ep_addr_len = uct_ib_md_is_flush_rkey_valid(md->flush_rkey) ?
                                       sizeof(uct_rc_verbs_ep_flush_addr_t) :
@@ -286,6 +292,7 @@ static UCS_CLASS_INIT_FUNC(uct_rc_verbs_iface_t, uct_md_h tl_md,
     init_attr.cq_len[UCT_IB_DIR_TX] = config->super.tx_cq_len;
     init_attr.seg_size              = ib_config->seg_size;
     init_attr.max_rd_atomic         = IBV_DEV_ATTR(&ib_md->dev, max_qp_rd_atom);
+    init_attr.tx_moderation         = config->super.tx_cq_moderation;
 
     UCS_CLASS_CALL_SUPER_INIT(uct_rc_iface_t, &uct_rc_verbs_iface_tl_ops,
                               &uct_rc_verbs_iface_ops, tl_md, worker, params,
@@ -293,7 +300,7 @@ static UCS_CLASS_INIT_FUNC(uct_rc_verbs_iface_t, uct_md_h tl_md,
 
     self->config.tx_max_wr               = ucs_min(config->tx_max_wr,
                                                    self->super.config.tx_qp_len);
-    self->super.config.tx_moderation     = ucs_min(config->super.tx_cq_moderation,
+    self->super.config.tx_moderation     = ucs_min(self->super.config.tx_moderation,
                                                    self->config.tx_max_wr / 4);
     self->super.config.fence_mode        = (uct_rc_fence_mode_t)config->super.super.fence_mode;
     self->super.progress                 = uct_rc_verbs_iface_progress;

@@ -1,5 +1,6 @@
 /**
  * Copyright (c) NVIDIA CORPORATION & AFFILIATES, 2001-2021. ALL RIGHTS RESERVED.
+ * Copyright (C) Advanced Micro Devices, Inc. 2024. ALL RIGHTS RESERVED.
  * See file LICENSE for terms.
  */
 
@@ -152,9 +153,18 @@ uct_self_iface_is_reachable_v2(const uct_iface_h tl_iface,
     }
 
     addr = (const uct_self_iface_addr_t*)params->iface_addr;
+    if (addr == NULL) {
+        uct_iface_fill_info_str_buf(params, "iface address is empty");
+        return 0;
+    }
 
-    return (addr != NULL) && (iface->id == *addr) &&
-           uct_iface_scope_is_reachable(tl_iface, params);
+    if (iface->id != *addr) {
+        uct_iface_fill_info_str_buf(
+                params, "iface id and iface address differ (%lu vs %lu)",
+                iface->id, *addr);
+        return 0;
+    }
+    return uct_iface_scope_is_reachable(tl_iface, params);
 }
 
 static void uct_self_iface_sendrecv_am(uct_self_iface_t *iface, uint8_t am_id,
@@ -313,7 +323,8 @@ ucs_status_t uct_self_ep_am_short(uct_ep_h tl_ep, uint8_t id, uint64_t header,
     UCT_CHECK_LENGTH(total_length, 0, iface->send_size, "am_short");
 
     send_buffer = UCT_SELF_IFACE_SEND_BUFFER_GET(iface);
-    uct_am_short_fill_data(send_buffer, header, payload, length);
+    uct_am_short_fill_data(send_buffer, header, payload, length,
+                           UCS_ARCH_MEMCPY_NT_NONE);
 
     UCT_TL_EP_STAT_OP(&ep->super, AM, SHORT, total_length);
     uct_self_iface_sendrecv_am(iface, id, send_buffer, total_length, "SHORT");
@@ -372,7 +383,8 @@ static uct_iface_internal_ops_t uct_self_iface_internal_ops = {
     .ep_query              = (uct_ep_query_func_t)ucs_empty_function_return_unsupported,
     .ep_invalidate         = (uct_ep_invalidate_func_t)ucs_empty_function_return_unsupported,
     .ep_connect_to_ep_v2   = ucs_empty_function_return_unsupported,
-    .iface_is_reachable_v2 = uct_self_iface_is_reachable_v2
+    .iface_is_reachable_v2 = uct_self_iface_is_reachable_v2,
+    .ep_is_connected       = uct_base_ep_is_connected
 };
 
 static uct_iface_ops_t uct_self_iface_ops = {

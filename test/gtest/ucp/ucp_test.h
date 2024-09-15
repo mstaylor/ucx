@@ -81,10 +81,11 @@ public:
                const ucp_worker_params_t& worker_params,
                const ucp_test_base* test_owner);
 
-        ~entity();
+        virtual ~entity();
 
-        void connect(const entity* other, const ucp_ep_params_t& ep_params,
-                     int ep_idx = 0, int do_set_ep = 1);
+        virtual void connect(const entity *other,
+                             const ucp_ep_params_t &ep_params, int ep_idx = 0,
+                             int do_set_ep = 1);
 
         bool verify_client_address(struct sockaddr_storage *client_address);
 
@@ -141,6 +142,8 @@ public:
 
         const size_t &get_err_num() const;
 
+        void reset_err_num();
+
         const size_t &get_accept_err_num() const;
 
         void warn_existing_eps() const;
@@ -152,6 +155,8 @@ public:
         static void ep_destructor(ucp_ep_h ep, entity *e);
 
         bool has_lane_with_caps(uint64_t caps) const;
+
+        bool is_rndv_put_ppln_supported() const;
 
         bool is_conn_reqs_queue_empty() const;
 
