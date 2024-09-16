@@ -202,7 +202,7 @@ uct_tcp_iface_is_reachable_v2(const uct_iface_h tl_iface,
                               const uct_iface_is_reachable_params_t *params)
 {
     uct_tcp_iface_t *iface = ucs_derived_of(tl_iface, uct_tcp_iface_t);
-    //uct_iface_local_addr_ns_t *local_addr_ns;
+    uct_iface_local_addr_ns_t *local_addr_ns;
     uct_tcp_device_addr_t *tcp_dev_addr;
     int is_local_loopback, is_remote_loopback;
 
@@ -232,13 +232,13 @@ uct_tcp_iface_is_reachable_v2(const uct_iface_h tl_iface,
         return 0;
     }
 
-    /*if (is_remote_loopback) {
+    if (is_remote_loopback) {
         local_addr_ns = (uct_iface_local_addr_ns_t*)(tcp_dev_addr + 1);
         if (!uct_iface_local_is_reachable(local_addr_ns, UCS_SYS_NS_TYPE_NET,
                                           params)) {
             return 0;
         }
-    }*/
+    }
 
     /* Later connect() call can still fail if the peer is actually unreachable
      * at UCT/TCP EP creation time */
